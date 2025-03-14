@@ -54,7 +54,7 @@ const PORT = process.env.PORT || 3000;
     await initRabbitMQ();
 
     // 3) เชื่อมต่อ Redis เพื่อใช้เป็น Adapter ของ Socket.IO
-    const pubClient = createClient({ url: 'redis://localhost:6379' });
+    const pubClient = createClient({ url: 'redis://192.168.55.219:6379' });
     const subClient = pubClient.duplicate();
     await pubClient.connect();
     await subClient.connect();
