@@ -8,7 +8,8 @@ exports.handleLineWebhook = async (req, res) => {
   try {
     const accountId = req.params.accountId;
 
-
+    console.log("Received from IP:", req);
+    console.log("webhook result:", req.body);
     console.log("webhook result:", req.body.events);
     // อ่าน event จาก req.body.events (Line messaging API)
     const events = req.body.events;
