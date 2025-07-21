@@ -108,6 +108,16 @@ exports.handleLineWebhook = async (req, res) => {
           userId: userId,
           timestamp: new Date().toISOString(),
         });
+        io.emit("server_broadcast", {
+          id: messageId,
+          userId: userId,
+          type: "LINE",
+          replyToken: replyToken,
+          quotaToken: quotaToken,
+          text: text,
+          timestamp: new Date().toISOString(),
+          attachments: stickerResourceType,
+        });
 
         /*  await publishToQueue("lineQueue", { accountId, event }); */
 
@@ -194,12 +204,12 @@ exports.sendMessage = async (req, res) => {
       quotaToken: "",
       text: Message,
       timeStamp: utc7Date,
-      stickerId: stickerId ?? '-',
-      stickerResourceType: stickerResourceType ?? '-',
+      stickerId: stickerId ?? "-",
+      stickerResourceType: stickerResourceType ?? "-",
       sendbyId: sendbyId,
     };
 
-    console.log("event send : " ,eventdata);
+    console.log("event send : ", eventdata);
 
     io.emit("server_broadcast", {
       from: "LINE",
@@ -298,7 +308,7 @@ exports.getLineFriend = async (req, res) => {
           language: lineProfile.language,
           type: row.type,
           typeName: row.typeName,
-          channelToken : contactToken ,
+          channelToken: contactToken,
         });
       } catch (err) {
         // Decide how you want to handle errors from the LINE API
@@ -311,7 +321,7 @@ exports.getLineFriend = async (req, res) => {
           displayName: null,
           pictureUrl: null,
           language: null,
-          channelToken : contactToken ,
+          channelToken: contactToken,
           error: "Failed to retrieve profile",
         });
       }

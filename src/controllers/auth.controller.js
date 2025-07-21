@@ -53,6 +53,7 @@ exports.registerUser = async (req, res) => {
 
 exports.loginUser = async (req, res) => {
   try {
+    console.log("req.body" ,req.body);
     const { username, password } = req.body;
     const pool = await connectDB();
 
@@ -76,7 +77,10 @@ exports.loginUser = async (req, res) => {
     }
 
     const token = generateToken({ userId: user.id, username: user.username });
-    return res.json({ token });
+    const cmpId = user.CmpId;
+    const refreshToken = user.RefreshToken;
+   
+    return res.json({ token , cmpId ,refreshToken });
   } catch (err) {
     console.error('Login error:', err);
     return res.status(500).json({ message: 'Server error' });

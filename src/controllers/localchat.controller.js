@@ -1,25 +1,21 @@
-// socket/ticketTaskReplyHub.ts
-const { io } = require("../app");
- 
-export function ticketTaskReplyHub(socket) {
-  console.log('✅ Socket connected:', socket.id);
+// controllers/localchat.controller.js
 
-  // Join Group
+function ticketTaskReplyHub(socket) {
+  console.log('✅ Socket connected to localchat.controller:', socket.id);
+
   socket.on('JoinTicketGroup', (ticketId) => {
     socket.join(ticketId);
     console.log(`🔗 Joined room: ${ticketId}`);
   });
 
-  // Leave Group
   socket.on('LeaveTicketGroup', (ticketId) => {
     socket.leave(ticketId);
     console.log(`🚪 Left room: ${ticketId}`);
   });
 
-  // Receive Ticket Task Reply (broadcast to room)
   socket.on('SendMessage', (msg) => {
     const eventName = `ReceiveTicketTaskReply${msg.CmpId}${msg.TicketId}${msg.RouteId}${msg.RemindId}`;
-    socket.to(msg.TicketId).emit(eventName, msg); // ใช้ socket.to เพื่อไม่ส่งกลับคนที่ส่ง
+    socket.to(msg.TicketId).emit(eventName, msg);
     console.log(`📤 Emit to ${msg.TicketId}: ${eventName}`);
   });
 
@@ -27,3 +23,5 @@ export function ticketTaskReplyHub(socket) {
     console.log('❌ Socket disconnected:', socket.id);
   });
 }
+
+module.exports = ticketTaskReplyHub;
