@@ -218,7 +218,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
     // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
     const flexMsg = {
       type: "flex",
-      altText: `ทีมงานกำลังดำการแก้ไขปัญหา #${taskNo ?? ""}`,
+      altText: `ทีมงานกำลังดำการแก้ไขปัญหา \n#${taskNo ?? ""}`,
       contents: {
         type: "bubble",
         body: {
@@ -227,7 +227,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `ทีมงานกำลังดำการแก้ไขปัญหา #${taskNo ?? ""}`,
+              text: `ทีมงานกำลังดำการแก้ไขปัญหา \n#${taskNo ?? ""}`,
               weight: "bold",
               size: "md",
             },
@@ -332,7 +332,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
     console.log("oaId", oaId);
     const flexmessage = {
       type: "flex",
-      altText:   `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo ?? ''}`, 
+      altText:   `🎉 แก้ไขปัญหาเรียบร้อยแล้ว \n#${taskNo ?? ''}`, 
       contents: {
         type: "bubble",
         body: {
@@ -341,7 +341,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo ?? ''}`, 
+              text: `🎉 แก้ไขปัญหาเรียบร้อยแล้ว \n#${taskNo ?? ''}`, 
               weight: "bold",
               size: "lg",
               color: "#1DB446",
