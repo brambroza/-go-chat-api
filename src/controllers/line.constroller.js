@@ -17,19 +17,15 @@ exports.createHelpdeskCase = async (req, res) => {
       ? `/uploads/helpdesk/${userId}/${req.file.filename}`
       : null;
 
-    console.log("userId", userId);
-    console.log("description", description);
-    console.log("oaId", oaId);
-    console.log("displayName", displayName);
+    
 
-    if (!userId || !description || !oaId || !cmpId) {
+    if (!userId || !description || !oaId ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const pool = await connectDB();
 
-    let request = pool.request();
-    request.input("cmpId", sql.VarChar(150), cmpId);
+    let request = pool.request(); 
     request.input("LineOAId", sql.VarChar(150), oaId);
     request.input("UserId", sql.VarChar(150), userId);
     request.input("Descriptions", sql.NVarChar(sql.MAX), description);
