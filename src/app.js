@@ -30,7 +30,18 @@ const server = http.createServer(app);
 const io = new Server(server, {
   path: '/chat-liff-app', // ต้องตรงกับ React
   cors: {
-    origin: '*', // หรือ '*' หากทดสอบ
+   
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'http://localhost:8080',
+      'https://erp.nisolution.co.th',
+    ];
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
     methods: ['GET', 'POST'],
     credentials: true,
   },
