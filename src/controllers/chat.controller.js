@@ -288,12 +288,11 @@ exports.getLineFriend = async (req, res) => {
 
     // Prepare the final result array
     const responseData = [];
-
+ //a.CmpId , a.UserId , a.Type , a.Branch , a.Province ,a.PhoneNo , a.LineOAId , a.Name
+//	, c.Name as LineOAName , c.AccessToken
     for (const row of rows) {
       const userId = row.UserId;
-      const contactToken =
-        "zHOdhlkJkcfWa4Hzm4nFQORzqCogEKj9PDUttOurALA2KjMdl0l9cwhRVRdXhYSFlIVOmrP1vP7DCA3aIt5u4B6CtsrNSW3Gj1Ud8BX5BWKiq1MbJS9GpadBBFBjImJOslCyMGHihEcgq0deVVXmHQdB04t89/1O/w1cDnyilFU=";
-
+      const contactToken = row.AccessToken;
       // Call the LINE API to get the profile
       try {
         const lineProfile = await lineService.getLineProfile(
@@ -307,8 +306,14 @@ exports.getLineFriend = async (req, res) => {
           pictureUrl: lineProfile.pictureUrl,
           language: lineProfile.language,
           type: row.type,
-          typeName: row.typeName,
+          name: row.Name,
           channelToken: contactToken,
+          branch : row.Branch, 
+          province : row.Province, 
+          phone : row.PhoneNo, 
+          lineOAId : row.LineOAId , 
+          lineOAName : row.LineOAName ,
+
         });
       } catch (err) {
         // Decide how you want to handle errors from the LINE API
