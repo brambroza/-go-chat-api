@@ -275,25 +275,27 @@ exports.getLineFriend = async (req, res) => {
       return res.status(400).json({ error: "cmpid is required" });
     }
 
-    // Build the T-SQL command, just like in .NET
-    const cmd = `exec dbo.getLineFriend @CmpId='${cmpid}'`;
-
     // Get a connection from your pool
     const pool = await connectDB();
-    // Execute the query
-    const result = await pool.request().query(cmd);
+
+    const dt = await pool
+      .request()
+      .input("CmpId", cmpid)
+      .query("EXEC dbo.getLineFriend @CmpId=@CmpId");
+
+    const dtc = await pool
+      .request()
+      .input("CmpId", cmpid)
+      .query("EXEC dbo.getLineChatConvertsatition @CmpId=@CmpId");
 
     // The recordset from the query
-    const rows = result.recordset;
+    const rows = dt.recordset;
 
-    // Prepare the final result array
     const responseData = [];
- //a.CmpId , a.UserId , a.Type , a.Branch , a.Province ,a.PhoneNo , a.LineOAId , a.Name
-//	, c.Name as LineOAName , c.AccessToken
     for (const row of rows) {
       const userId = row.UserId;
       const contactToken = row.AccessToken;
-      // Call the LINE API to get the profile
+
       try {
         const lineProfile = await lineService.getLineProfile(
           userId,
@@ -308,12 +310,11 @@ exports.getLineFriend = async (req, res) => {
           type: row.type,
           name: row.Name,
           channelToken: contactToken,
-          branch : row.Branch, 
-          province : row.Province, 
-          phone : row.PhoneNo, 
-          lineOAId : row.LineOAId , 
-          lineOAName : row.LineOAName ,
-
+          branch: row.Branch,
+          province: row.Province,
+          phone: row.PhoneNo,
+          lineOAId: row.LineOAId,
+          lineOAName: row.LineOAName,
         });
       } catch (err) {
         // Decide how you want to handle errors from the LINE API
@@ -336,5 +337,72 @@ exports.getLineFriend = async (req, res) => {
   } catch (error) {
     console.error("Error in getLineFriend route:", error.message);
     return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.getLineChatConvertsatition = async (req, res) => {
+  try {
+    const { cmpid } = req.query;
+ 
+
+    const pool = await poolPromise;
+
+    const dt = await pool
+      .request()
+      .input("CmpId", cmpid)
+      .query("EXEC dbo.getLineFriend @CmpId=@CmpId");
+
+    const dtc = await pool
+      .request()
+      .input("CmpId", cmpid)
+      .query("EXEC dbo.getLineChatConvertsatition @CmpId=@CmpId");
+
+    const conversations = [];
+
+    for (const r of dt.recordset) {
+      const rd = {
+        cmpId: r.CmpId,
+        lineToken : r.AccessToken , 
+        id: r.UserId,
+        type: "text",
+        unreadCount: 0,
+        messages: [],
+        participants: [],
+      };
+
+      const userMessages = dtc.recordset.filter((d) => d.userId === rd.id);
+      for (const d of userMessages) {
+        rd.messages.push({
+          id: d.Id,
+          userId: rd.id,
+          replyToken: d.replyToken,
+          quotaToken: d.quotaToken,
+          text: d.text,
+          type: d.type,
+          timestamp: new Date(d.TimeStamp),
+        });
+      }
+
+      const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
+      for (const rx of userRows) {
+        const profile = await getProfile(rx.UserId, rd.lineToken);
+
+        rd.participants.push({
+          UserId: rx.UserId,
+          DisplayName: profile.displayName,
+          PictureUrl: profile.pictureUrl,
+          Language: profile.language,
+          status: "online",
+          lastActivity: new Date(),
+        });
+      }
+
+      conversations.push(rd);
+    }
+
+    res.json(conversations);
+  } catch (error) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal Server Error.." });
   }
 };
