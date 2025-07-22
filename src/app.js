@@ -25,14 +25,18 @@ app.use(bodyParser.json());
 
 // สร้าง server + Socket.IO
 const server = http.createServer(app);
+ 
+
 const io = new Server(server, {
+  path: '/chat-liff-app', // ต้องตรงกับ React
   cors: {
-    origin: "*", // หรือ URL frontend เช่น 'http://localhost:5173'
-    methods: ["GET", "POST"],
+    origin: '*', // หรือ '*' หากทดสอบ
+    methods: ['GET', 'POST'],
     credentials: true,
   },
 });
 
+ 
 // export io เพื่อให้ controller อื่นเรียกใช้ได้
 module.exports.io = io;
 
