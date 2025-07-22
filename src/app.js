@@ -36,7 +36,7 @@ const io = new Server(server, {
       'http://localhost:8080',
       'https://erp.nisolution.co.th',
     ];
-    if (allowedOrigins.includes(origin)) {
+   if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
