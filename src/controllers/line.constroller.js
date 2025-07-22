@@ -327,12 +327,12 @@ exports.sendFlexMsgWaiting = async (req, res) => {
 
 exports.sendCaseClosedMessage = async (req, res) => {
   try {
-    const { userId, issue, staffName, closedDate, ratingUrl, oaId } = req.body;
+    const { userId, issue, staffName, closedDate, ratingUrl, oaId ,taskNo } = req.body;
 
     console.log("oaId", oaId);
     const flexmessage = {
       type: "flex",
-      altText:   `🎉 แก้ไขปัญหาเรียบร้อยแล้ว \n#${taskNo ?? ''}`, 
+      altText:   `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo}`, 
       contents: {
         type: "bubble",
         body: {
@@ -341,7 +341,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `🎉 แก้ไขปัญหาเรียบร้อยแล้ว \n#${taskNo ?? ''}`, 
+              text: `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo}`, 
               weight: "bold",
               size: "lg",
               color: "#1DB446",
