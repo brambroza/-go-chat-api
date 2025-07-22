@@ -244,14 +244,14 @@ exports.sendFlexMsgWaiting = async (req, res) => {
                   contents: [
                     {
                       type: "text",
-                      text: `ดำเนินการโดย : ${actionby ?? ""}`,
+                      text: `ดำเนินการโดย :`,
                       color: "#aaaaaa",
                       size: "sm",
                       flex: 2,
                     },
                     {
                       type: "text",
-                      text: "กำลังดำเนินการ",
+                      text: `${actionby ?? ""}`,
                       wrap: true,
                       color: "#666666",
                       size: "sm",
