@@ -28,7 +28,7 @@ const server = http.createServer(app);
  
 
 const io = new Server(server, {
-  path: '/chat-liff-app', // ต้องตรงกับ React
+  path: '/socketionode', // ต้องตรงกับ React
   cors: {
    
   origin:  ['http://localhost:8080', 'https://api.nisolution.co.th'],
