@@ -31,17 +31,7 @@ const io = new Server(server, {
   path: '/chat-liff-app', // ต้องตรงกับ React
   cors: {
    
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      'http://localhost:8080',
-      'https://erp.nisolution.co.th',
-    ];
-   if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin:  ['http://localhost:8080', 'https://api.nisolution.co.th'],
     methods: ['GET', 'POST'],
     credentials: true,
   },
