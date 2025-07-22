@@ -1,7 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const axios = require("axios");
-
+const { io } = require("../app");
 const { connectDB, sql } = require("../config/database");
 
 // create upload dir
@@ -113,6 +113,16 @@ exports.createHelpdeskCase = async (req, res) => {
         },
       }
     );
+
+    io.emit("helpdesk:new", {
+      userId,
+      displayName,
+      description,
+      oaId,
+      cmpId,
+      taskNo: TaskNo,
+      imagePath,
+    });
 
     return res.status(200).json({ success: true });
   } catch (err) {
@@ -327,12 +337,13 @@ exports.sendFlexMsgWaiting = async (req, res) => {
 
 exports.sendCaseClosedMessage = async (req, res) => {
   try {
-    const { userId, issue, staffName, closedDate, ratingUrl, oaId ,taskNo } = req.body;
+    const { userId, issue, staffName, closedDate, ratingUrl, oaId, taskNo } =
+      req.body;
 
     console.log("oaId", oaId);
     const flexmessage = {
       type: "flex",
-      altText:   `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo}`, 
+      altText: `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo}`,
       contents: {
         type: "bubble",
         body: {
@@ -341,7 +352,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo}`, 
+              text: `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo}`,
               weight: "bold",
               size: "lg",
               color: "#1DB446",

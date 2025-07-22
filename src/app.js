@@ -36,6 +36,9 @@ const io = new Server(server, {
 // export io เพื่อให้ controller อื่นเรียกใช้ได้
 module.exports.io = io;
 
+ 
+
+
 const routes = require("./routes");
 
 // ผูก routes
