@@ -363,7 +363,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
         messages: [],
         participants: [],
       };
-
+      
       const userMessages = dtc.recordset.filter((d) => d.userId === rd.id);
       for (const d of userMessages) {
         rd.messages.push({
@@ -379,17 +379,16 @@ exports.getLineChatConvertsatition = async (req, res) => {
 
       const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
       for (const rx of userRows) {
-       
-
-         const profile = await lineService.getLineProfile(
-         rx.UserId, rd.lineToken
+        const profile = await lineService.getLineProfile(
+          rx.UserId,
+          rd.lineToken
         );
 
         rd.participants.push({
-          UserId: rx.UserId,
-          DisplayName: profile.displayName,
-          PictureUrl: profile.pictureUrl,
-          Language: profile.language,
+          userId: rx.UserId,
+          displayName: profile.displayName,
+          pictureUrl: profile.pictureUrl,
+          language: profile.language,
           status: "online",
           lastActivity: new Date(),
         });
