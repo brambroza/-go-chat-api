@@ -17,15 +17,13 @@ exports.createHelpdeskCase = async (req, res) => {
       ? `/uploads/helpdesk/${userId}/${req.file.filename}`
       : null;
 
-    
-
-    if (!userId || !description || !oaId ) {
+    if (!userId || !description || !oaId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const pool = await connectDB();
 
-    let request = pool.request(); 
+    let request = pool.request();
     request.input("LineOAId", sql.VarChar(150), oaId);
     request.input("UserId", sql.VarChar(150), userId);
     request.input("Descriptions", sql.NVarChar(sql.MAX), description);
@@ -207,7 +205,7 @@ exports.rateProblem = async (req, res) => {
 
 exports.sendFlexMsgWaiting = async (req, res) => {
   try {
-    const { userId, oaId } = req.body;
+    const { userId, oaId, taskNo, actionby } = req.body;
 
     console.log("userId", userId);
     console.log("oaId", oaId);
@@ -220,7 +218,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
     // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
     const flexMsg = {
       type: "flex",
-      altText: "ทีมงานกำลังดำการแก้ไขปัญหา",
+      altText: `ทีมงานกำลังดำการแก้ไขปัญหา #${taskNo ?? ""}`,
       contents: {
         type: "bubble",
         body: {
@@ -229,7 +227,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: "ทีมงานกำลังดำการแก้ไขปัญหา",
+              text: `ทีมงานกำลังดำการแก้ไขปัญหา #${taskNo ?? ""}`,
               weight: "bold",
               size: "md",
             },
@@ -239,6 +237,28 @@ exports.sendFlexMsgWaiting = async (req, res) => {
               margin: "lg",
               spacing: "sm",
               contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `ดำเนินการโดย : ${actionby ?? ""}`,
+                      color: "#aaaaaa",
+                      size: "sm",
+                      flex: 2,
+                    },
+                    {
+                      type: "text",
+                      text: "กำลังดำเนินการ",
+                      wrap: true,
+                      color: "#666666",
+                      size: "sm",
+                      flex: 5,
+                    },
+                  ],
+                },
                 {
                   type: "box",
                   layout: "baseline",
@@ -312,7 +332,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
     console.log("oaId", oaId);
     const flexmessage = {
       type: "flex",
-      altText: "🎉 แก้ไขปัญหาเรียบร้อยแล้ว",
+      altText:   `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo ?? ''}`, 
       contents: {
         type: "bubble",
         body: {
@@ -321,7 +341,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: "🎉  แก้ไขปัญหาเรียบร้อย",
+              text: `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo ?? ''}`, 
               weight: "bold",
               size: "lg",
               color: "#1DB446",
