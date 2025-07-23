@@ -79,21 +79,7 @@ const PORT = process.env.PORT || 3000;
       console.log("A user connected:", socket.id);
 
       ticketTaskReplyHub(socket);
-
-    /*   setInterval(() => {
-        io.emit("server_broadcast", {
-          attachments: "-",
-          id: "557135566819819521",
-          quotaToken:
-            "nfo0fqAW1bQVVo5ezb9oUnfl8mpfrWrnICNV6RefQrTZDVL-ZLRDuoI0wH8zlDXf6jwMjyfiEM_EjUWnfUucZVVByc0fHb2oV0SY29aOQv17dd0kdNlkaX968BBJh2kvuVWeAwWJn8E_OFChemidpA",
-          replyToken: "55d4f704011c47b39f5e191e017e6486",
-          text: "hello test",
-          timestamp: "2025-04-17T17:13:00.116Z",
-          type: "LINE",
-          userId: "Ud6d93b323d8ac8e4856c0084134d5a8a",
-        });
-      }, 10000); */
-
+ 
       socket.on("client_message", (data) => {
         console.log("client_message from Flutter:", data);
         io.emit("server_broadcast", {

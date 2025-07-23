@@ -8,9 +8,12 @@ exports.handleLineWebhook = async (req, res) => {
   try {
     const accountId = req.params.accountId;
 
-    console.log("Received from IP:", req);
-    console.log("webhook result:", req.body);
-    console.log("webhook result:", req.body.events);
+    console.log("account" , accountId);
+    console.log('req.body' , req.body.events);
+    if (!accountId || !req.body?.events) {
+      return res.status(200).json({ message: "OK (no content to process)" });
+    }
+
     // อ่าน event จาก req.body.events (Line messaging API)
     const events = req.body.events;
 
@@ -28,8 +31,8 @@ exports.handleLineWebhook = async (req, res) => {
       return res.status(404).json({ message: "Account not found" });
     }
 
-    const { channelToken } = result.recordset[0];
-
+    /*     const { channelToken } = result.recordset[0];
+     */
     // ตรวจสอบ signature ตามแนวทางของ Line API (ถ้าต้องการ)
     // lineService.verifySignature(req.headers['x-line-signature'], body, channelSecret) ...
 
@@ -118,13 +121,6 @@ exports.handleLineWebhook = async (req, res) => {
           timestamp: new Date().toISOString(),
           attachments: stickerResourceType,
         });
-
-        /*  await publishToQueue("lineQueue", { accountId, event }); */
-
-        /* await lineService.replyMessage(channelToken, event.replyToken, {
-          type: "text",
-          text: "Hello from webhook!",
-        }); */
       }
     }
 
@@ -138,8 +134,8 @@ exports.handleLineWebhook = async (req, res) => {
 exports.sendMessage = async (req, res) => {
   try {
     const {
-      UserId,
-      Message,
+      userId,
+      message,
       type,
       sendbyId,
       id,
@@ -147,10 +143,10 @@ exports.sendMessage = async (req, res) => {
       channelToken,
       stickerId,
       stickerResourceType,
+      
     } = req.body;
 
-    const fromUserId = req.user.userId; // ได้จาก JWT
-
+ 
     // อาจจะบันทึกลง DB ก่อน
     const pool = await connectDB();
 
@@ -165,7 +161,7 @@ exports.sendMessage = async (req, res) => {
       id +
       "'" +
       ",@userId='" +
-      UserId +
+      userId +
       "'" +
       ",@type='" +
       type +
@@ -173,7 +169,7 @@ exports.sendMessage = async (req, res) => {
       ",@replyToken=''" +
       ",@quotaToken=''" +
       ",@text='" +
-      Message +
+      message +
       "'" +
       ",@stickerId=''" +
       ",@stickerResourceType=''" +
@@ -196,13 +192,13 @@ exports.sendMessage = async (req, res) => {
     const utc7Date = new Date(utcTime + offset);
 
     const eventdata = {
-      cmpId: "230015",
-      userId: UserId,
+      cmpId: cmpid ,
+      userId: userId,
       id: id,
       type: type,
       replyToken: "",
       quotaToken: "",
-      text: Message,
+      text: message,
       timeStamp: utc7Date,
       stickerId: stickerId ?? "-",
       stickerResourceType: stickerResourceType ?? "-",
@@ -214,17 +210,17 @@ exports.sendMessage = async (req, res) => {
     io.emit("server_broadcast", {
       from: "LINE",
       event: eventdata,
-      userId: UserId,
+      userId: userId,
       timestamp: new Date().toISOString(),
     });
 
     // สามารถ publish ไปยัง RabbitMQ ได้ ถ้าต้องการกระจายข้อมูล real-time
     /*  await publishToQueue("internalChatQueue", { fromUserId, to, message }); */
 
-    const to = UserId;
+    const to = userId;
     const messageObject = {
       type: "text",
-      text: Message,
+      text: message,
     };
 
     await lineService.pushMessage(channelToken, to, messageObject);
