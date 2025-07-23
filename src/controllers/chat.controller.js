@@ -8,8 +8,8 @@ exports.handleLineWebhook = async (req, res) => {
   try {
     const accountId = req.params.accountId;
 
-    console.log("account" , accountId);
-    console.log('req.body' , req.body.events);
+    console.log("account", accountId);
+    console.log("req.body", req.body.events);
     if (!accountId || !req.body?.events) {
       return res.status(200).json({ message: "OK (no content to process)" });
     }
@@ -143,10 +143,8 @@ exports.sendMessage = async (req, res) => {
       channelToken,
       stickerId,
       stickerResourceType,
-      
     } = req.body;
 
- 
     // อาจจะบันทึกลง DB ก่อน
     const pool = await connectDB();
 
@@ -192,7 +190,7 @@ exports.sendMessage = async (req, res) => {
     const utc7Date = new Date(utcTime + offset);
 
     const eventdata = {
-      cmpId: cmpid ,
+      cmpId: cmpid,
       userId: userId,
       id: id,
       type: type,
@@ -386,6 +384,8 @@ exports.getLineChatConvertsatition = async (req, res) => {
           pictureUrl: profile.pictureUrl,
           language: profile.language,
           status: "online",
+          lineOAName: rx.lineOAName,
+          lineOAId: rx.lineOAName,
           lastActivity: new Date(),
         });
       }
@@ -482,6 +482,8 @@ exports.getChatConvertsationUserId = async (req, res) => {
         pictureUrl: prof.pictureUrl,
         language: prof.language,
         status: "online",
+        lineOAName: rx.lineOAName,
+        lineOAId: rx.lineOAName,
         lastActivity: new Date(),
       });
     }
