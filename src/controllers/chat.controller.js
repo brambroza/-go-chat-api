@@ -363,7 +363,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
         messages: [],
         participants: [],
       };
-      
+
       const userMessages = dtc.recordset.filter((d) => d.userId === rd.id);
       for (const d of userMessages) {
         rd.messages.push({
@@ -401,5 +401,98 @@ exports.getLineChatConvertsatition = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal Server Error.." });
+  }
+};
+
+exports.getChatConvertsationUserId = async (req, res) => {
+  const { cmpid, userId } = req.query;
+
+  try {
+    const pool = await connectDB();
+
+    const dt = await pool
+      .request()
+      .input("CmpId", cmpid)
+      .input("userId", userId)
+      .query("EXEC dbo.getLineFriendUserId @CmpId=@CmpId, @userid=@userId");
+
+    const dtc = await pool
+      .request()
+      .input("CmpId", cmpid)
+      .input("userId", userId)
+      .query(
+        "EXEC dbo.getLineChatConvertsatitionUserId @CmpId=@CmpId, @userid=@userId"
+      );
+
+    const rd = {
+      cmpid,
+      id: userId,
+      type: "text",
+      unreadCount: 0,
+      messages: [],
+      participants: [],
+    };
+
+    let accessToken = "";
+
+    // 🔁 แปลงข้อความ
+    const messages = dtc.recordset.filter((d) => d.userId === userId);
+    for (const d of messages) {
+      accessToken = d.AccessToken;
+      const msg = {
+        id: d.Id,
+        userId: d.chatId,
+        lineToken: d.AccessToken,
+        replyToken: d.replyToken,
+        quotaToken: d.quotaToken,
+        text: d.text,
+        type: d.type,
+        timestamp: new Date(d.TimeStamp),
+        attachments: [],
+      };
+
+      if (msg.type === "image") {
+        const url = await lineService.downloadImage(msg.id, msg.lineToken);
+        msg.attachments.push({
+          id: msg.id,
+          url,
+          createdAt: msg.timestamp,
+          type: "image",
+        });
+      }
+
+      if (msg.type === "sticker") {
+        msg.attachments.push({
+          id: msg.id,
+          url: "",
+          createdAt: msg.timestamp,
+          type: "sticker",
+          stickerId: d.stickerId,
+          stickerType: d.stickerResourceType,
+        });
+      }
+
+      rd.messages.push(msg);
+    }
+
+    // 👤 participants
+    const userRows = dt.recordset.filter((rx) => rx.UserId === userId);
+    for (const rx of userRows) {
+      const prof = await lineService.getLineProfile(rx.UserId, accessToken);
+
+      rd.participants.push({
+        userId: rx.UserId,
+        displayName: prof.displayName,
+        pictureUrl: prof.pictureUrl,
+        language: prof.language,
+        status: "online",
+        lastActivity: new Date(),
+      });
+    }
+
+    res.json(rd);
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).send("Internal Server Error");
   }
 };
