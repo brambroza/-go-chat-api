@@ -394,7 +394,8 @@ exports.getLineChatConvertsatition = async (req, res) => {
           branch: rx.branch,
           province: rx.province,
           phone: rx.phone,
-           customerName : rx.customerName, 
+          customerName: rx.customerName,
+          position: rx.position,
         });
       }
 
@@ -500,7 +501,8 @@ exports.getChatConvertsationUserId = async (req, res) => {
         branch: rx.branch,
         province: rx.province,
         phone: rx.phone,
-        customerName : rx.customerName, 
+        customerName: rx.customerName,
+        position: rx.position,
       });
     }
 
