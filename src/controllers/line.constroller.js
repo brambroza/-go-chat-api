@@ -158,6 +158,7 @@ exports.saveContact = async (req, res) => {
       oaId,
       cmpId,
       customerCode,
+      lineid, 
     } = req.body;
 
     // Validation
@@ -193,7 +194,7 @@ exports.saveContact = async (req, res) => {
     // MSSQL Stored Procedure
     const result = await request.execute("dbo.setContactFormLiff");
 
-    const lineAddFriendUrl = "https://line.me/R/ti/p/@689iqciq";
+    const lineAddFriendUrl = `https://line.me/R/ti/p/${lineid}`;
   
 
  
