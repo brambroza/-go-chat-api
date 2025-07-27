@@ -205,14 +205,12 @@ exports.sendMessage = async (req, res) => {
 
     console.log("event send : ", eventdata);
 
-  /*   io.emit("server_broadcast", {
+    io.emit("server_broadcast", {
       from: "LINE",
       event: eventdata,
       userId: userId,
       timestamp: new Date().toISOString(),
     });
- */
-    io.emit("server_broadcast", eventdata);
 
     // สามารถ publish ไปยัง RabbitMQ ได้ ถ้าต้องการกระจายข้อมูล real-time
     /*  await publishToQueue("internalChatQueue", { fromUserId, to, message }); */
