@@ -333,6 +333,8 @@ exports.getLineChatConvertsatition = async (req, res) => {
   try {
     const { cmpid } = req.query;
 
+ 
+
     const pool = await connectDB();
 
     const dt = await pool
@@ -344,6 +346,9 @@ exports.getLineChatConvertsatition = async (req, res) => {
       .request()
       .input("CmpId", cmpid)
       .query("EXEC dbo.getLineChatConvertsatition @CmpId=@CmpId");
+
+      
+
 
     const conversations = [];
 
@@ -357,7 +362,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
         messages: [],
         participants: [],
       };
-
+ 
       const userMessages = dtc.recordset.filter((d) => d.userId === rd.id);
       for (const d of userMessages) {
         rd.messages.push({
@@ -369,7 +374,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
           type: d.type,
           timestamp: new Date(d.TimeStamp),
         });
-      }
+      }  
 
       const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
       for (const rx of userRows) {
@@ -395,7 +400,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
 
     res.json(conversations);
   } catch (error) {
-    console.error(error);
+    console.error("error getconvertition:::" , error);
     return res.status(500).json({ error: "Internal Server Error.." });
   }
 };
