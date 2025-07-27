@@ -54,6 +54,7 @@ exports.getLineProfile = async (userId, accessToken) => {
     );
     return response.data; // { displayName, pictureUrl, language, ... }
   } catch (error) {
+    console.log("userId" , userId);
     console.error("Error fetching LINE profile:",  `https://api.line.me/v2/bot/profile/${userId}`);
     // Decide how you want to handle errors from the LINE API
     throw error;

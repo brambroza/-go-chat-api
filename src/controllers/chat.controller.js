@@ -485,9 +485,9 @@ exports.getChatConvertsationUserId = async (req, res) => {
 
       rd.participants.push({
         userId: rx.UserId,
-        displayName: profile.displayName,
-        pictureUrl: profile.pictureUrl,
-        language: profile.language,
+        displayName: prof.displayName,
+        pictureUrl: prof.pictureUrl,
+        language: prof.language,
         status: "online",
         lineOAName: rx.lineOAName,
         lineOAId: rx.lineOAName,
