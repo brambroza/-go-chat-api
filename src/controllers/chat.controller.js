@@ -14,6 +14,24 @@ exports.handleLineWebhook = async (req, res) => {
       return res.status(200).json({ message: "OK (no content to process)" });
     }
 
+    for (const e of events) {
+      if (e.type === "follow") {
+        const userIdB = e.source.userId;
+
+        const channelToken =
+          "zHOdhlkJkcfWa4Hzm4nFQORzqCogEKj9PDUttOurALA2KjMdl0l9cwhRVRdXhYSFlIVOmrP1vP7DCA3aIt5u4B6CtsrNSW3Gj1Ud8BX5BWKiq1MbJS9GpadBBFBjImJOslCyMGHihEcgq0deVVXmHQdB04t89/1O/w1cDnyilFU=";
+
+        const messageObject = {
+          type: "text",
+          text: `ขอบคุณที่เพิ่มเพื่อน 🎉`,
+        };
+
+        await lineService.pushMessage(channelToken, userIdB, messageObject);
+
+       
+      }
+    }
+
     // อ่าน event จาก req.body.events (Line messaging API)
     const events = req.body.events;
 
@@ -333,8 +351,6 @@ exports.getLineChatConvertsatition = async (req, res) => {
   try {
     const { cmpid } = req.query;
 
- 
-
     const pool = await connectDB();
 
     const dt = await pool
@@ -346,9 +362,6 @@ exports.getLineChatConvertsatition = async (req, res) => {
       .request()
       .input("CmpId", cmpid)
       .query("EXEC dbo.getLineChatConvertsatition @CmpId=@CmpId");
-
-      
-
 
     const conversations = [];
 
@@ -362,7 +375,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
         messages: [],
         participants: [],
       };
- 
+
       const userMessages = dtc.recordset.filter((d) => d.userId === rd.id);
       for (const d of userMessages) {
         rd.messages.push({
@@ -374,7 +387,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
           type: d.type,
           timestamp: new Date(d.TimeStamp),
         });
-      }  
+      }
 
       const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
       for (const rx of userRows) {
@@ -400,7 +413,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
 
     res.json(conversations);
   } catch (error) {
-    console.error("error getconvertition:::" , error);
+    console.error("error getconvertition:::", error);
     return res.status(500).json({ error: "Internal Server Error.." });
   }
 };

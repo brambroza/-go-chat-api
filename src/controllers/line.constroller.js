@@ -195,17 +195,11 @@ exports.saveContact = async (req, res) => {
     const result = await request.execute("dbo.setContactFormLiff");
 
     const lineAddFriendUrl = "https://line.me/R/ti/p/@689iqciq";
-    res.redirect(lineAddFriendUrl);
+  
 
-    const messageObject = {
-      type: "text",
-      text: `ขอบคุณที่เพิ่มเพื่อน 🎉🎉 `,
-    };
-    const channelToken =
-      "zHOdhlkJkcfWa4Hzm4nFQORzqCogEKj9PDUttOurALA2KjMdl0l9cwhRVRdXhYSFlIVOmrP1vP7DCA3aIt5u4B6CtsrNSW3Gj1Ud8BX5BWKiq1MbJS9GpadBBFBjImJOslCyMGHihEcgq0deVVXmHQdB04t89/1O/w1cDnyilFU=";
-    await lineService.pushMessage(channelToken, userId, messageObject);
-
-    return res.status(200).json({ success: true, result: result.recordset });
+ 
+ 
+    return res.status(200).json({ success: true, result: result.recordset , addFriendUrl: lineAddFriendUrl  });
   } catch (err) {
     console.error("saveContact error:", err);
     return res.status(500).json({ error: "Internal Server Error" });
