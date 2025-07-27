@@ -485,13 +485,20 @@ exports.getChatConvertsationUserId = async (req, res) => {
 
       rd.participants.push({
         userId: rx.UserId,
-        displayName: prof.displayName,
-        pictureUrl: prof.pictureUrl,
-        language: prof.language,
+        displayName: profile.displayName,
+        pictureUrl: profile.pictureUrl,
+        language: profile.language,
         status: "online",
         lineOAName: rx.lineOAName,
         lineOAId: rx.lineOAName,
         lastActivity: new Date(),
+        cmpId: rx.cmpId,
+        type: rx.type,
+        name: rx.name,
+        channelToken: rx.channelToken,
+        branch: rx.branch,
+        province: rx.province,
+        phone: rx.phone,
       });
     }
 
