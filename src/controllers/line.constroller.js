@@ -4,8 +4,7 @@ const axios = require("axios");
 const { io } = require("../app");
 const { connectDB, sql } = require("../config/database");
 
-
-const lineService = require("../services/line.service");
+ 
 
 // create upload dir
 const uploadDir = path.join(__dirname, "../../uploads/helpdesk");

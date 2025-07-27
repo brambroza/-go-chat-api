@@ -14,24 +14,6 @@ exports.handleLineWebhook = async (req, res) => {
       return res.status(200).json({ message: "OK (no content to process)" });
     }
 
-    for (const e of events) {
-      if (e.type === "follow") {
-        const userIdB = e.source.userId;
-
-        const channelToken =
-          "zHOdhlkJkcfWa4Hzm4nFQORzqCogEKj9PDUttOurALA2KjMdl0l9cwhRVRdXhYSFlIVOmrP1vP7DCA3aIt5u4B6CtsrNSW3Gj1Ud8BX5BWKiq1MbJS9GpadBBFBjImJOslCyMGHihEcgq0deVVXmHQdB04t89/1O/w1cDnyilFU=";
-
-        const messageObject = {
-          type: "text",
-          text: `ขอบคุณที่เพิ่มเพื่อน 🎉`,
-        };
-
-        await lineService.pushMessage(channelToken, userIdB, messageObject);
-
-       
-      }
-    }
-
     // อ่าน event จาก req.body.events (Line messaging API)
     const events = req.body.events;
 
