@@ -481,7 +481,7 @@ exports.getChatConvertsationUserId = async (req, res) => {
     // 👤 participants
     const userRows = dt.recordset.filter((rx) => rx.UserId === userId);
     for (const rx of userRows) {
-      const prof = await lineService.getLineProfile(rx.UserId, accessToken);
+      const prof = await lineService.getLineProfile(rx.UserId, rx.channelToken);
 
       rd.participants.push({
         userId: rx.UserId,
