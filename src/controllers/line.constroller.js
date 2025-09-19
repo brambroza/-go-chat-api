@@ -12,16 +12,6 @@ fs.mkdirSync(uploadDir, { recursive: true });
 
 exports.uploadDir = uploadDir;
 
-/* exports.addfriends = async (req, res) => {
-  const { name , company , branch ,oaId , cmpId , province , customerCode , liffId , lineid } = req.query;
-  await db.query("UPDATE qr_mapping SET status='scanned' WHERE token=?", [
-    token,
-  ]);
-
-  const lineAddFriendUrl = "https://line.me/R/ti/p/@YourChannelB_ID";
-  res.redirect(lineAddFriendUrl);
-}; */
-
 exports.createHelpdeskCase = async (req, res) => {
   try {
     const { userId, displayName, description, oaId, cmpId } = req.body;
@@ -30,7 +20,8 @@ exports.createHelpdeskCase = async (req, res) => {
     if (!userId || !description || !oaId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-
+    console.log("📂 Final imagePath:", imagePath);
+    
     const pool = await connectDB();
 
     let request = pool.request();
