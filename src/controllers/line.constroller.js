@@ -4,8 +4,6 @@ const axios = require("axios");
 const { io } = require("../app");
 const { connectDB, sql } = require("../config/database");
 
- 
-
 // create upload dir
 const uploadDir = path.join(__dirname, "../../uploads/helpdesk");
 fs.mkdirSync(uploadDir, { recursive: true });
@@ -25,9 +23,7 @@ exports.uploadDir = uploadDir;
 exports.createHelpdeskCase = async (req, res) => {
   try {
     const { userId, displayName, description, oaId, cmpId } = req.body;
-    const imagePath = req.file
-      ? `/uploads/helpdesk/${userId}/${req.file.filename}`
-      : null;
+    const imagePath = req.file ? `${req.file.filename}` : null;
 
     if (!userId || !description || !oaId) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -44,6 +40,20 @@ exports.createHelpdeskCase = async (req, res) => {
     const result = await request.execute("dbo.setServiceFormLiFF");
     const { TaskNo } = result.recordset[0];
     console.log("✅ MSSQL stored procedure executed successfully");
+
+    let finalPath = null;
+    const volumeBase = "/uploads/helpdesk";
+    const uploadDirnew = path.join(volumeBase, `${cmpId}/serviceproblem/${TaskNo}`);
+    if (req.file) {
+      // ตำแหน่งเดิม (temp)
+      const oldPath = req.file.path;
+
+      // ตำแหน่งใหม่
+      finalPath = path.join(uploadDirnew, req.file.filename);
+
+      // move file (rename = ย้าย)
+      await rename(oldPath, finalPath);
+    }
 
     // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
     const flexMsg = {
@@ -158,7 +168,7 @@ exports.saveContact = async (req, res) => {
       oaId,
       cmpId,
       customerCode,
-      lineid, 
+      lineid,
     } = req.body;
 
     // Validation
@@ -195,11 +205,14 @@ exports.saveContact = async (req, res) => {
     const result = await request.execute("dbo.setContactFormLiff");
 
     const lineAddFriendUrl = `https://line.me/R/ti/p/${lineid}`;
-  
 
- 
- 
-    return res.status(200).json({ success: true, result: result.recordset , addFriendUrl: lineAddFriendUrl  });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        result: result.recordset,
+        addFriendUrl: lineAddFriendUrl,
+      });
   } catch (err) {
     console.error("saveContact error:", err);
     return res.status(500).json({ error: "Internal Server Error" });

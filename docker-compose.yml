@@ -1,0 +1,19 @@
+version: '3.9'
+
+services: # Changed from 'service' to 'services'
+  api: 
+    image: api
+    build: 
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_EVN: production
+  nginx:
+    container_name: nginx # Note: Also fixed 'containter_name' spelling
+    image: nginx:latest
+    volumes:
+      - ./conf.d:/etc/nginx/conf.d # Note: Also fixed the path delimiter from ':' to '/' for the destination part
+    depends_on:
+      - api
+    ports:
+      - 3000:3000
