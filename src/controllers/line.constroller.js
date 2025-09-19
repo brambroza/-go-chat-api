@@ -37,15 +37,21 @@ exports.createHelpdeskCase = async (req, res) => {
     request.input("Descriptions", sql.NVarChar(sql.MAX), description);
     request.input("ImagePath", sql.VarChar(150), imagePath);
 
-    const result = await request.execute("dbo.setServiceFormLiFF");
-    const { TaskNo } = result.recordset[0];
-    console.log("✅ MSSQL stored procedure executed successfully");
+    let TaskNoNew = null;
+    try {
+      const result = await request.execute("dbo.setServiceFormLiFF");
+      const { TaskNo } = result.recordset[0];
+      TaskNoNew = TaskNo;
+      console.log("✅ MSSQL stored procedure executed successfully");
+    } catch (e) {
+      console.error("❌ MSSQL Error moving file:", e);
+    }
 
     let finalPath = null;
     const volumeBase = "/usr/src/app/uploads";
     const uploadDirnew = path.join(
       volumeBase,
-      `${cmpId}/serviceproblem/${TaskNo}`
+      `${cmpId}/serviceproblem/${TaskNoNew}`
     );
     console.log("📂 req.file:", req.file.path);
     if (req.file) {
@@ -82,7 +88,7 @@ exports.createHelpdeskCase = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `  📨 รับเคสเรียบร้อยแล้ว # ${TaskNo ?? ""}`,
+              text: `  📨 รับเคสเรียบร้อยแล้ว # ${TaskNoNew ?? ""}`,
               weight: "bold",
               size: "md",
             },
@@ -157,7 +163,7 @@ exports.createHelpdeskCase = async (req, res) => {
       description,
       oaId,
       cmpId,
-      taskNo: TaskNo,
+      taskNo: TaskNoNew,
       imagePath,
     });
 
