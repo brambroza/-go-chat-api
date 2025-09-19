@@ -5,7 +5,9 @@ const { io } = require("../app");
 const { connectDB, sql } = require("../config/database");
 
 // create upload dir
-const uploadDir = path.join(__dirname, "../../uploads/helpdesk");
+//const uploadDir = path.join(__dirname, "../../uploads/helpdesk");
+const uploadBase = "/usr/src/app/uploads"; // <- path ตรงกับ docker -v
+const uploadDir = path.join(uploadBase, "helpdesk");
 fs.mkdirSync(uploadDir, { recursive: true });
 
 exports.uploadDir = uploadDir;
