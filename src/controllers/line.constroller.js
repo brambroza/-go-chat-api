@@ -42,17 +42,32 @@ exports.createHelpdeskCase = async (req, res) => {
     console.log("✅ MSSQL stored procedure executed successfully");
 
     let finalPath = null;
-    const volumeBase = "/uploads/helpdesk";
-    const uploadDirnew = path.join(volumeBase, `${cmpId}/serviceproblem/${TaskNo}`);
+    const volumeBase = "/usr/src/app/uploads";
+    const uploadDirnew = path.join(
+      volumeBase,
+      `${cmpId}/serviceproblem/${TaskNo}`
+    );
+
     if (req.file) {
       // ตำแหน่งเดิม (temp)
       const oldPath = req.file.path;
+
+      console.log("📂 Old path:", oldPath);
+      console.log("📂 New dir :", uploadDirnew);
+      console.log("📂 Final path:", finalPath);
 
       // ตำแหน่งใหม่
       finalPath = path.join(uploadDirnew, req.file.filename);
 
       // move file (rename = ย้าย)
-      await rename(oldPath, finalPath);
+      
+      try {
+        await fs.mkdir(uploadDirnew, { recursive: true });
+        await rename(oldPath, finalPath);
+        console.log("✅ File moved successfully");
+      } catch (e) {
+        console.error("❌ Error moving file:", e);
+      }
     }
 
     // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
@@ -206,13 +221,11 @@ exports.saveContact = async (req, res) => {
 
     const lineAddFriendUrl = `https://line.me/R/ti/p/${lineid}`;
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        result: result.recordset,
-        addFriendUrl: lineAddFriendUrl,
-      });
+    return res.status(200).json({
+      success: true,
+      result: result.recordset,
+      addFriendUrl: lineAddFriendUrl,
+    });
   } catch (err) {
     console.error("saveContact error:", err);
     return res.status(500).json({ error: "Internal Server Error" });
