@@ -13,7 +13,12 @@ const {
 
 // configure multer storage
 const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, uploadDir),
+ /*  destination: (_, __, cb) => cb(null, uploadDir), */
+  destination: (_, __, cb) => {
+    console.log("📂 Saving to:", uploadDir); // log ตำแหน่งที่จะเขียน
+    cb(null, uploadDir);
+  },
+
   // filename: (_, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
   filename: (_, file, cb) => {
     console.log("📸 Uploading file:", file.originalname);
