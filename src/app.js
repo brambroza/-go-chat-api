@@ -49,10 +49,10 @@ const  os = require("os");
 
 // test loadbanlance get name service 
 
-app.use("/" , async(req ,res) => {
+/* app.use("/" , async(req ,res) => {
     res.json({message: "Responsefrom: " , hostname : `${os.hostname}`})
 })
-
+ */
 
 // ผูก routes
 app.use("/api", routes);
