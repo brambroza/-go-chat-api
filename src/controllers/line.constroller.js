@@ -47,20 +47,20 @@ exports.createHelpdeskCase = async (req, res) => {
       volumeBase,
       `${cmpId}/serviceproblem/${TaskNo}`
     );
-
+    console.log("📂 req.file:", req.file.path);
     if (req.file) {
       // ตำแหน่งเดิม (temp)
       const oldPath = req.file.path;
+
+      // ตำแหน่งใหม่
+      finalPath = path.join(uploadDirnew, req.file.filename);
 
       console.log("📂 Old path:", oldPath);
       console.log("📂 New dir :", uploadDirnew);
       console.log("📂 Final path:", finalPath);
 
-      // ตำแหน่งใหม่
-      finalPath = path.join(uploadDirnew, req.file.filename);
-
       // move file (rename = ย้าย)
-      
+
       try {
         await fs.mkdir(uploadDirnew, { recursive: true });
         await rename(oldPath, finalPath);
