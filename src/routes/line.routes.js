@@ -7,22 +7,26 @@ const {
   createHelpdeskCase,
   saveContact,
   rateProblem,
-  sendFlexMsgWaiting, 
+  sendFlexMsgWaiting,
   sendCaseClosedMessage,
 } = require("../controllers/line.constroller");
 
 // configure multer storage
 const storage = multer.diskStorage({
   destination: (_, __, cb) => cb(null, uploadDir),
-  filename: (_, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  // filename: (_, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  filename: (_, file, cb) => {
+    console.log("📸 Uploading file:", file.originalname);
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
 });
 const upload = multer({ storage });
 
 router.post("/helpdesk", upload.single("image"), createHelpdeskCase);
 router.post("/contact", saveContact);
-router.post("/problem/rate" ,rateProblem);
-router.post("/problem/sendmsgwaiting" ,sendFlexMsgWaiting);
-router.post("/problem/sendfinish" ,sendCaseClosedMessage);
+router.post("/problem/rate", rateProblem);
+router.post("/problem/sendmsgwaiting", sendFlexMsgWaiting);
+router.post("/problem/sendfinish", sendCaseClosedMessage);
 
 // webhook สำหรับ Line Messaging API
 router.post("/webhook/:accountId", handleLineWebhook);

@@ -15,13 +15,18 @@ exports.uploadDir = uploadDir;
 exports.createHelpdeskCase = async (req, res) => {
   try {
     const { userId, displayName, description, oaId, cmpId } = req.body;
+    if (!req.file) {
+      console.log("⚠️ No file uploaded in this request");
+    } else {
+      console.log("📂 req.file info:", req.file);
+    }
     const imagePath = req.file ? `${req.file.filename}` : null;
 
     if (!userId || !description || !oaId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
     console.log("📂 Final imagePath:", imagePath);
-    
+
     const pool = await connectDB();
 
     let request = pool.request();
