@@ -14,7 +14,7 @@ exports.uploadDir = uploadDir;
 
 exports.createHelpdeskCase = async (req, res) => {
   try {
-    const { userId, displayName, description, oaId, cmpId } = req.body;
+    const { userId, displayName, description, oaId, cmpId , customerCode } = req.body;
     if (!req.file) {
       console.log("⚠️ No file uploaded in this request");
     } else {
@@ -33,7 +33,8 @@ exports.createHelpdeskCase = async (req, res) => {
     request.input("LineOAId", sql.VarChar(150), oaId);
     request.input("UserId", sql.VarChar(150), userId);
     request.input("Descriptions", sql.NVarChar(sql.MAX), description);
-    request.input("ImagePath", sql.VarChar(150), imagePath);
+    request.input("ImagePath", sql.VarChar(150), imagePath); 
+    request.input("CustomerCode", sql.VarChar(30), customerCode || "");
 
     let TaskNoNew = null;
     try {
@@ -86,7 +87,7 @@ exports.createHelpdeskCase = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `  📨 รับเคสเรียบร้อยแล้ว # ${TaskNoNew ?? ""}`,
+              text: `📨 รับเคสเรียบร้อยแล้ว \n# ${TaskNoNew ?? ""}`,
               weight: "bold",
               size: "md",
             },
@@ -101,6 +102,34 @@ exports.createHelpdeskCase = async (req, res) => {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
+                      {
+                      type: "text",
+                      text: `รายละเอียด :`,
+                      color: "#aaaaaa",
+                      size: "sm",
+                      flex: 2,
+                    },
+                     {
+                      type: "text",
+                      text: `${description}`,
+                      color: "#aaaaaa",
+                      size: "sm",
+                      flex: 5,
+                    },
+                     {
+                      type: "text",
+                      text: `แจ้งโดย :`,
+                      color: "#aaaaaa",
+                      size: "sm",
+                      flex: 2,
+                    },
+                     {
+                      type: "text",
+                      text: `${displayName}`,
+                      color: "#aaaaaa",
+                      size: "sm",
+                      flex: 5,
+                    },
                     {
                       type: "text",
                       text: "สถานะ :",
