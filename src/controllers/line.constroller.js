@@ -68,14 +68,13 @@ exports.createHelpdeskCase = async (req, res) => {
       // move file (rename = ย้าย)
 
       try {
-      /*   await fs.mkdir(uploadDirnew, { recursive: true }); */
-        fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
+        /*   await fs.mkdir(uploadDirnew, { recursive: true }); */
+        await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
           if (err) {
             console.error("❌ Error creating directory:", err);
             return;
           }
 
-         
           fs.rename(oldPath, finalPath, (err) => {
             if (err) {
               console.error("❌ Error moving file:", err);
@@ -85,7 +84,7 @@ exports.createHelpdeskCase = async (req, res) => {
           });
         });
 
-       /*  await rename(oldPath, finalPath); */
+        /*  await rename(oldPath, finalPath); */
         console.log("✅ File moved successfully");
       } catch (e) {
         console.error("❌ Error moving file:", e);
