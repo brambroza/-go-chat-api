@@ -162,7 +162,7 @@ exports.createHelpdeskCase = async (req, res) => {
                   contents: [
                     {
                       type: "text",
-                      text: `🚩 รายละเอียด : ${description}`,
+                      text: `🚩 รายละเอียด: ${description}`,
 
                       size: "sm",
                       wrap: true,
@@ -336,7 +336,7 @@ exports.rateProblem = async (req, res) => {
 
 exports.sendFlexMsgWaiting = async (req, res) => {
   try {
-    const { userId, oaId, taskNo, actionby } = req.body;
+    const { userId, oaId, taskNo, actionby, description } = req.body;
 
     console.log("userId", userId);
     console.log("oaId", oaId);
@@ -349,7 +349,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
     // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
     const flexMsg = {
       type: "flex",
-      altText: `ทีมงานกำลังดำการแก้ไขปัญหา \n#${taskNo ?? ""}`,
+      altText: `Ticket: ${taskNo ?? ""} - กำลังดำเนินการ`,
       contents: {
         type: "bubble",
         body: {
@@ -358,7 +358,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `ทีมงานกำลังดำการแก้ไขปัญหา \n#${taskNo ?? ""}`,
+              text: `📄 Ticket: \n#${taskNo ?? ""}`,
               weight: "bold",
               size: "md",
             },
@@ -368,6 +368,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
               margin: "lg",
               spacing: "sm",
               contents: [
+                
                 {
                   type: "box",
                   layout: "baseline",
@@ -375,18 +376,10 @@ exports.sendFlexMsgWaiting = async (req, res) => {
                   contents: [
                     {
                       type: "text",
-                      text: `ดำเนินการโดย :`,
+                      text: `🚩 รายละเอียด: ${description}`,
                       color: "#aaaaaa",
                       size: "sm",
-                      flex: 2,
-                    },
-                    {
-                      type: "text",
-                      text: `${actionby ?? ""}`,
                       wrap: true,
-                      color: "#666666",
-                      size: "sm",
-                      flex: 5,
                     },
                   ],
                 },
@@ -397,19 +390,28 @@ exports.sendFlexMsgWaiting = async (req, res) => {
                   contents: [
                     {
                       type: "text",
-                      text: "สถานะ :",
+                      text: "🕒 สถานะ : กำลังดำเนินการ",
                       color: "#aaaaaa",
                       size: "sm",
-                      flex: 2,
+                      wrap: true,
                     },
+      
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
                     {
                       type: "text",
-                      text: "กำลังดำเนินการ",
-                      wrap: true,
-                      color: "#666666",
+                      text: `👨🏻‍💻 ผู้ดูแลเคส: ${actionby ?? ""}`,
+                      color: "#aaaaaa",
                       size: "sm",
-                      flex: 5,
+                      wrap: true,
                     },
+                    
                   ],
                 },
               ],
