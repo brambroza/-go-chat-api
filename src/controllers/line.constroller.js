@@ -251,6 +251,9 @@ exports.saveContact = async (req, res) => {
       cmpId,
       customerCode,
       lineid,
+      surname ,
+      nickname , 
+      email
     } = req.body;
 
     // Validation
@@ -282,6 +285,9 @@ exports.saveContact = async (req, res) => {
     request.input("LineOAId", sql.VarChar(100), oaId);
     request.input("CmpId", sql.VarChar(30), cmpId || "");
     request.input("CustomerCode", sql.VarChar(30), customerCode || "");
+    request.input("Surname", sql.NVarChar(100), surname || "");
+    request.input("Nickname", sql.NVarChar(100), nickname || "");
+    request.input("Email", sql.NVarChar(100), email || "");
 
     // MSSQL Stored Procedure
     const result = await request.execute("dbo.setContactFormLiff");
