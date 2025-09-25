@@ -23,6 +23,15 @@ exports.createHelpdeskCase = async (req, res) => {
     }
     const imagePath = req.file ? `${req.file.filename}` : null;
 
+    if (req.files && req.files.length > 0) {
+      console.log("📂 req.files info:", req.files);
+
+      // รวมชื่อไฟล์ทั้งหมดเป็น string คั่นด้วย |
+      imagePath = req.files.map((f) => f.filename).join("|");
+    } else {
+      console.log("⚠️ No files uploaded in this request");
+    }
+
     if (!userId || !description || !oaId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -56,33 +65,45 @@ exports.createHelpdeskCase = async (req, res) => {
     console.log("📂 req.file:", req.file.path);
     if (req.file) {
       // ตำแหน่งเดิม (temp)
-      const oldPath = req.file.path;
+      /*    const oldPath = req.file.path; */
 
       // ตำแหน่งใหม่
-      finalPath = path.join(uploadDirnew, req.file.filename);
+      /*    finalPath = path.join(uploadDirnew, req.file.filename);
 
       console.log("📂 Old path:", oldPath);
       console.log("📂 New dir :", uploadDirnew);
-      console.log("📂 Final path:", finalPath);
+      console.log("📂 Final path:", finalPath); */
 
       // move file (rename = ย้าย)
 
       try {
         /*   await fs.mkdir(uploadDirnew, { recursive: true }); */
-        await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
-          if (err) {
-            console.error("❌ Error creating directory:", err);
-            return;
-          }
 
-          fs.rename(oldPath, finalPath, (err) => {
+        for (const file of req.files) {
+          const oldPath = file.path;
+          const finalPath = path.join(uploadDirnew, file.filename);
+
+          console.log("📂 Old path:", oldPath);
+          console.log("📂 New dir :", uploadDirnew);
+          console.log("📂 Final path:", finalPath);
+
+          await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
             if (err) {
-              console.error("❌ Error moving file:", err);
+              console.error("❌ Error creating directory:", err);
               return;
             }
-            console.log("✅ File moved successfully");
+
+            fs.rename(oldPath, finalPath, (err) => {
+              if (err) {
+                console.error("❌ Error moving file:", err);
+                return;
+              }
+              console.log("✅ File moved successfully");
+            });
           });
-        });
+
+          console.log(`✅ File moved successfully: ${file.filename}`);
+        }
 
         /*  await rename(oldPath, finalPath); */
         console.log("✅ File moved successfully");
@@ -251,9 +272,9 @@ exports.saveContact = async (req, res) => {
       cmpId,
       customerCode,
       lineid,
-      surname ,
-      nickname , 
-      email
+      surname,
+      nickname,
+      email,
     } = req.body;
 
     // Validation

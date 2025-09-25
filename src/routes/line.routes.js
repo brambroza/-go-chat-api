@@ -27,7 +27,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.post("/helpdesk", upload.single("image"), createHelpdeskCase);
+router.post("/helpdesk", upload.array("image" , 10), createHelpdeskCase);
 router.post("/contact", saveContact);
 router.post("/problem/rate", rateProblem);
 router.post("/problem/sendmsgwaiting", sendFlexMsgWaiting);
@@ -37,3 +37,4 @@ router.post("/problem/sendfinish", sendCaseClosedMessage);
 router.post("/webhook/:accountId", handleLineWebhook);
 
 module.exports = router;
+ 
