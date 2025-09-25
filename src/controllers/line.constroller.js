@@ -21,13 +21,17 @@ exports.createHelpdeskCase = async (req, res) => {
     } else {
       console.log("📂 req.file info:", req.file);
     }
-    const imagePath = req.file ? `${req.file.filename}` : null;
+    let imagePath = "";
 
     if (req.files && req.files.length > 0) {
       console.log("📂 req.files info:", req.files);
 
       // รวมชื่อไฟล์ทั้งหมดเป็น string คั่นด้วย |
-      imagePath = req.files.map((f) => f.filename).join("|");
+      try {
+        imagePath = req.files.map((f) => f.filename).join("|");
+      } catch (e) {
+        console.error("❌ Error processing uploaded files:", e);
+      }
     } else {
       console.log("⚠️ No files uploaded in this request");
     }
@@ -43,7 +47,7 @@ exports.createHelpdeskCase = async (req, res) => {
     request.input("LineOAId", sql.VarChar(150), oaId);
     request.input("UserId", sql.VarChar(150), userId);
     request.input("Descriptions", sql.NVarChar(sql.MAX), description);
-    request.input("ImagePath", sql.VarChar(150), imagePath);
+    request.input("ImagePath", sql.VarChar(500), imagePath);
     request.input("CustomerCode", sql.VarChar(30), customerCode || "");
 
     let TaskNoNew = null;
@@ -62,8 +66,8 @@ exports.createHelpdeskCase = async (req, res) => {
       volumeBase,
       `${cmpId}/serviceproblem/${TaskNoNew}`
     );
-    console.log("📂 req.file:", req.file.path);
-    if (req.file) {
+
+    if (req.files) {
       // ตำแหน่งเดิม (temp)
       /*    const oldPath = req.file.path; */
 
