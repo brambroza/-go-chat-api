@@ -368,7 +368,6 @@ exports.sendFlexMsgWaiting = async (req, res) => {
               margin: "lg",
               spacing: "sm",
               contents: [
-                
                 {
                   type: "box",
                   layout: "baseline",
@@ -395,7 +394,6 @@ exports.sendFlexMsgWaiting = async (req, res) => {
                       size: "sm",
                       wrap: true,
                     },
-      
                   ],
                 },
 
@@ -411,7 +409,6 @@ exports.sendFlexMsgWaiting = async (req, res) => {
                       size: "sm",
                       wrap: true,
                     },
-                    
                   ],
                 },
               ],
@@ -460,13 +457,22 @@ exports.sendFlexMsgWaiting = async (req, res) => {
 
 exports.sendCaseClosedMessage = async (req, res) => {
   try {
-    const { userId, issue, staffName, closedDate, ratingUrl, oaId, taskNo } =
-      req.body;
+    const {
+      userId,
+      issue,
+      staffName,
+      closedDate,
+      ratingUrl,
+      oaId,
+      taskNo,
+      actiondetail,
+      startDate ,receiveDate
+    } = req.body;
 
     console.log("oaId", oaId);
     const flexmessage = {
       type: "flex",
-      altText: `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo}`,
+      altText: `🎉 Ticket: ${taskNo} ดำเนินการเรียบร้อย`,
       contents: {
         type: "bubble",
         body: {
@@ -475,24 +481,65 @@ exports.sendCaseClosedMessage = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `🎉 แก้ไขปัญหาเรียบร้อยแล้ว #${taskNo}`,
+              text: `📄 Ticket: ${taskNo}`,
               weight: "bold",
               size: "lg",
-              color: "#1DB446",
+              color: "#e38c29ff",
             },
             {
               type: "text",
-              text: `ปัญหา: ${issue}`,
+              text: `🚩 รายละเอียด: ${issue}`,
               wrap: true,
+              size: "sm",
+              color: "#666666",
             },
             {
               type: "text",
-              text: `เจ้าหน้าที่: ${staffName}`,
+              text: `🕒 สถานะ: ดำเนินการเรียบร้อย`,
               wrap: true,
+              size: "sm",
+              color: "#666666",
             },
             {
               type: "text",
-              text: `วันที่ปิดเคส: ${closedDate}`,
+              text: `📄 รายงาน: ${actiondetail}`,
+              wrap: true,
+              size: "sm",
+              color: "#666666",
+            },
+
+            {
+              type: "text",
+              text: `ผู้ดูแลเคส: ${staffName}`,
+              wrap: true,
+              size: "sm",
+              color: "#666666",
+            },
+            {
+              type: "text",
+              text: `⏳ ระยะเวลา:`,
+              wrap: true,
+              size: "sm",
+              color: "#e38c29ff",
+            },
+
+            {
+              type: "text",
+              text: `เวลาแจ้ง: ${receiveDate}`,
+              wrap: true,
+              size: "sm",
+              color: "#999999",
+            },
+            {
+              type: "text",
+              text: `เวลาดำเนินการ: ${startDate}`,
+              wrap: true,
+              size: "sm",
+              color: "#999999",
+            },
+            {
+              type: "text",
+              text: `เวลาปิดงาน: ${closedDate}`,
               wrap: true,
               size: "sm",
               color: "#999999",
@@ -508,7 +555,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
               type: "button",
               action: {
                 type: "uri",
-                label: "ให้คะแนน",
+                label: "ยืนยันการปิดเคส",
                 uri: ratingUrl,
               },
               style: "primary",
