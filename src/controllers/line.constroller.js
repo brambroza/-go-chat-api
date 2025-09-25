@@ -119,7 +119,7 @@ exports.createHelpdeskCase = async (req, res) => {
     // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
     const flexMsg = {
       type: "flex",
-      altText: "รับเคสเรียบร้อยแล้ว",
+      altText: "สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ",
       contents: {
         type: "bubble",
         body: {
@@ -128,10 +128,11 @@ exports.createHelpdeskCase = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `📨 รับเคสเรียบร้อยแล้ว \n# ${TaskNoNew ?? ""}`,
+              text: `สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ`,
               weight: "bold",
               size: "md",
             },
+
             {
               type: "box",
               layout: "vertical",
@@ -145,18 +146,11 @@ exports.createHelpdeskCase = async (req, res) => {
                   contents: [
                     {
                       type: "text",
-                      text: `รายละเอียด :`,
-                      color: "#aaaaaa",
-                      size: "sm",
-                      flex: 2,
-                    },
-                    {
-                      type: "text",
-                      text: `${description}`,
+                      text: `📄 Ticket: ${TaskNoNew ?? ""}`,
+                      weight: "bold",
+                      size: "md",
                       wrap: true,
-                      color: "#aaaaaa",
-                      size: "sm",
-                      flex: 5,
+                      color: "#666666",
                     },
                   ],
                 },
@@ -168,18 +162,11 @@ exports.createHelpdeskCase = async (req, res) => {
                   contents: [
                     {
                       type: "text",
-                      text: `แจ้งโดย :`,
-                      color: "#aaaaaa",
+                      text: `🚩 รายละเอียด : ${description}`,
+
                       size: "sm",
-                      flex: 2,
-                    },
-                    {
-                      type: "text",
-                      text: `${displayName}`,
                       wrap: true,
-                      color: "#aaaaaa",
-                      size: "sm",
-                      flex: 5,
+                      color: "#666666",
                     },
                   ],
                 },
@@ -191,18 +178,10 @@ exports.createHelpdeskCase = async (req, res) => {
                   contents: [
                     {
                       type: "text",
-                      text: "สถานะ :",
-                      color: "#aaaaaa",
-                      size: "sm",
-                      flex: 2,
-                    },
-                    {
-                      type: "text",
-                      text: "รอดำเนินการ",
+                      text: "🕒 สถานะ: รอดำเนินการ ทีมงานจะติดต่อกลับภายใน 10 นาที",
                       wrap: true,
                       color: "#666666",
                       size: "sm",
-                      flex: 5,
                     },
                   ],
                 },
