@@ -104,7 +104,7 @@ exports.handleLineWebhook = async (req, res) => {
             const buffer = Buffer.from(await response.arrayBuffer());
 
             // ตั้งชื่อไฟล์ตาม messageId
-            const filename = `${file.id}.jpg`;
+            const filename = `${messageId}.png`;
             const finalPath = path.join(uploadDirnew, filename);
 
             console.log(`✅ Saved file: ${finalPath}`);
