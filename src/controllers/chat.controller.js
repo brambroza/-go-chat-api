@@ -1,6 +1,8 @@
 const { publishToQueue } = require("../config/rabbitmq");
 const { connectDB, sql } = require("../config/database");
 const lineService = require("../services/line.service");
+const fs = require("fs");
+const path = require("path");
 
 const { io } = require("../app");
 
@@ -8,8 +10,6 @@ exports.handleLineWebhook = async (req, res) => {
   try {
     const accountId = req.params.accountId;
 
-    console.log("account", accountId);
-    console.log("req.body", req.body.events);
     if (!accountId || !req.body?.events) {
       return res.status(200).json({ message: "OK (no content to process)" });
     }
@@ -79,6 +79,48 @@ exports.handleLineWebhook = async (req, res) => {
         const result = await request.execute("dbo.setLineChatMessage");
 
         console.log("MSSQL result:", result);
+
+        if (type === "image") {
+       
+
+          const volumeBase = "/usr/src/app/uploads";
+          const uploadDirnew = path.join(
+            volumeBase,
+           `${cmpId}/linechat`
+          );
+
+          await fs.mkdir(uploadDirnew, { recursive: true });
+
+          try {
+            const response = await fetch(
+              `https://api-data.line.me/v2/bot/message/${messageId}/content`,
+              {
+                headers: {
+                  Authorization: `Bearer ${replyToken}`,
+                },
+              }
+            );
+
+            if (!response.ok) {
+              console.error(`❌ Failed to fetch image ${file.id}`);
+              continue;
+            }
+
+            const buffer = Buffer.from(await response.arrayBuffer());
+
+            // ตั้งชื่อไฟล์ตาม messageId
+            const filename = `${file.id}.jpg`;
+            const finalPath = path.join(uploadDirnew, filename);
+
+            fs.writeFileSync(finalPath, buffer);
+            console.log(`✅ Saved file: ${finalPath}`);
+
+            // push path กลับไปให้ frontend ใช้
+            results.push(`/uploads/line/${filename}`);
+          } catch (err) {
+            console.error("❌ Error saving image:", err);
+          }
+        }
 
         const date = new Date();
 

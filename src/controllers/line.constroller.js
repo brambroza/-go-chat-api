@@ -47,7 +47,7 @@ exports.createHelpdeskCase = async (req, res) => {
     request.input("LineOAId", sql.VarChar(150), oaId);
     request.input("UserId", sql.VarChar(150), userId);
     request.input("Descriptions", sql.NVarChar(sql.MAX), description);
-    request.input("ImagePath", sql.NVarChar(500), imagePath);
+    request.input("ImagePath", sql.NVarChar(sql.MAX), imagePath);
     request.input("CustomerCode", sql.VarChar(30), customerCode || "");
 
     let TaskNoNew = null;
@@ -466,7 +466,8 @@ exports.sendCaseClosedMessage = async (req, res) => {
       oaId,
       taskNo,
       actiondetail,
-      startDate ,receiveDate
+      startDate,
+      receiveDate,
     } = req.body;
 
     console.log("oaId", oaId);
