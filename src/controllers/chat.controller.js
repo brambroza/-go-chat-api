@@ -17,7 +17,7 @@ exports.handleLineWebhook = async (req, res) => {
     // อ่าน event จาก req.body.events (Line messaging API)
     const events = req.body.events;
 
-    console.log("eventsxxxx:", events);
+    console.log("reqxxxxx==>:", req);
 
     // ดึงข้อมูล channel token/secret จาก DB ตาม accountId
     const pool = await connectDB();
