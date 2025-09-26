@@ -123,9 +123,7 @@ exports.handleLineWebhook = async (req, res) => {
                 console.log("✅ File moved successfully");
               });
             });
-
-            // push path กลับไปให้ frontend ใช้
-            results.push(`/uploads/line/${filename}`);
+ 
           } catch (err) {
             console.error("❌ Error saving image:", err);
           }
