@@ -123,7 +123,6 @@ exports.handleLineWebhook = async (req, res) => {
                 console.log("✅ File moved successfully");
               });
             });
- 
           } catch (err) {
             console.error("❌ Error saving image:", err);
           }
@@ -160,6 +159,20 @@ exports.handleLineWebhook = async (req, res) => {
           userId: userId,
           timestamp: new Date().toISOString(),
         });
+        let stickertype = null;
+        if (event.message.type === "sticker") {
+          stickertype = [
+            {
+              createdAt: new Date().toISOString(),
+              id: messageId,
+              stickerId: stickerId,
+              stickerType: stickerResourceType ?? "-",
+              type: "sticker",
+              url: "",
+            },
+          ];
+        }
+
         io.emit("server_broadcast", {
           id: messageId,
           userId: userId,
@@ -168,7 +181,7 @@ exports.handleLineWebhook = async (req, res) => {
           quotaToken: quotaToken,
           text: text,
           timestamp: new Date().toISOString(),
-          attachments: stickerResourceType,
+          attachments: stickertype ?? stickerResourceType,
         });
       }
     }
