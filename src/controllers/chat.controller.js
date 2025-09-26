@@ -181,7 +181,17 @@ exports.handleLineWebhook = async (req, res) => {
           quotaToken: quotaToken,
           text: text,
           timestamp: new Date().toISOString(),
-          attachments: stickertype ?? stickerResourceType,
+          attachments:
+            [
+              {
+                createdAt: new Date().toISOString(),
+                id: messageId,
+                stickerId: stickerId,
+                stickerType: stickerResourceType ?? "-",
+                type: "sticker",
+                url: "",
+              },
+            ] ?? stickerResourceType,
         });
       }
     }
