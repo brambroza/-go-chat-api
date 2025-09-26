@@ -17,7 +17,7 @@ exports.handleLineWebhook = async (req, res) => {
     // อ่าน event จาก req.body.events (Line messaging API)
     const events = req.body.events;
 
-    console.log("eventsxxxx:" ,events);
+    console.log("eventsxxxx:", events);
 
     // ดึงข้อมูล channel token/secret จาก DB ตาม accountId
     const pool = await connectDB();
@@ -33,8 +33,8 @@ exports.handleLineWebhook = async (req, res) => {
       return res.status(404).json({ message: "Account not found" });
     }
 
-    /*     const { channelToken } = result.recordset[0];
-     */
+    const { channelToken } = result.recordset[0];
+
     // ตรวจสอบ signature ตามแนวทางของ Line API (ถ้าต้องการ)
     // lineService.verifySignature(req.headers['x-line-signature'], body, channelSecret) ...
 
@@ -91,7 +91,7 @@ exports.handleLineWebhook = async (req, res) => {
               `https://api-data.line.me/v2/bot/message/${messageId}/content`,
               {
                 headers: {
-                  Authorization: `Bearer ${replyToken}`,
+                  Authorization: `Bearer ${channelToken}`,
                 },
               }
             );
