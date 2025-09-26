@@ -81,15 +81,8 @@ exports.handleLineWebhook = async (req, res) => {
         console.log("MSSQL result:", result);
 
         if (type === "image") {
-       
-
           const volumeBase = "/usr/src/app/uploads";
-          const uploadDirnew = path.join(
-            volumeBase,
-           `${cmpId}/linechat`
-          );
-
-          await fs.mkdir(uploadDirnew, { recursive: true });
+          const uploadDirnew = path.join(volumeBase, `${cmpId}/linechat`);
 
           try {
             const response = await fetch(
@@ -112,8 +105,22 @@ exports.handleLineWebhook = async (req, res) => {
             const filename = `${file.id}.jpg`;
             const finalPath = path.join(uploadDirnew, filename);
 
-            fs.writeFileSync(finalPath, buffer);
             console.log(`✅ Saved file: ${finalPath}`);
+
+            await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
+              if (err) {
+                console.error("❌ Error creating directory:", err);
+                return;
+              }
+
+              fs.writeFileSync(finalPath, buffer, (err) => {
+                if (err) {
+                  console.error("❌ Error moving file:", err);
+                  return;
+                }
+                console.log("✅ File moved successfully");
+              });
+            });
 
             // push path กลับไปให้ frontend ใช้
             results.push(`/uploads/line/${filename}`);
