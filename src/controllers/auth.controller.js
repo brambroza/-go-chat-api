@@ -66,7 +66,7 @@ exports.loginUser = async (req, res) => {
     const user = result.recordset[0];
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid credentials user' });
     }
     console.log("2 hashpassword" , user.Password);
 /*     const match = await bcrypt.compare(password, user.password); */
