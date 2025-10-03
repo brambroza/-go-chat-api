@@ -652,7 +652,7 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
 
     const flexMsg = {
       type: "flex",
-      altText: `สวัสดี ${hellotext} มีเคสใหม่เข้ามาครับ`,
+      altText: `สวัสดี มีเคสใหม่เข้ามาครับ`,
       contents: {
         type: "bubble",
         body: {
@@ -661,7 +661,7 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
           contents: [
             {
               type: "text",
-              text: `สวัสดี ${hellotext} มีเคสใหม่เข้ามาครับ`,
+              text: `สวัสดี  มีเคสใหม่เข้ามาครับ`,
               weight: "bold",
               size: "md",
             },
