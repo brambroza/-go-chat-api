@@ -218,7 +218,7 @@ exports.createHelpdeskCase = async (req, res) => {
       }
     );
 
-   /*  await sendLineToTeamSevice(TaskNoNew, description); */
+    await sendLineToTeamSevice(TaskNoNew, description);
 
     io.emit("helpdesk:new", {
       userId,
@@ -446,6 +446,8 @@ exports.sendFlexMsgWaiting = async (req, res) => {
       }
     );
 
+    await sendLineToTeamSeviceWaiting(taskNo, description, actionby);
+
     return res.status(200).json({ success: true });
   } catch (err) {
     console.error("Helpdesk error:", err);
@@ -468,7 +470,6 @@ exports.sendCaseClosedMessage = async (req, res) => {
       receiveDate,
     } = req.body;
 
-    console.log("oaId", oaId);
     const flexmessage = {
       type: "flex",
       altText: `🎉 Ticket: ${taskNo} ดำเนินการเรียบร้อย`,
@@ -593,6 +594,17 @@ exports.sendCaseClosedMessage = async (req, res) => {
       }
     );
 
+    await sendLineToTeamSeviceFinish(
+      taskNo,
+      issue,
+      actiondetail,
+      staffName,
+      actiondetail,
+      startDate,
+      receiveDate,
+      closedDate
+    );
+
     console.log("✅ Case closed message sent to user");
     return res.json({ success: true });
   } catch (err) {
@@ -615,7 +627,7 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
   try {
     let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
     let actionby = "";
-    let userId = "" ;
+    let userId = "";
 
     let hellotext = getTimePeriod();
 
@@ -629,10 +641,10 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
       if (result.recordset.length === 0) {
         return res.status(404).json({ message: "Account not found" });
       }
-      const { assignname, channelToken ,userId } = result.recordset[0];
+      const { assignname, channelToken, userId } = result.recordset[0];
       actionby = assignname;
       LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
-      userId = userId ;
+      userId = userId;
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
@@ -733,6 +745,265 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
       {
         to: userId,
         messages: [flexMsg],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return true;
+  } catch (error) {
+    console.error(
+      "Error in sendLineToTeamSevice:",
+      error.response?.data || error.message
+    );
+    return false;
+  }
+}
+
+async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
+  try {
+    let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
+
+    let userId = "";
+
+    let hellotext = getTimePeriod();
+
+    const pool = await connectDB();
+
+    let request = pool.request();
+    request.input("TaskNo", sql.VarChar(150), TaskNoNew);
+
+    try {
+      const result = await request.execute("dbo.getServiceTeam");
+      if (result.recordset.length === 0) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+      const { channelToken, userId } = result.recordset[0];
+
+      LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
+      userId = userId;
+      console.log("✅ MSSQL stored procedure executed successfully");
+    } catch (e) {
+      console.error("❌ MSSQL Error moving file:", e);
+    }
+
+    const flexMsg = {
+      type: "flex",
+      altText: `Ticket: ${TaskNoNew ?? ""} - กำลังดำเนินการ`,
+      contents: {
+        type: "bubble",
+        body: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "text",
+              text: `📄 Ticket: \n#${TaskNoNew ?? ""}`,
+              weight: "bold",
+              size: "md",
+            },
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "lg",
+              spacing: "sm",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `🚩 รายละเอียด: ${description}`,
+                      color: "#aaaaaa",
+                      size: "sm",
+                      wrap: true,
+                    },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "🕒 สถานะ : กำลังดำเนินการ",
+                      color: "#aaaaaa",
+                      size: "sm",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `👨🏻‍💻 ดำเนินการโดย: ${actionby ?? ""}`,
+                      color: "#aaaaaa",
+                      size: "sm",
+                      wrap: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      {
+        to: userId,
+        messages: [flexMsg],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return true;
+  } catch (error) {
+    console.error(
+      "Error in sendLineToTeamSevice:",
+      error.response?.data || error.message
+    );
+    return false;
+  }
+}
+
+async function sendLineToTeamSeviceFinish(
+  TaskNoNew,
+  issue,
+  actiondetail,
+  staffName,
+  actiondetail,
+  startDate,
+  receiveDate,
+  closedDate
+) {
+  try {
+    let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
+    
+    let userId = "";  
+
+    const pool = await connectDB();
+
+    let request = pool.request();
+    request.input("TaskNo", sql.VarChar(150), TaskNoNew);
+
+    try {
+      const result = await request.execute("dbo.getServiceTeam");
+      if (result.recordset.length === 0) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+      const { channelToken, userId } = result.recordset[0];
+
+      LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
+      userId = userId;
+      console.log("✅ MSSQL stored procedure executed successfully");
+    } catch (e) {
+      console.error("❌ MSSQL Error moving file:", e);
+    }
+
+    const flexmessage = {
+      type: "flex",
+      altText: `🎉 Ticket: ${TaskNoNew} ดำเนินการเรียบร้อย`,
+      contents: {
+        type: "bubble",
+        body: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "text",
+              text: `📄 Ticket: ${TaskNoNew}`,
+              weight: "bold",
+              size: "lg",
+              color: "#e38c29ff",
+            },
+            {
+              type: "text",
+              text: `🚩 รายละเอียด: ${issue}`,
+              wrap: true,
+              size: "sm",
+              color: "#666666",
+            },
+            {
+              type: "text",
+              text: `🕒 สถานะ: ดำเนินการเรียบร้อย`,
+              wrap: true,
+              size: "sm",
+              color: "#666666",
+            },
+            {
+              type: "text",
+              text: `📄 รายงาน: ${actiondetail}`,
+              wrap: true,
+              size: "sm",
+              color: "#666666",
+            },
+
+            {
+              type: "text",
+              text: `ผู้ดูแลเคส: ${staffName}`,
+              wrap: true,
+              size: "sm",
+              color: "#666666",
+            },
+            {
+              type: "text",
+              text: `⏳ ระยะเวลา:`,
+              wrap: true,
+              size: "sm",
+              color: "#e38c29ff",
+            },
+
+            {
+              type: "text",
+              text: `เวลาแจ้ง: ${receiveDate}`,
+              wrap: true,
+              size: "sm",
+              color: "#999999",
+            },
+            {
+              type: "text",
+              text: `เวลาดำเนินการ: ${startDate}`,
+              wrap: true,
+              size: "sm",
+              color: "#999999",
+            },
+            {
+              type: "text",
+              text: `เวลาปิดงาน: ${closedDate}`,
+              wrap: true,
+              size: "sm",
+              color: "#999999",
+            },
+          ],
+        },
+      },
+    };
+
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      {
+        to: userId,
+        messages: [flexmessage],
       },
       {
         headers: {
