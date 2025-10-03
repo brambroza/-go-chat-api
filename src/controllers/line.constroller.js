@@ -87,10 +87,6 @@ exports.createHelpdeskCase = async (req, res) => {
           const oldPath = file.path;
           const finalPath = path.join(uploadDirnew, file.filename);
 
-          console.log("📂 Old path:", oldPath);
-          console.log("📂 New dir :", uploadDirnew);
-          console.log("📂 Final path:", finalPath);
-
           await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
             if (err) {
               console.error("❌ Error creating directory:", err);
@@ -221,6 +217,8 @@ exports.createHelpdeskCase = async (req, res) => {
         },
       }
     );
+
+   /*  await sendLineToTeamSevice(TaskNoNew, description); */
 
     io.emit("helpdesk:new", {
       userId,
@@ -601,3 +599,155 @@ exports.sendCaseClosedMessage = async (req, res) => {
     console.error("❌ Error sending case closed message:", err);
   }
 };
+
+function getTimePeriod() {
+  const now = new Date();
+  const hour = now.getHours(); // current hour (0-23)
+
+  if (hour >= 5 && hour < 12) return "ตอนเช้า";
+  if (hour >= 12 && hour < 13) return "ตอนเที่ยง";
+  if (hour >= 13 && hour < 17) return "ตอนบ่าย";
+  if (hour >= 17 && hour < 21) return "ตอนเย็น";
+  return "กลางคืน";
+}
+
+async function sendLineToTeamSevice(TaskNoNew, description) {
+  try {
+    let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
+    let actionby = "";
+    let userId = "" ;
+
+    let hellotext = getTimePeriod();
+
+    const pool = await connectDB();
+
+    let request = pool.request();
+    request.input("TaskNo", sql.VarChar(150), TaskNoNew);
+
+    try {
+      const result = await request.execute("dbo.getServiceTeam");
+      if (result.recordset.length === 0) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+      const { assignname, channelToken ,userId } = result.recordset[0];
+      actionby = assignname;
+      LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
+      userId = userId ;
+      console.log("✅ MSSQL stored procedure executed successfully");
+    } catch (e) {
+      console.error("❌ MSSQL Error moving file:", e);
+    }
+
+    const flexMsg = {
+      type: "flex",
+      altText: `สวัสดี ${hellotext} มีเคสใหม่เข้ามาครับ`,
+      contents: {
+        type: "bubble",
+        body: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "text",
+              text: `สวัสดี ${hellotext} มีเคสใหม่เข้ามาครับ`,
+              weight: "bold",
+              size: "md",
+            },
+
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "lg",
+              spacing: "sm",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `📄 Ticket: ${TaskNoNew ?? ""}`,
+                      weight: "bold",
+                      size: "md",
+                      wrap: true,
+                      color: "#666666",
+                    },
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `🚩 รายละเอียด: ${description}`,
+
+                      size: "sm",
+                      wrap: true,
+                      color: "#666666",
+                    },
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "🕒 สถานะ: รอดำเนินการ กรุณาติดต่อกลับภายใน 10 นาที",
+                      wrap: true,
+                      color: "#666666",
+                      size: "sm",
+                    },
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `👨🏻‍💻 ผู้ดูแลเคส: ${actionby ?? ""}`,
+                      wrap: true,
+                      color: "#666666",
+                      size: "sm",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      {
+        to: userId,
+        messages: [flexMsg],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return true;
+  } catch (error) {
+    console.error(
+      "Error in sendLineToTeamSevice:",
+      error.response?.data || error.message
+    );
+    return false;
+  }
+}
