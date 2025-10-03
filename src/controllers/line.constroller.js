@@ -641,10 +641,10 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
       if (result.recordset.length === 0) {
         return res.status(404).json({ message: "Account not found" });
       }
-      const { assignname, channelToken, userId } = result.recordset[0];
+      const { assignname, channelToken, userIds } = result.recordset[0];
       actionby = assignname;
       LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
-      userId = userId;
+      userId = userIds;
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
@@ -788,7 +788,7 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
     }
-
+ 
     const flexMsg = {
       type: "flex",
       altText: `Ticket: ${TaskNoNew ?? ""} - กำลังดำเนินการ`,
@@ -909,10 +909,10 @@ async function sendLineToTeamSeviceFinish(
       if (result.recordset.length === 0) {
         return res.status(404).json({ message: "Account not found" });
       }
-      const { channelToken, userId } = result.recordset[0];
+      const { channelToken, userIds } = result.recordset[0];
 
       LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
-      userId = userId;
+      userId = userIds;
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
