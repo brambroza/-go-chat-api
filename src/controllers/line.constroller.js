@@ -218,6 +218,8 @@ exports.createHelpdeskCase = async (req, res) => {
       }
     );
 
+
+
     await sendLineToTeamSevice(TaskNoNew, description);
 
     io.emit("helpdesk:new", {
@@ -309,7 +311,7 @@ exports.saveContact = async (req, res) => {
 
 // controllers/problemController.js
 exports.rateProblem = async (req, res) => {
-  const { userId, problemId, score, cmpId } = req.body;
+  const { userId, problemId, score, cmpId ,description } = req.body;
 
   if (!userId || !problemId || !score || !cmpId) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -322,6 +324,7 @@ exports.rateProblem = async (req, res) => {
     request.input("ProblemId", sql.VarChar(100), problemId);
     request.input("RatingScore", sql.Int, score);
     request.input("CmpId", sql.VarChar(100), cmpId);
+    request.input("Descripotion", sql.NVarChar(500), description);
 
     await request.execute("dbo.setProblemRating");
 
