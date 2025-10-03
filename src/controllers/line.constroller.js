@@ -766,11 +766,9 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
 
 async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
   try {
-    let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
+    let LINE_OA_CHANNEL_ACCESS_TOKEN = null;
 
-    let userId = "";
-
-    let hellotext = getTimePeriod();
+    let userId = null; 
 
     const pool = await connectDB();
 
@@ -782,10 +780,10 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
       if (result.recordset.length === 0) {
         return res.status(404).json({ message: "Account not found" });
       }
-      const { channelToken, userId } = result.recordset[0];
+      const { channelToken, userIds } = result.recordset[0];
 
       LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
-      userId = userId;
+      userId = userIds;
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
