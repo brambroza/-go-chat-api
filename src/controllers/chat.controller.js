@@ -216,6 +216,7 @@ exports.sendMessage = async (req, res) => {
       stickerId,
       stickerResourceType,
       timeStamp,
+      attachments,
     } = req.body;
 
     // อาจจะบันทึกลง DB ก่อน
@@ -274,6 +275,7 @@ exports.sendMessage = async (req, res) => {
       stickerId: stickerId ?? "-",
       stickerResourceType: stickerResourceType ?? "-",
       sendbyId: sendbyId,
+      attachments: attachments || [],
     };
 
     console.log("event send : ", eventdata);
@@ -289,10 +291,15 @@ exports.sendMessage = async (req, res) => {
     /*  await publishToQueue("internalChatQueue", { fromUserId, to, message }); */
 
     const to = userId;
-    const messageObject = {
-      type: type,
-      text: message,
-    };
+    const messageObject =
+      type === "text"
+        ? [
+            {
+              type: type,
+              text: type === message,
+            },
+          ]
+        : attachments;
 
     await lineService.pushMessage(channelToken, to, [messageObject]);
 
