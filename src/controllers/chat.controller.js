@@ -215,6 +215,7 @@ exports.sendMessage = async (req, res) => {
       channelToken,
       stickerId,
       stickerResourceType,
+      timeStamp,
     } = req.body;
 
     // อาจจะบันทึกลง DB ก่อน
@@ -269,7 +270,7 @@ exports.sendMessage = async (req, res) => {
       replyToken: "",
       quotaToken: "",
       text: message,
-      timeStamp: utc7Date,
+      timeStamp: timeStamp ?? utc7Date,
       stickerId: stickerId ?? "-",
       stickerResourceType: stickerResourceType ?? "-",
       sendbyId: sendbyId,
