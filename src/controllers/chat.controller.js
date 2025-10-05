@@ -301,7 +301,7 @@ exports.sendMessage = async (req, res) => {
           ]
         : attachments;
 
-    await lineService.pushMessage(channelToken, to, [messageObject]);
+    await lineService.pushMessage(channelToken, to,  messageObject);
 
     return res.status(200).json({ message: "Message sent." });
   } catch (error) {
