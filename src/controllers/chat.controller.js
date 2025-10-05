@@ -290,7 +290,7 @@ exports.sendMessage = async (req, res) => {
 
     const to = userId;
     const messageObject = {
-      type: "text",
+      type: type,
       text: message,
     };
 
