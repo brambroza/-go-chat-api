@@ -294,7 +294,7 @@ exports.sendMessage = async (req, res) => {
       text: message,
     };
 
-    await lineService.pushMessage(channelToken, to, messageObject);
+    await lineService.pushMessage(channelToken, to, [messageObject]);
 
     return res.status(200).json({ message: "Message sent." });
   } catch (error) {
