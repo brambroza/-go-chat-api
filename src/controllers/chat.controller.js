@@ -270,7 +270,7 @@ exports.sendMessage = async (req, res) => {
       replyToken: "",
       quotaToken: "",
       text: message,
-      timeStamp: timeStamp ?? utc7Date,
+      timestamp: timeStamp ?? utc7Date,
       stickerId: stickerId ?? "-",
       stickerResourceType: stickerResourceType ?? "-",
       sendbyId: sendbyId,
