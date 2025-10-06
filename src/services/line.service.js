@@ -43,7 +43,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
           return {
             type: "image",
             originalContentUrl: item.url,
-            previewImageUrl: item.previewUrl || item.url,
+            previewImageUrl:   item.url,
           };
 
         // ✅ วิดีโอ

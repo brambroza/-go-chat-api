@@ -296,12 +296,12 @@ exports.sendMessage = async (req, res) => {
         ? [
             {
               type: type,
-              text: type === message,
+              text: message,
             },
           ]
         : attachments;
 
-    await lineService.pushMessage(channelToken, to,  messageObject);
+    await lineService.pushMessage(channelToken, to, messageObject);
 
     return res.status(200).json({ message: "Message sent." });
   } catch (error) {
@@ -309,7 +309,7 @@ exports.sendMessage = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
- 
+
 exports.getMessages = async (req, res) => {
   try {
     const { userid, cmpid } = req.query;
