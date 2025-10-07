@@ -501,6 +501,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
       };
 
       const userMessages = dtc.recordset.filter((d) => d.userId === rd.id);
+      console.log("userMessages:::", userMessages.length);
       for (const d of userMessages) {
         rd.messages.push({
           id: d.Id,
