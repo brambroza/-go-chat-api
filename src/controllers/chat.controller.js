@@ -501,11 +501,11 @@ exports.getLineChatConvertsatition = async (req, res) => {
       };
 
       const userMessages = dtc.recordset.filter((dx) => dx.UserId === rd.UserId);
-  
+      console.log("userMessages:::", userMessages.length);
       for (const dx of userMessages) {
         rd.messages.push({
           id: dx.Id,
-          userId: rd.id,
+          userId: rd.UserId,
           replyToken: dx.replyToken,
           quotaToken: dx.quotaToken,
           text: dx.text,
