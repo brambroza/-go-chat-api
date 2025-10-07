@@ -89,8 +89,8 @@ const PORT = process.env.PORT || 3000;
         });
       });
 
-      socket.on("joinRoom", () => {
-        const room = `notification_230015_brambroza@gmail.com`;
+      socket.on("joinRoom", ({ cmpid, userlogin }) => {
+        const room = `notification_${cmpid}_${userlogin}`;
         socket.join(room);
         console.log(`👥 ${userlogin} joined ${room}`);
       });
