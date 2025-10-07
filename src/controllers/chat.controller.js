@@ -6,13 +6,13 @@ const path = require("path");
 
 const { io } = require("../app");
 
- function uuidv4() {
+function uuidv4() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
-}  
+}
 
 exports.handleLineWebhook = async (req, res) => {
   try {
@@ -201,7 +201,15 @@ exports.handleLineWebhook = async (req, res) => {
               },
             ] ?? stickerResourceType,
         });
-      
+
+        const dateTime = new Date(timestamp);
+
+        // แปลงเป็นเวลาไทย (UTC+7)
+        const bangkokTime = new Date(dateTime.getTime() + 7 * 60 * 60 * 1000)
+          .toISOString()
+          .replace("T", " ")
+          .substring(0, 19);
+
         const msgNotification = {
           id: uuidv4(),
           type: "linechat",
@@ -209,7 +217,7 @@ exports.handleLineWebhook = async (req, res) => {
           category: text,
           isUnRead: true,
           avatarUrl: null,
-          createdAt: new Date().toISOString(),
+          createdAt: bangkokTime, // new Date().toISOString(),
           isUnAlert: true,
           urllink: "/dashboard/chatsocial?id=" + userId,
           sendFrom: userId,
@@ -224,7 +232,27 @@ exports.handleLineWebhook = async (req, res) => {
         io.to(room).emit(
           "ReceiveNotification",
           JSON.stringify([msgNotification])
-        );  
+        );
+
+        request2 = pool.request();
+        request2.input("userTo", sql.NVarChar(100), 'brambroza@gmail.com');
+        request2.input("userFrom", sql.NVarChar(100), userId); 
+        request2.input("id", sql.VarChar(100), messageId);
+        request2.input("Title", sql.VarChar(500), 'คุณมีข้อความใหม่');
+        request2.input("Category", sql.VarChar(500), text); 
+        request2.input("type", sql.VarChar(50), "linechat");
+        request2.input("linkTo", sql.VarChar(500), `/dashboard/chatsocial?id=${userId}`);
+        request2.input(
+          "ModuleFormName",
+          sql.VarChar(500),
+          "/dashboard/chatsocial"
+        );
+        request2.input("DocNo", sql.VarChar(100), messageId);
+        request2.input("RevNo", sql.Int, 0);
+         
+        await request2.execute("dbo.setNotification");
+
+    
       }
     }
 
