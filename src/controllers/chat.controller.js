@@ -213,10 +213,10 @@ exports.handleLineWebhook = async (req, res) => {
         const msgNotification = {
           id: uuidv4(),
           type: "linechat",
-          title: "คุณมีข้อความใหม่",
+          title: text,
           category: text,
           isUnRead: true,
-          avatarUrl: null,
+          avatarUrl: userId,
           createdAt: bangkokTime, // new Date().toISOString(),
           isUnAlert: true,
           urllink: "/dashboard/chatsocial?id=" + userId,
