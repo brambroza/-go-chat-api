@@ -237,9 +237,9 @@ exports.handleLineWebhook = async (req, res) => {
         request2 = pool.request();
         request2.input("CmpId", sql.NVarChar(100), "230015");
         request2.input("userTo", sql.NVarChar(100), "brambroza@gmail.com");
-        request2.input("userFrom", sql.NVarChar(100), userId);
+        request2.input("userFrom", sql.NVarChar(100), "0");
         request2.input("id", sql.VarChar(100), messageId);
-        request2.input("Title", sql.VarChar(500), "คุณมีข้อความใหม่");
+        request2.input("Title", sql.VarChar(500), text);
         request2.input("Category", sql.VarChar(500), text);
         request2.input("type", sql.VarChar(50), "linechat");
         request2.input(
@@ -252,8 +252,9 @@ exports.handleLineWebhook = async (req, res) => {
           sql.VarChar(500),
           "/dashboard/chatsocial"
         );
-        request2.input("DocNo", sql.VarChar(100), messageId);
+        request2.input("DocNo", sql.VarChar(100), `${messageId}`);
         request2.input("RevNo", sql.Int, 0);
+        request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
 
         await request2.execute("dbo.setNotification");
       }
