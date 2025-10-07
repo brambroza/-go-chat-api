@@ -6,13 +6,13 @@ const path = require("path");
 
 const { io } = require("../app");
 
-/* export function uuidv4() {
+ function uuidv4() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
-} */
+}  
 
 exports.handleLineWebhook = async (req, res) => {
   try {
@@ -201,7 +201,7 @@ exports.handleLineWebhook = async (req, res) => {
               },
             ] ?? stickerResourceType,
         });
-        /* 
+      
         const msgNotification = {
           id: uuidv4(),
           type: "linechat",
@@ -224,7 +224,7 @@ exports.handleLineWebhook = async (req, res) => {
         io.to(room).emit(
           "ReceiveNotification",
           JSON.stringify([msgNotification])
-        ); */
+        );  
       }
     }
 
