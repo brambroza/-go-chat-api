@@ -505,6 +505,8 @@ exports.getLineChatConvertsatition = async (req, res) => {
       );
     
       for (const dx of userMessages) {
+
+        console.log(" dx::::", dx);
         rd.messages.push({
           id: dx.Id,
           userId: rd.id,
