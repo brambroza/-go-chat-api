@@ -6,6 +6,14 @@ const path = require("path");
 
 const { io } = require("../app");
 
+export function uuidv4() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 exports.handleLineWebhook = async (req, res) => {
   try {
     const accountId = req.params.accountId;
@@ -193,6 +201,30 @@ exports.handleLineWebhook = async (req, res) => {
               },
             ] ?? stickerResourceType,
         });
+
+        const msgNotification = {
+          id: uuidv4(),
+          type: "linechat",
+          title: "คุณมีข้อความใหม่",
+          category: text,
+          isUnRead: true,
+          avatarUrl: null,
+          createdAt: new Date().toISOString(),
+          isUnAlert: true,
+          urllink: "/dashboard/chatsocial?id=" + userId,
+          sendFrom: userId,
+          moduleFormName: "/dashboard/chatsocial",
+          isUnReadMenu: true,
+          docNo: messageId,
+          revNo: 0,
+        };
+
+        const userlogin = "brambroza@gmail.com"; // กำหนด userlogin ตามระบบของคุณ
+        const room = `notification_230015_${userlogin}`;
+        io.to(room).emit(
+          "ReceiveNotification",
+          JSON.stringify([msgNotification])
+        );
       }
     }
 
@@ -277,8 +309,6 @@ exports.sendMessage = async (req, res) => {
       sendbyId: sendbyId,
       attachments: attachments || [],
     };
-
-    console.log("event send : ", eventdata);
 
     io.emit("server_broadcast", {
       from: "LINE",

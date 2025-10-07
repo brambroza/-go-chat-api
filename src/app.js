@@ -25,34 +25,27 @@ app.use(bodyParser.json());
 
 // สร้าง server + Socket.IO
 const server = http.createServer(app);
- 
 
 const io = new Server(server, {
-  path: '/socketionode', // ต้องตรงกับ React
+  path: "/socketionode", // ต้องตรงกับ React
   cors: {
-   
-  origin:  ['http://localhost:8080', 'https://api.nisolution.co.th'],
-    methods: ['GET', 'POST'],
+    origin: ["http://localhost:8080", "https://api.nisolution.co.th"],
+    methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
- 
 // export io เพื่อให้ controller อื่นเรียกใช้ได้
 module.exports.io = io;
 
- 
-
-
 const routes = require("./routes");
-const  os = require("os");
+const os = require("os");
 
-// test loadbanlance get name service 
+// test loadbanlance get name service
 /* 
 app.use("/" , async(req ,res) => {
     res.json({message: "Responsefrom: " , hostname : `${os.hostname}`})
 }) */
-
 
 // ผูก routes
 app.use("/api", routes);
@@ -87,14 +80,19 @@ const PORT = process.env.PORT || 3000;
       console.log("A user connected:", socket.id);
 
       ticketTaskReplyHub(socket);
- 
+
       socket.on("client_message", (data) => {
-        console.log("client_message from Flutter:", data);
         io.emit("server_broadcast", {
           from: socket.id,
           text: data,
           timestamp: new Date().toISOString(),
         });
+      });
+
+      socket.on("joinRoom", () => {
+        const room = `notification_230015_brambroza@gmail.com`;
+        socket.join(room);
+        console.log(`👥 ${userlogin} joined ${room}`);
       });
 
       socket.on("disconnect", () => {
