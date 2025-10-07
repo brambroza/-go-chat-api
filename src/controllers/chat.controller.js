@@ -500,17 +500,17 @@ exports.getLineChatConvertsatition = async (req, res) => {
         participants: [],
       };
 
-      const userMessages = dtc.recordset.filter((d) => d.userId === rd.id);
+      const userMessages = dtc.recordset.filter((dx) => dx.UserId === rd.id);
       console.log("userMessages:::", userMessages.length);
-      for (const d of userMessages) {
+      for (const dx of userMessages) {
         rd.messages.push({
-          id: d.Id,
+          id: dx.Id,
           userId: rd.id,
-          replyToken: d.replyToken,
-          quotaToken: d.quotaToken,
-          text: d.text,
-          type: d.type,
-          timestamp: new Date(d.TimeStamp),
+          replyToken: dx.replyToken,
+          quotaToken: dx.quotaToken,
+          text: dx.text,
+          type: dx.type,
+          timestamp: new Date(dx.TimeStamp),
         });
       }
 
