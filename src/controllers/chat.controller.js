@@ -517,7 +517,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
         });
       }
 
-     
+       
 
       const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
       for (const rx of userRows) {
