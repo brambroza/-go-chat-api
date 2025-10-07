@@ -201,7 +201,7 @@ exports.handleLineWebhook = async (req, res) => {
               },
             ] ?? stickerResourceType,
         });
-
+        /* 
         const msgNotification = {
           id: uuidv4(),
           type: "linechat",
@@ -224,7 +224,7 @@ exports.handleLineWebhook = async (req, res) => {
         io.to(room).emit(
           "ReceiveNotification",
           JSON.stringify([msgNotification])
-        );
+        ); */
       }
     }
 
