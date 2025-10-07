@@ -513,6 +513,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
           text: dx.text,
           type: dx.type,
           timestamp: new Date(dx.TimeStamp),
+          isUnRead: dx.isUnRead,
         });
       }
 
