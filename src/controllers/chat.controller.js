@@ -503,7 +503,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
       const userMessages = dtc.recordset.filter(
         (dx) => String(dx.UserId) === String(rd.id)
       );
-      console.log("userMessages:::", userMessages.length);
+    
       for (const dx of userMessages) {
         rd.messages.push({
           id: dx.Id,
@@ -516,21 +516,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
         });
       }
 
-      console.log("----------");
-      console.log("Checking for rd.id:", rd.id);
-      console.log("Type of rd.id:", typeof rd.id);
-
-      // แสดงค่าทั้งหมดใน dtc.recordset ก่อน filter
-      dtc.recordset.forEach((dx, i) => {
-        console.log(
-          `[${i}] dx.UserId =`,
-          dx.UserId,
-          "| type:",
-          typeof dx.UserId,
-          "| Equal?:",
-          dx.UserId === rd.id
-        );
-      });
+     
 
       const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
       for (const rx of userRows) {
