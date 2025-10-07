@@ -499,9 +499,9 @@ exports.getLineChatConvertsatition = async (req, res) => {
         messages: [],
         participants: [],
       };
-      console.log("userMessages:::1", dtc.recordset);
+  
       const userMessages = dtc.recordset.filter(
-        (dx) => dx.UserId === rd.UserId
+        (dx) => dx.UserId === r.UserId
       );
       console.log("userMessages:::", userMessages.length);
       for (const dx of userMessages) {
