@@ -90,7 +90,7 @@ exports.handleLineWebhook = async (req, res) => {
 
         let problamDetail = "";
         let urlName = "";
-        const { ProbDetail, UrlName } = result.recordset[0];
+        const { ProbDetail, UrlName  } = result.recordset[0];
         problamDetail = ProbDetail;
         urlName = UrlName;
 
@@ -293,9 +293,9 @@ exports.handleLineWebhook = async (req, res) => {
                 ]
               : attachments;
 
-          await lineService.pushMessage(replyToken, to, messageObject);
+          await lineService.pushMessage(channelToken, to, messageObject);
         }
-        
+
       }
     }
 
