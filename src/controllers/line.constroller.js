@@ -20,7 +20,6 @@ function uuidv4() {
   });
 }
 
-
 exports.createHelpdeskCase = async (req, res) => {
   try {
     const { userId, displayName, description, oaId, cmpId, customerCode } =
@@ -268,6 +267,26 @@ exports.createHelpdeskCase = async (req, res) => {
 
     const room = `notification_230015_${userlogin}`;
     io.to(room).emit("ReceiveNotification", JSON.stringify([msgNotification]));
+
+    let request2 = pool.request();
+    request2.input("CmpId", sql.NVarChar(100), "230015");
+    request2.input("userTo", sql.NVarChar(100), userlogin);
+    request2.input("userFrom", sql.NVarChar(100), "0");
+    request2.input("id", sql.VarChar(100), TaskNoNew);
+    request2.input("Title", sql.VarChar(500), `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `);
+    request2.input("Category", sql.VarChar(500), `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `);
+    request2.input("type", sql.VarChar(50), "linechat");
+    request2.input(
+      "linkTo",
+      sql.VarChar(500),
+      `/productservice/servicerequest`
+    );
+    request2.input("ModuleFormName", sql.VarChar(500), "/productservice/servicerequest");
+    request2.input("DocNo", sql.VarChar(100), `${TaskNoNew}`);
+    request2.input("RevNo", sql.Int, 0);
+    request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
+
+    await request2.execute("dbo.setNotification");
 
     return res.status(200).json({ success: true });
   } catch (err) {
