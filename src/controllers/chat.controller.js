@@ -90,7 +90,7 @@ exports.handleLineWebhook = async (req, res) => {
 
         const dt = await pool
           .request()
-          .input("cmpId", cmpid)
+          .input("cmpId", cmpId)
           .query("EXEC dbo.getAccountlist @cmpId=@cmpId");
 
         // The recordset from the query
