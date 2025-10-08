@@ -233,7 +233,7 @@ exports.createHelpdeskCase = async (req, res) => {
     });
 
     // const dateTime = new Date().toISOString();
-
+    const now = new Date();
     // แปลงเป็นเวลาไทย (UTC+7)
     const bangkokTime = new Date(now.getTime() + 7 * 60 * 60 * 1000)
       .toISOString()
