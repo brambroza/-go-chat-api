@@ -51,10 +51,12 @@ exports.createHelpdeskCase = async (req, res) => {
     request.input("CustomerCode", sql.VarChar(30), customerCode || "");
 
     let TaskNoNew = null;
+    let userlogin = null;
     try {
       const result = await request.execute("dbo.setServiceFormLiFF");
-      const { TaskNo } = result.recordset[0];
+      const { TaskNo, userAssign } = result.recordset[0];
       TaskNoNew = TaskNo;
+      userlogin = userAssign;
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
@@ -218,8 +220,6 @@ exports.createHelpdeskCase = async (req, res) => {
       }
     );
 
-
-
     await sendLineToTeamSevice(TaskNoNew, description);
 
     io.emit("helpdesk:new", {
@@ -231,6 +231,35 @@ exports.createHelpdeskCase = async (req, res) => {
       taskNo: TaskNoNew,
       imagePath,
     });
+
+    const dateTime = new Date(timestamp);
+
+    // แปลงเป็นเวลาไทย (UTC+7)
+    const bangkokTime = new Date(dateTime.getTime() + 7 * 60 * 60 * 1000)
+      .toISOString()
+      .replace("T", " ")
+      .substring(0, 19);
+
+    const msgNotification = {
+      id: uuidv4(),
+      type: "linechat",
+      title: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
+      category: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
+      isUnRead: true,
+      avatarUrl: userId,
+      createdAt: bangkokTime, // new Date().toISOString(),
+      isUnAlert: true,
+      urllink: "/productservice/servicerequest?id=" + userId,
+      sendFrom: userId,
+      moduleFormName: "/productservice/servicerequest",
+      isUnReadMenu: true,
+      docNo: TaskNoNew,
+      revNo: 0,
+    };
+
+    const room = `notification_230015_${userlogin}`;
+    io.to(room).emit("ReceiveNotification", JSON.stringify([msgNotification]));
+    
 
     return res.status(200).json({ success: true });
   } catch (err) {
@@ -311,7 +340,7 @@ exports.saveContact = async (req, res) => {
 
 // controllers/problemController.js
 exports.rateProblem = async (req, res) => {
-  const { userId, problemId, score, cmpId ,description } = req.body;
+  const { userId, problemId, score, cmpId, description } = req.body;
 
   if (!userId || !problemId || !score || !cmpId) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -771,7 +800,7 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
   try {
     let LINE_OA_CHANNEL_ACCESS_TOKEN = null;
 
-    let userId = null; 
+    let userId = null;
 
     const pool = await connectDB();
 
@@ -791,7 +820,7 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
     }
- 
+
     const flexMsg = {
       type: "flex",
       altText: `Ticket: ${TaskNoNew ?? ""} - กำลังดำเนินการ`,
@@ -899,8 +928,8 @@ async function sendLineToTeamSeviceFinish(
 ) {
   try {
     let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
-    
-    let userId = "";  
+
+    let userId = "";
 
     const pool = await connectDB();
 
