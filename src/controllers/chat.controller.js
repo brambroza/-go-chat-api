@@ -88,6 +88,12 @@ exports.handleLineWebhook = async (req, res) => {
 
         const result = await request.execute("dbo.setLineChatMessage");
 
+        let problamDetail = "";
+        let urlName = "";
+        const { ProbDetail, UrlName } = result.recordset[0];
+        problamDetail = ProbDetail;
+        urlName = UrlName;
+
         const dt = await pool
           .request()
           .input("cmpId", cmpId)
@@ -274,6 +280,22 @@ exports.handleLineWebhook = async (req, res) => {
           "ReceiveNotification",
           JSON.stringify([msgNotification])
         ); */
+
+        if (problamDetail !== "" && urlName !== "") {
+          const to = userId;
+          const messageObject =
+            type === "text"
+              ? [
+                  {
+                    type: type,
+                    text: `${problamDetail}\n\n กดที่ link นี้แล้วกรอกปัญหาการใช้งานได้เลยครับ \n\n${urlName}`,
+                  },
+                ]
+              : attachments;
+
+          await lineService.pushMessage(replyToken, to, messageObject);
+        }
+        
       }
     }
 
