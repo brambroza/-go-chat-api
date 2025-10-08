@@ -670,7 +670,7 @@ exports.getChatConvertsationUserId = async (req, res) => {
 
 exports.setReadLineMsg = async (req, res) => {
   try {
-    const { cmpid, userId } = req.body;
+    const { cmpid, userId } = req.body.params;
 
     if (!cmpid || !userId) {
       return res.status(400).json({ error: "cmpid and userId are required" });
