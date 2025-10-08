@@ -545,6 +545,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
           phone: rx.phone,
           customerName: rx.customerName,
           position: rx.position,
+          nickName: rx.nickName || "",
         });
       }
 
