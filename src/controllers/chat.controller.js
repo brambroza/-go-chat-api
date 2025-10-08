@@ -495,7 +495,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
         lineToken: r.AccessToken,
         id: r.UserId,
         type: "text",
-        unreadCount: 0,
+        unreadCount: r.unreadCount || 0,
         messages: [],
         participants: [],
       };
@@ -518,8 +518,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
           isUnRead: dx.isUnRead,
         });
       }
-
-        console.log("conversationsrd.messages:::", rd.messages);
+ 
 
       const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
       for (const rx of userRows) {
