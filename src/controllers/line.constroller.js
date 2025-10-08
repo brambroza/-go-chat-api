@@ -232,7 +232,7 @@ exports.createHelpdeskCase = async (req, res) => {
       imagePath,
     });
 
-    const dateTime = new Date(timestamp);
+    const dateTime = new Date().toISOString();
 
     // แปลงเป็นเวลาไทย (UTC+7)
     const bangkokTime = new Date(dateTime.getTime() + 7 * 60 * 60 * 1000)
@@ -259,7 +259,7 @@ exports.createHelpdeskCase = async (req, res) => {
 
     const room = `notification_230015_${userlogin}`;
     io.to(room).emit("ReceiveNotification", JSON.stringify([msgNotification]));
-    
+
 
     return res.status(200).json({ success: true });
   } catch (err) {
