@@ -88,8 +88,8 @@ exports.handleLineWebhook = async (req, res) => {
 
         const result = await request.execute("dbo.setLineChatMessage");
 
-        let problamDetail = "";
-        let urlName = "";
+        let problamDetail = null;
+        let urlName = null;
         const { ProbDetail, UrlName  } = result.recordset[0];
         problamDetail = ProbDetail;
         urlName = UrlName;
@@ -281,19 +281,8 @@ exports.handleLineWebhook = async (req, res) => {
           JSON.stringify([msgNotification])
         ); */
 
-        if (problamDetail !== "" && urlName !== "") {
-          const to = userId;
-          const messageObject =
-            type === "text"
-              ? [
-                  {
-                    type: type,
-                    text: `${problamDetail}\n\nกดที่ link นี้แล้วกรอกปัญหาการใช้งานได้เลยครับ \n\n${urlName}`,
-                  },
-                ]
-              : attachments;
-
-          await lineService.pushMessage(channelToken, to, messageObject);
+        if (problamDetail !== "" && urlName !== "" && problamDetail != null && urlName != null) { 
+          await lineService.senLinkdMessageProblem(channelToken, to, problamDetail , urlName);
         }
 
       }
@@ -391,7 +380,7 @@ exports.sendMessage = async (req, res) => {
     // สามารถ publish ไปยัง RabbitMQ ได้ ถ้าต้องการกระจายข้อมูล real-time
     /*  await publishToQueue("internalChatQueue", { fromUserId, to, message }); */
 
-   /*  const to = userId;
+     const to = userId;
     const messageObject =
       type === "text"
         ? [
@@ -402,7 +391,7 @@ exports.sendMessage = async (req, res) => {
           ]
         : attachments;
 
-    await lineService.pushMessage(channelToken, to, messageObject); */
+    await lineService.pushMessage(channelToken, to, messageObject);  
 
     return res.status(200).json({ message: "Message sent." });
   } catch (error) {

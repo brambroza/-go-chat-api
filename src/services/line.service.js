@@ -43,7 +43,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
           return {
             type: "image",
             originalContentUrl: item.url,
-            previewImageUrl:   item.url,
+            previewImageUrl: item.url,
           };
 
         // ✅ วิดีโอ
@@ -82,6 +82,74 @@ exports.pushMessage = async (channelToken, to, items = []) => {
     };
 
     await axios.post(url, body, { headers });
+  } catch (error) {
+    console.error(
+      "Error in replyMessage:",
+      error.response?.data || error.message
+    );
+  }
+};
+
+exports.senLinkdMessageProblem = async (channelToken, userId, text, link) => {
+  try {
+    const flexmessage = {
+      type: "flex",
+      altText: `🔈 ${text}`,
+      contents: {
+        type: "bubble",
+        body: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "text",
+              text: `🔈 ${text}`,
+              weight: "bold",
+              size: "lg",
+              color: "#e38c29ff",
+            },
+            {
+              type: "text",
+              text: `🚩 ต้องการแจ้งปัญหา สามารถกดปุ่มด้านล่างแจ้ง แล้วแจ้งปัญหาได้เลยครับ ขอบคุณครับ.`,
+              wrap: true,
+              size: "sm",
+              color: "#666666",
+            },
+          ],
+        },
+        footer: {
+          type: "box",
+          layout: "horizontal",
+          spacing: "md",
+          contents: [
+            {
+              type: "button",
+              action: {
+                type: "uri",
+                label: "แจ้งปัญหา",
+                uri: link,
+              },
+              style: "primary",
+              position: "relative",
+            },
+          ],
+        },
+      },
+    };
+
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      {
+        to: userId,
+        messages: [flexmessage],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${channelToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
   } catch (error) {
     console.error(
       "Error in replyMessage:",
