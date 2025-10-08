@@ -88,7 +88,15 @@ exports.handleLineWebhook = async (req, res) => {
 
         const result = await request.execute("dbo.setLineChatMessage");
 
-        console.log("MSSQL result:", result);
+        const dt = await pool
+          .request()
+          .input("cmpId", cmpid)
+          .query("EXEC dbo.getAccountlist @cmpId=@cmpId");
+
+        // The recordset from the query
+        const rows = dt.recordset;
+
+
 
         if (type === "image") {
           const volumeBase = "/usr/src/app/uploads";
@@ -228,11 +236,22 @@ exports.handleLineWebhook = async (req, res) => {
         };
 
         const userlogin = "brambroza@gmail.com"; // กำหนด userlogin ตามระบบของคุณ
-        const room = `notification_230015_${userlogin}`;
+
+        for (const row of rows) {
+          if (row.UserLogin && row.UserLogin === userlogin) {
+            const room = `notification_${cmpId}_${row.Username}`;
+            io.to(room).emit(
+              "ReceiveNotification",
+              JSON.stringify([msgNotification])
+            );
+          }
+        }
+
+       /*  const room = `notification_230015_${userlogin}`;
         io.to(room).emit(
           "ReceiveNotification",
           JSON.stringify([msgNotification])
-        );
+        ); */
 
         request2 = pool.request();
         request2.input("CmpId", sql.NVarChar(100), "230015");
@@ -503,10 +522,8 @@ exports.getLineChatConvertsatition = async (req, res) => {
       const userMessages = dtc.recordset.filter(
         (dx) => String(dx.UserId) === String(rd.id)
       );
-    
-      for (const dx of userMessages) {
 
-     
+      for (const dx of userMessages) {
         rd.messages.push({
           id: dx.Id,
           userId: rd.id,
@@ -518,7 +535,6 @@ exports.getLineChatConvertsatition = async (req, res) => {
           isUnRead: dx.isUnRead,
         });
       }
- 
 
       const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
       for (const rx of userRows) {
@@ -551,9 +567,6 @@ exports.getLineChatConvertsatition = async (req, res) => {
 
       conversations.push(rd);
     }
-
-
-   
 
     res.json(conversations);
   } catch (error) {
@@ -665,8 +678,6 @@ exports.getChatConvertsationUserId = async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 };
-
-
 
 exports.setReadLineMsg = async (req, res) => {
   try {

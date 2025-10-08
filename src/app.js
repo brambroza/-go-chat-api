@@ -79,7 +79,7 @@ const PORT = process.env.PORT || 3000;
     io.on("connection", (socket) => {
       console.log("A user connected:", socket.id);
 
-    /*   ticketTaskReplyHub(socket); */
+      ticketTaskReplyHub(socket);
 
       socket.on("client_message", (data) => {
         io.emit("server_broadcast", {
@@ -88,12 +88,12 @@ const PORT = process.env.PORT || 3000;
           timestamp: new Date().toISOString(),
         });
       });
-  
+
       socket.on("joinRoom", ({ cmpid, userlogin }) => {
         const room = `notification_${cmpid}_${userlogin}`;
         socket.join(room);
         console.log(`👥 ${userlogin} joined ${room}`);
-      });  
+      });
 
       socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
