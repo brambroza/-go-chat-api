@@ -12,6 +12,15 @@ fs.mkdirSync(uploadDir, { recursive: true });
 
 exports.uploadDir = uploadDir;
 
+function uuidv4() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+
 exports.createHelpdeskCase = async (req, res) => {
   try {
     const { userId, displayName, description, oaId, cmpId, customerCode } =
