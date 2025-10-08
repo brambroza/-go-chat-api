@@ -282,7 +282,7 @@ exports.handleLineWebhook = async (req, res) => {
         ); */
 
         if (problamDetail !== "" && urlName !== "" && problamDetail != null && urlName != null) { 
-          await lineService.senLinkdMessageProblem(channelToken, to, problamDetail , urlName);
+          await lineService.senLinkdMessageProblem(channelToken, userId, problamDetail , urlName);
         }
 
       }
