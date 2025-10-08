@@ -236,11 +236,13 @@ exports.handleLineWebhook = async (req, res) => {
         //  const userlogin = "brambroza@gmail.com"; // กำหนด userlogin ตามระบบของคุณ
 
         for (const row of rows) {
-          const room = `notification_${cmpId}_${row.Username}`;
+          const room = `notification_230015_${row.Username}`;
           io.to(room).emit(
             "ReceiveNotification",
             JSON.stringify([msgNotification])
           );
+
+          // บันทึกแจ้งเตือนไปยังแต่ละ user
 
           request2 = pool.request();
           request2.input("CmpId", sql.NVarChar(100), "230015");
