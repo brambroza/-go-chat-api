@@ -79,7 +79,7 @@ const PORT = process.env.PORT || 3000;
     io.on("connection", (socket) => {
       console.log("A user connected:", socket.id);
 
-      ticketTaskReplyHub(socket);
+    /*   ticketTaskReplyHub(socket); */
 
       socket.on("client_message", (data) => {
         io.emit("server_broadcast", {
