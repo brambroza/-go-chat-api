@@ -8,6 +8,7 @@ const {
   getMessagesTitle,
   getLineChatConvertsatition,
   getChatConvertsationUserId, 
+  setReadLineMsg,
 } = require("../controllers/chat.controller");
 
 // POST /chat/send
@@ -19,6 +20,7 @@ router.get("/history", authMiddleware, getMessages);
 // get line friend
 router.get("/getLineFriend", authMiddleware, getLineFriend);
 router.get("/getconvertsation", authMiddleware, getLineChatConvertsatition);
+router.post("/setreadlinechat", authMiddleware, setReadLineMsg);
  
 // get message title
 router.get(

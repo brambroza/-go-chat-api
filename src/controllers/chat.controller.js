@@ -665,3 +665,28 @@ exports.getChatConvertsationUserId = async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 };
+
+
+
+exports.setReadLineMsg = async (req, res) => {
+  try {
+    const { cmpid, userId } = req.body;
+
+    if (!cmpid || !userId) {
+      return res.status(400).json({ error: "cmpid and userId are required" });
+    }
+
+    const pool = await connectDB();
+
+    await pool
+      .request()
+      .input("CmpId", sql.VarChar(10), cmpid)
+      .input("userId", sql.VarChar(50), userId)
+      .query("EXEC dbo.setReadLineMsg @CmpId=@CmpId, @userId=@userId");
+
+    return res.json({ message: "Messages marked as read." });
+  } catch (error) {
+    console.error("setReadLineMsg error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
