@@ -519,7 +519,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
         });
       }
 
-       
+        console.log("conversationsrd.messages:::", rd.messages);
 
       const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
       for (const rx of userRows) {
@@ -553,7 +553,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
     }
 
 
-    console.log("conversations:::", conversations);
+   
 
     res.json(conversations);
   } catch (error) {
