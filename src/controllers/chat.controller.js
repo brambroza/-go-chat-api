@@ -288,7 +288,7 @@ exports.handleLineWebhook = async (req, res) => {
               ? [
                   {
                     type: type,
-                    text: `${problamDetail}\n\n กดที่ link นี้แล้วกรอกปัญหาการใช้งานได้เลยครับ \n\n${urlName}`,
+                    text: `${problamDetail}\n\nกดที่ link นี้แล้วกรอกปัญหาการใช้งานได้เลยครับ \n\n${urlName}`,
                   },
                 ]
               : attachments;
@@ -391,7 +391,7 @@ exports.sendMessage = async (req, res) => {
     // สามารถ publish ไปยัง RabbitMQ ได้ ถ้าต้องการกระจายข้อมูล real-time
     /*  await publishToQueue("internalChatQueue", { fromUserId, to, message }); */
 
-    const to = userId;
+   /*  const to = userId;
     const messageObject =
       type === "text"
         ? [
@@ -402,7 +402,7 @@ exports.sendMessage = async (req, res) => {
           ]
         : attachments;
 
-    await lineService.pushMessage(channelToken, to, messageObject);
+    await lineService.pushMessage(channelToken, to, messageObject); */
 
     return res.status(200).json({ message: "Message sent." });
   } catch (error) {
