@@ -474,6 +474,8 @@ exports.getLineFriend = async (req, res) => {
           phone: row.PhoneNo,
           lineOAId: row.LineOAId,
           lineOAName: row.LineOAName,
+          position : row.position,
+          customerName : row.customerName,
         });
       } catch (err) {
         // Decide how you want to handle errors from the LINE API
