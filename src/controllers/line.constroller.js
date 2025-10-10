@@ -380,7 +380,7 @@ exports.rateProblem = async (req, res) => {
     request.input("ProblemId", sql.VarChar(100), problemId);
     request.input("RatingScore", sql.Int, score);
     request.input("CmpId", sql.VarChar(100), cmpId);
-    request.input("Descripotion", sql.NVarChar(500), description);
+    request.input("Description", sql.NVarChar(500), description);
 
     await request.execute("dbo.setProblemRating");
 
