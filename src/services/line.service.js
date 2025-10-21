@@ -56,11 +56,16 @@ exports.pushMessage = async (channelToken, to, items = []) => {
           };
 
         // ✅ ไฟล์เอกสาร (PDF, DOCX, XLSX)
-        case "file":
+        case "pdf":
+        case "doc":
+        case "docx":
+        case "xls":
+        case "xlsx":
           return {
             type: "file",
             fileName: item.fileName || "document.pdf",
-            fileSize: item.fileSize || 1024, // bytes (ประมาณค่าได้)
+            fileSize: item.fileSize || 1024,
+            originalContentUrl: item.url,
           };
 
         // ✅ Flex message (custom card)
