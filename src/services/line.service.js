@@ -29,6 +29,8 @@ exports.pushMessage = async (channelToken, to, items = []) => {
       Authorization: `Bearer ${channelToken}`,
     };
 
+    console.log("item" ,item);
+
     const messages = items.map((item) => {
       switch (item.type) {
         // ✅ ข้อความธรรมดา
