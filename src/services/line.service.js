@@ -29,7 +29,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
       Authorization: `Bearer ${channelToken}`,
     };
 
-    console.log("item" ,items);
+    console.log("item", items);
 
     const messages = items.map((item) => {
       switch (item.type) {
@@ -68,6 +68,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
             fileName: item.fileName || "document.pdf",
             fileSize: item.fileSize || 1024,
             originalContentUrl: item.url,
+            previewImageUrl: item.url,
           };
 
         // ✅ Flex message (custom card)
