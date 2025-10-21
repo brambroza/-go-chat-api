@@ -64,11 +64,20 @@ exports.pushMessage = async (channelToken, to, items = []) => {
         case "xls":
         case "xlsx":
           return {
-            type: "file",
-            fileName: item.fileName || "document.pdf",
-            fileSize: item.fileSize || 1024,
-            originalContentUrl: item.url,
-            previewImageUrl: item.url,
+            type: "template",
+            altText: `ไฟล์เอกสาร: ${item.fileName}`,
+            template: {
+              type: "buttons",
+              title: "📎 ดาวน์โหลดไฟล์",
+              text: item.fileName,
+              actions: [
+                {
+                  type: "uri",
+                  label: "ดาวน์โหลด",
+                  uri: item.url,
+                },
+              ],
+            },
           };
 
         // ✅ Flex message (custom card)
