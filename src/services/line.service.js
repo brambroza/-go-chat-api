@@ -63,6 +63,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
         case "docx":
         case "xls":
         case "xlsx":
+        case "txt":
           return {
             type: "template",
             altText: `ไฟล์เอกสาร: ${item.fileName}`,
