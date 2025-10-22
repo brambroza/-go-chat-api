@@ -414,7 +414,7 @@ exports.rateProblem = async (req, res) => {
 
     const flexmessage = {
       type: "flex",
-      altText: `🙏 ขอคุณที่ใช้บริการ`,
+      altText: `🙏 ขอบคุณที่ใช้บริการ`,
       contents: {
         type: "bubble",
         body: {
@@ -423,7 +423,7 @@ exports.rateProblem = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `🙏 ขอคุณที่ใช้บริการ`,
+              text: `🙏 ขอบคุณที่ใช้บริการ`,
               size: "md",
               color: "#e38c29ff",
             },
