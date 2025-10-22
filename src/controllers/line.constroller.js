@@ -486,23 +486,6 @@ exports.rateProblem = async (req, res) => {
             },
           ],
         },
-        footer: {
-          type: "box",
-          layout: "horizontal",
-          spacing: "md",
-          contents: [
-            {
-              type: "button",
-              action: {
-                type: "uri",
-                label: "ยืนยันการปิดเคส",
-                uri: ratingUrl,
-              },
-              style: "primary",
-              position: "relative",
-            },
-          ],
-        },
       },
     };
 
