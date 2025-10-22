@@ -423,9 +423,8 @@ exports.rateProblem = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `🙏 ขอคุณที่ใช้บริการ`,
-              weight: "bold",
-              size: "lg",
+              text: `🙏 ขอคุณที่ใช้บริการ`, 
+              size: "md",
               color: "#e38c29ff",
             },
 
