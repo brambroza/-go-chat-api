@@ -432,7 +432,7 @@ exports.rateProblem = async (req, res) => {
               type: "box",
               layout: "baseline",
               margin: "md",
-              align: "center",
+             
               contents: [
                 {
                   type: "icon",
