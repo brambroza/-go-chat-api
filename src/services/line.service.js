@@ -65,6 +65,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
         case "xlsx":
         case "txt":
         case "excel":
+          const safeUrl = encodeURI(item.url);
           return {
             type: "template",
             altText: `ไฟล์เอกสาร: ${item.fileName}`,
@@ -76,7 +77,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
                 {
                   type: "uri",
                   label: "ดาวน์โหลด",
-                  uri: item.url,
+                  uri: safeUrl,
                 },
               ],
             },
