@@ -273,15 +273,27 @@ exports.createHelpdeskCase = async (req, res) => {
     request2.input("userTo", sql.NVarChar(100), userlogin);
     request2.input("userFrom", sql.NVarChar(100), "0");
     request2.input("id", sql.VarChar(100), TaskNoNew);
-    request2.input("Title", sql.VarChar(500), `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `);
-    request2.input("Category", sql.VarChar(500), `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `);
+    request2.input(
+      "Title",
+      sql.VarChar(500),
+      `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `
+    );
+    request2.input(
+      "Category",
+      sql.VarChar(500),
+      `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `
+    );
     request2.input("type", sql.VarChar(50), "linechat");
     request2.input(
       "linkTo",
       sql.VarChar(500),
       `/productservice/servicerequest`
     );
-    request2.input("ModuleFormName", sql.VarChar(500), "/productservice/servicerequest");
+    request2.input(
+      "ModuleFormName",
+      sql.VarChar(500),
+      "/productservice/servicerequest"
+    );
     request2.input("DocNo", sql.VarChar(100), `${TaskNoNew}`);
     request2.input("RevNo", sql.Int, 0);
     request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
@@ -383,6 +395,130 @@ exports.rateProblem = async (req, res) => {
     request.input("Description", sql.NVarChar(500), description);
 
     await request.execute("dbo.setProblemRating");
+
+    const results = await pool.request().input("CmpId", sql.VarChar, cmpId)
+      .query(`
+        SELECT top 1 AccessToken as channelToken 
+        FROM [dbo].[CompanySocialChannel]
+      WHERE CmpId = @CmpId
+      `);
+
+    if (results.recordset.length === 0) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    const { channelToken } = results.recordset[0];
+
+    // 🔐 Token ของ LINE OA (map ตาม oaId ถ้ามีหลายตัว)
+    const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
+
+    const flexmessage = {
+      type: "flex",
+      altText: `🙏 ขอคุณที่ใช้บริการ`,
+      contents: {
+        type: "bubble",
+        body: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "text",
+              text: `🙏 ขอคุณที่ใช้บริการ`,
+              weight: "bold",
+              size: "lg",
+              color: "#e38c29ff",
+            },
+
+            {
+              type: "box",
+              layout: "baseline",
+              margin: "md",
+              contents: [
+                {
+                  type: "icon",
+                  size: "sm",
+                  url:
+                    score === 1
+                      ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+                      : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
+                },
+                {
+                  type: "icon",
+                  size: "sm",
+                  url:
+                    score === 2
+                      ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+                      : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
+                },
+                {
+                  type: "icon",
+                  size: "sm",
+                  url:
+                    score === 3
+                      ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+                      : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
+                },
+                {
+                  type: "icon",
+                  size: "sm",
+                  url:
+                    score === 4
+                      ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+                      : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
+                },
+                {
+                  type: "icon",
+                  size: "sm",
+                  url:
+                    score === 5
+                      ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
+                      : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
+                },
+                {
+                  type: "text",
+                  text: score.toString(),
+                  size: "sm",
+                  color: "#999999",
+                  margin: "md",
+                  flex: 0,
+                },
+              ],
+            },
+          ],
+        },
+        footer: {
+          type: "box",
+          layout: "horizontal",
+          spacing: "md",
+          contents: [
+            {
+              type: "button",
+              action: {
+                type: "uri",
+                label: "ยืนยันการปิดเคส",
+                uri: ratingUrl,
+              },
+              style: "primary",
+              position: "relative",
+            },
+          ],
+        },
+      },
+    };
+
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      {
+        to: userId,
+        messages: [flexmessage],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     return res.json({ success: true });
   } catch (err) {
