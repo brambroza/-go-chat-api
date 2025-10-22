@@ -437,7 +437,7 @@ exports.rateProblem = async (req, res) => {
                   type: "icon",
                   size: "sm",
                   url:
-                    score === 1
+                    score === 1 ||  score === 2 || score === 3  || score === 4 || score === 5
                       ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
                       : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
                 },
@@ -445,7 +445,7 @@ exports.rateProblem = async (req, res) => {
                   type: "icon",
                   size: "sm",
                   url:
-                    score === 2
+                    score === 2 || score === 3  || score === 4 || score === 5
                       ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
                       : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
                 },
@@ -453,7 +453,7 @@ exports.rateProblem = async (req, res) => {
                   type: "icon",
                   size: "sm",
                   url:
-                    score === 3
+                    score === 3  || score === 4 || score === 5
                       ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
                       : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
                 },
@@ -461,7 +461,7 @@ exports.rateProblem = async (req, res) => {
                   type: "icon",
                   size: "sm",
                   url:
-                    score === 4
+                    score === 4 || score === 5
                       ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
                       : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
                 },
