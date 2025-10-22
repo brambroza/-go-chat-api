@@ -59,11 +59,12 @@ exports.pushMessage = async (channelToken, to, items = []) => {
 
         // ✅ ไฟล์เอกสาร (PDF, DOCX, XLSX)
         case "pdf":
-        case "doc":
+        case "word":
         case "docx":
         case "xls":
         case "xlsx":
         case "txt":
+        case "excel":
           return {
             type: "template",
             altText: `ไฟล์เอกสาร: ${item.fileName}`,
