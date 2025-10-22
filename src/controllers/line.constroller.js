@@ -423,7 +423,7 @@ exports.rateProblem = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `🙏 ขอคุณที่ใช้บริการ`, 
+              text: `🙏 ขอคุณที่ใช้บริการ`,
               size: "md",
               color: "#e38c29ff",
             },
@@ -432,12 +432,17 @@ exports.rateProblem = async (req, res) => {
               type: "box",
               layout: "baseline",
               margin: "md",
+              align: "center",
               contents: [
                 {
                   type: "icon",
                   size: "sm",
                   url:
-                    score === 1 ||  score === 2 || score === 3  || score === 4 || score === 5
+                    score === 1 ||
+                    score === 2 ||
+                    score === 3 ||
+                    score === 4 ||
+                    score === 5
                       ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
                       : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
                 },
@@ -445,7 +450,7 @@ exports.rateProblem = async (req, res) => {
                   type: "icon",
                   size: "sm",
                   url:
-                    score === 2 || score === 3  || score === 4 || score === 5
+                    score === 2 || score === 3 || score === 4 || score === 5
                       ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
                       : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
                 },
@@ -453,7 +458,7 @@ exports.rateProblem = async (req, res) => {
                   type: "icon",
                   size: "sm",
                   url:
-                    score === 3  || score === 4 || score === 5
+                    score === 3 || score === 4 || score === 5
                       ? "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png"
                       : "https://developers-resource.landpress.line.me/fx/img/review_gray_star_28.png",
                 },
@@ -475,7 +480,7 @@ exports.rateProblem = async (req, res) => {
                 },
                 {
                   type: "text",
-                  text: score.toString(),
+                  text: `${score.toString()} ขอบคุณที่ให้คะแนน`,
                   size: "sm",
                   color: "#999999",
                   margin: "md",
