@@ -270,7 +270,7 @@ exports.downloadVideo = async (messageId, token) => {
     const buffer = Buffer.from(await res.arrayBuffer());
 
     const volumeBase = "/usr/src/app/uploads";
-    const folder = path.join(volumeBase, `fromline/line-vedio`);
+    const folder = path.join(volumeBase, `fromline/line-video`);
 
     const filename = `${messageId}.mp4`;
     const filepath = path.join(folder, filename);
@@ -290,7 +290,7 @@ exports.downloadVideo = async (messageId, token) => {
       });
     });
 
-    return `/fromline/line-vedio/${filename}`;
+    return `/fromline/line-video/${filename}`;
   } catch (error) {
     console.error(
       "Error in downloadvideo:",
