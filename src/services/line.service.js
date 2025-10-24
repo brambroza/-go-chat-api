@@ -224,7 +224,7 @@ exports.downloadImage = async (messageId, token) => {
     const volumeBase = "/usr/src/app/uploads";
     const folder = path.join(volumeBase, `fromline/line-images`);
 
-    const filename = `${uuidv4()}.jpg`;
+    const filename = `${messageId}.jpg`;
     const filepath = path.join(folder, filename);
 
     await fs.mkdir(folder, { recursive: true }, (err) => {
@@ -272,7 +272,7 @@ exports.downloadVideo = async (messageId, token) => {
     const volumeBase = "/usr/src/app/uploads";
     const folder = path.join(volumeBase, `fromline/line-vedio`);
 
-    const filename = `${uuidv4()}.mp4`;
+    const filename = `${messageId}.mp4`;
     const filepath = path.join(folder, filename);
 
     await fs.mkdir(folder, { recursive: true }, (err) => {
