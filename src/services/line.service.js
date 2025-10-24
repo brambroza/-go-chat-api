@@ -202,7 +202,7 @@ exports.getLineProfile = async (userId, accessToken) => {
 
 exports.downloadImage = async (messageId, token) => {
   try {
-    const res = await axios.get(
+    const res = await fetch(
       `https://api-data.line.me/v2/bot/message/${messageId}/content`,
       {
         headers: {
@@ -249,8 +249,8 @@ exports.downloadImage = async (messageId, token) => {
 };
 
 exports.downloadVideo = async (messageId, token) => {
- try {
-    const res = await axios.get(
+  try {
+    const res = await fetch(
       `https://api-data.line.me/v2/bot/message/${messageId}/content`,
       {
         headers: {
@@ -290,7 +290,7 @@ exports.downloadVideo = async (messageId, token) => {
     return `/uploads/line-vedio/${filename}`;
   } catch (error) {
     console.error(
-      "Error in downloadImage:",
+      "Error in downloadvideo:",
       error.response?.data || error.message
     );
   }
