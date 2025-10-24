@@ -219,7 +219,7 @@ exports.downloadImage = async (messageId, token) => {
     const buffer = Buffer.from(await res.arrayBuffer());
 
     const volumeBase = "/usr/src/app/uploads";
-    const folder = path.join(volumeBase, `uploads/line-images`);
+    const folder = path.join(volumeBase, `fromline/line-images`);
 
     const filename = `${uuidv4()}.jpg`;
     const filepath = path.join(folder, filename);
@@ -239,7 +239,7 @@ exports.downloadImage = async (messageId, token) => {
       });
     });
 
-    return `/uploads/line-images/${filename}`;
+    return `/fromline/line-images/${filename}`;
   } catch (error) {
     console.error(
       "Error in downloadImage:",
@@ -267,7 +267,7 @@ exports.downloadVideo = async (messageId, token) => {
     const buffer = Buffer.from(await res.arrayBuffer());
 
     const volumeBase = "/usr/src/app/uploads";
-    const folder = path.join(volumeBase, `uploads/line-vedio`);
+    const folder = path.join(volumeBase, `fromline/line-vedio`);
 
     const filename = `${uuidv4()}.mp4`;
     const filepath = path.join(folder, filename);
@@ -287,7 +287,7 @@ exports.downloadVideo = async (messageId, token) => {
       });
     });
 
-    return `/uploads/line-vedio/${filename}`;
+    return `/fromline/line-vedio/${filename}`;
   } catch (error) {
     console.error(
       "Error in downloadvideo:",
