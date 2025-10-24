@@ -208,16 +208,36 @@ exports.downloadImage = async (messageId, token) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        responseType: "arraybuffer",
       }
     );
 
-    const folder = path.join(__dirname, "../uploads/line-images");
-    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
+    if (!res.ok) {
+      console.error(`❌ Failed to fetch image ${file.id}`);
+      return;
+    }
+
+    const buffer = Buffer.from(await res.arrayBuffer());
+
+    const volumeBase = "/usr/src/app/uploads";
+    const folder = path.join(volumeBase, `uploads/line-images`);
 
     const filename = `${uuidv4()}.jpg`;
     const filepath = path.join(folder, filename);
-    fs.writeFileSync(filepath, res.data);
+
+    await fs.mkdir(folder, { recursive: true }, (err) => {
+      if (err) {
+        console.error("❌ Error creating directory:", err);
+        return;
+      }
+
+      fs.writeFileSync(filepath, buffer, (err) => {
+        if (err) {
+          console.error("❌ Error moving file:", err);
+          return;
+        }
+        console.log("✅ File moved successfully");
+      });
+    });
 
     return `/uploads/line-images/${filename}`;
   } catch (error) {
@@ -229,28 +249,48 @@ exports.downloadImage = async (messageId, token) => {
 };
 
 exports.downloadVideo = async (messageId, token) => {
-  try {
+ try {
     const res = await axios.get(
       `https://api-data.line.me/v2/bot/message/${messageId}/content`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        responseType: "arraybuffer",
       }
     );
 
-    const folder = path.join(__dirname, "../uploads/line-video");
-    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
+    if (!res.ok) {
+      console.error(`❌ Failed to fetch image ${file.id}`);
+      return;
+    }
+
+    const buffer = Buffer.from(await res.arrayBuffer());
+
+    const volumeBase = "/usr/src/app/uploads";
+    const folder = path.join(volumeBase, `uploads/line-vedio`);
 
     const filename = `${uuidv4()}.mp4`;
     const filepath = path.join(folder, filename);
-    fs.writeFileSync(filepath, res.data);
 
-    return `/uploads/line-video/${filename}`;
+    await fs.mkdir(folder, { recursive: true }, (err) => {
+      if (err) {
+        console.error("❌ Error creating directory:", err);
+        return;
+      }
+
+      fs.writeFileSync(filepath, buffer, (err) => {
+        if (err) {
+          console.error("❌ Error moving file:", err);
+          return;
+        }
+        console.log("✅ File moved successfully");
+      });
+    });
+
+    return `/uploads/line-vedio/${filename}`;
   } catch (error) {
     console.error(
-      "Error in download video:",
+      "Error in downloadImage:",
       error.response?.data || error.message
     );
   }
