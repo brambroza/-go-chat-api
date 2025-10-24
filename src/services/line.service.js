@@ -1,5 +1,8 @@
 const axios = require("axios");
 
+const fs = require("fs");
+const path = require("path");
+
 exports.replyMessage = async (channelToken, replyToken, messageObject) => {
   try {
     const url = "https://api.line.me/v2/bot/message/reply";
