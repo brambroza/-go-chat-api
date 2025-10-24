@@ -643,6 +643,16 @@ exports.getChatConvertsationUserId = async (req, res) => {
         });
       }
 
+       if (msg.type === "video") {
+        const url = await lineService.downloadVideo(msg.id, msg.lineToken);
+        msg.attachments.push({
+          id: msg.id,
+          url,
+          createdAt: msg.timestamp,
+          type: "video",
+        });
+      }
+
       if (msg.type === "sticker") {
         msg.attachments.push({
           id: msg.id,
@@ -712,3 +722,5 @@ exports.setReadLineMsg = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+ 
