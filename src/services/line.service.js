@@ -240,17 +240,17 @@ exports.downloadVideo = async (messageId, token) => {
       }
     );
 
-    const folder = path.join(__dirname, "../uploads/line-images");
+    const folder = path.join(__dirname, "../uploads/line-video");
     if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
 
     const filename = `${uuidv4()}.mp4`;
     const filepath = path.join(folder, filename);
     fs.writeFileSync(filepath, res.data);
 
-    return `/uploads/line-images/${filename}`;
+    return `/uploads/line-video/${filename}`;
   } catch (error) {
     console.error(
-      "Error in downloadImage:",
+      "Error in download video:",
       error.response?.data || error.message
     );
   }
