@@ -35,7 +35,6 @@ router.post("/problem/sendmsgwaiting", sendFlexMsgWaiting);
 router.post("/problem/sendfinish", sendCaseClosedMessage);
 
 // webhook สำหรับ Line Messaging API
-router.post("/webhook/:accountId", handleLineWebhook);
-router.get("/sendfrompromblem", sendFromproblem);
+router.post("/webhook/:accountId", handleLineWebhook); 
 
 module.exports = router;

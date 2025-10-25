@@ -90,7 +90,7 @@ exports.handleLineWebhook = async (req, res) => {
 
         let problamDetail = null;
         let urlName = null;
-        const { ProbDetail, UrlName  } = result.recordset[0];
+        const { ProbDetail, UrlName } = result.recordset[0];
         problamDetail = ProbDetail;
         urlName = UrlName;
 
@@ -281,10 +281,19 @@ exports.handleLineWebhook = async (req, res) => {
           JSON.stringify([msgNotification])
         ); */
 
-        if (problamDetail !== "" && urlName !== "" && problamDetail != null && urlName != null) { 
-          await lineService.senLinkdMessageProblem(channelToken, userId, problamDetail , urlName);
+        if (
+          problamDetail !== "" &&
+          urlName !== "" &&
+          problamDetail != null &&
+          urlName != null
+        ) {
+          await lineService.senLinkdMessageProblem(
+            channelToken,
+            userId,
+            problamDetail,
+            urlName
+          );
         }
-
       }
     }
 
@@ -309,6 +318,7 @@ exports.sendMessage = async (req, res) => {
       stickerResourceType,
       timeStamp,
       attachments,
+      flexmessage,
     } = req.body;
 
     // อาจจะบันทึกลง DB ก่อน
@@ -380,8 +390,8 @@ exports.sendMessage = async (req, res) => {
     // สามารถ publish ไปยัง RabbitMQ ได้ ถ้าต้องการกระจายข้อมูล real-time
     /*  await publishToQueue("internalChatQueue", { fromUserId, to, message }); */
 
-     const to = userId;
-    const messageObject =
+    const to = userId;
+  /*   const messageObject =
       type === "text"
         ? [
             {
@@ -389,9 +399,39 @@ exports.sendMessage = async (req, res) => {
               text: message,
             },
           ]
-        : attachments;
+        : attachments; */
 
-    await lineService.pushMessage(channelToken, to, messageObject);  
+    let messageObject;
+
+    if (type === "flex") {
+      // กรณีเป็น Flex message
+      messageObject = [
+        {
+          type: "flex",
+          altText: flexmessage?.altText || "📢 ข้อความ Flex",
+          contents: flexmessage?.contents || {},
+        },
+      ];
+    } else if (type === "text") {
+      messageObject = [
+        {
+          type: "text",
+          text: message,
+        },
+      ];
+    } else if (type === "sticker") {
+      messageObject = [
+        {
+          type: "sticker",
+          packageId: stickerId || "11537",
+          stickerId: stickerResourceType || "52002734",
+        },
+      ];
+    } else {
+      messageObject = attachments || [];
+    }
+
+    await lineService.pushMessage(channelToken, to, messageObject);
 
     return res.status(200).json({ message: "Message sent." });
   } catch (error) {
@@ -474,8 +514,8 @@ exports.getLineFriend = async (req, res) => {
           phone: row.PhoneNo,
           lineOAId: row.LineOAId,
           lineOAName: row.LineOAName,
-          position : row.position,
-          customerName : row.customerName,
+          position: row.position,
+          customerName: row.customerName,
         });
       } catch (err) {
         // Decide how you want to handle errors from the LINE API
@@ -643,7 +683,7 @@ exports.getChatConvertsationUserId = async (req, res) => {
         });
       }
 
-       if (msg.type === "video") {
+      if (msg.type === "video") {
         const url = await lineService.downloadVideo(msg.id, msg.lineToken);
         msg.attachments.push({
           id: msg.id,
@@ -722,5 +762,3 @@ exports.setReadLineMsg = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
- 

@@ -43,6 +43,8 @@ exports.pushMessage = async (channelToken, to, items = []) => {
             text: item.text || "",
           };
 
+      
+
         // ✅ รูปภาพ
         case "image":
           return {
