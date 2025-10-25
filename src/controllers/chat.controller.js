@@ -321,6 +321,13 @@ exports.sendMessage = async (req, res) => {
       flexmessage,
     } = req.body;
 
+    let messageToSave = message;
+
+    if (type === "flex" && flexmessage) {
+      // แปลง Flex JSON เป็น string เพื่อเก็บลง DB
+      messageToSave = JSON.stringify(flexmessage);
+    }
+
     // อาจจะบันทึกลง DB ก่อน
     const pool = await connectDB();
 
@@ -343,7 +350,7 @@ exports.sendMessage = async (req, res) => {
       ",@replyToken=''" +
       ",@quotaToken=''" +
       ",@text='" +
-      message +
+      messageToSave +
       "'" +
       ",@stickerId=''" +
       ",@stickerResourceType=''" +
@@ -391,7 +398,7 @@ exports.sendMessage = async (req, res) => {
     /*  await publishToQueue("internalChatQueue", { fromUserId, to, message }); */
 
     const to = userId;
-  /*   const messageObject =
+    /*   const messageObject =
       type === "text"
         ? [
             {
