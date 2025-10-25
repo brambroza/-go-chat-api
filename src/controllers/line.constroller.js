@@ -3,6 +3,7 @@ const fs = require("fs");
 const axios = require("axios");
 const { io } = require("../app");
 const { connectDB, sql } = require("../config/database");
+const lineService = require("../services/line.service");
 
 // create upload dir
 //const uploadDir = path.join(__dirname, "../../uploads/helpdesk");
@@ -1217,3 +1218,27 @@ async function sendLineToTeamSeviceFinish(
     return false;
   }
 }
+
+exports.sendFromproblem = async (req, res) => {
+  const { userId, channelToken ,   cmpId, urlName } = req.body;
+
+  if (!userId || !problemId || !score || !cmpId) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+   
+
+    await lineService.senLinkdMessageProblem(
+      channelToken,
+      userId,
+      'แจ้งปัญหา',
+      urlName
+    );
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("rateProblem error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
