@@ -599,7 +599,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
                   contents: [
                     {
                       type: "text",
-                      text: `เวลาเริ่มดำเนินการ: ${startDate}`,
+                      text: `⏱️ เวลาเริ่มดำเนินการ: ${startDate}`,
                       wrap: true,
                       size: "sm",
                       color: "#999999",
