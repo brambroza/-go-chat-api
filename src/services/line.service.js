@@ -43,8 +43,6 @@ exports.pushMessage = async (channelToken, to, items = []) => {
             text: item.text || "",
           };
 
-      
-
         // ✅ รูปภาพ
         case "image":
           return {
@@ -207,6 +205,21 @@ exports.getLineProfile = async (userId, accessToken) => {
 
 exports.downloadImage = async (messageId, token) => {
   try {
+    const volumeBase = "/usr/src/app/uploads";
+    const folder = path.join(volumeBase, `fromline/line-images`);
+
+    const filename = `${messageId}.jpg`;
+    const filepath = path.join(folder, filename);
+
+    // ✅ ถ้ามีไฟล์อยู่แล้ว ไม่ต้องโหลดซ้ำ
+    try {
+      await fs.access(filepath);
+      console.log(`⚡ ใช้ไฟล์ที่มีอยู่แล้ว: ${filepath}`);
+      return `/fromline/line-images/${filename}`;
+    } catch {
+      // file ไม่เจอ → ไปโหลดใหม่
+    }
+
     const res = await fetch(
       `https://api-data.line.me/v2/bot/message/${messageId}/content`,
       {
@@ -222,12 +235,6 @@ exports.downloadImage = async (messageId, token) => {
     }
 
     const buffer = Buffer.from(await res.arrayBuffer());
-
-    const volumeBase = "/usr/src/app/uploads";
-    const folder = path.join(volumeBase, `fromline/line-images`);
-
-    const filename = `${messageId}.jpg`;
-    const filepath = path.join(folder, filename);
 
     await fs.mkdir(folder, { recursive: true }, (err) => {
       if (err) {
@@ -255,6 +262,20 @@ exports.downloadImage = async (messageId, token) => {
 
 exports.downloadVideo = async (messageId, token) => {
   try {
+    const volumeBase = "/usr/src/app/uploads";
+    const folder = path.join(volumeBase, "fromline/line-video");
+    const filename = `${messageId}.mp4`;
+    const filepath = path.join(folder, filename);
+
+    // ✅ ถ้ามีไฟล์อยู่แล้ว ไม่ต้องโหลดซ้ำ
+    try {
+      await fs.access(filepath);
+      console.log(`⚡ ใช้ไฟล์ที่มีอยู่แล้ว: ${filepath}`);
+      return `/fromline/line-video/${filename}`;
+    } catch {
+      // file ไม่เจอ → ไปโหลดใหม่
+    }
+
     const res = await fetch(
       `https://api-data.line.me/v2/bot/message/${messageId}/content`,
       {
@@ -270,12 +291,6 @@ exports.downloadVideo = async (messageId, token) => {
     }
 
     const buffer = Buffer.from(await res.arrayBuffer());
-
-    const volumeBase = "/usr/src/app/uploads";
-    const folder = path.join(volumeBase, `fromline/line-video`);
-
-    const filename = `${messageId}.mp4`;
-    const filepath = path.join(folder, filename);
 
     await fs.mkdir(folder, { recursive: true }, (err) => {
       if (err) {

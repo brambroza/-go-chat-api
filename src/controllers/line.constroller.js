@@ -517,10 +517,9 @@ exports.rateProblem = async (req, res) => {
 
 exports.sendFlexMsgWaiting = async (req, res) => {
   try {
-    const { userId, oaId, taskNo, actionby, description, startDate } = req.body;
+    const { userId, oaId, taskNo, actionby, description, startDate  } = req.body;
 
-    console.log("userId", userId);
-    console.log("oaId", oaId);
+
     if (!userId || !oaId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -645,6 +644,40 @@ exports.sendFlexMsgWaiting = async (req, res) => {
     );
 
     await sendLineToTeamSeviceWaiting(taskNo, description, actionby);
+
+
+  
+
+    // อาจจะบันทึกลง DB ก่อน
+ /* 
+   const  messageToSave = JSON.stringify(flexMsg);
+    // Build the SQL command string
+    let cmd =
+      "EXEC dbo.setLineChatMessage" +
+      " @CmpId='230015'" +
+      ",@TimeStamp=0" +
+      ",@id='" +
+      uuidv4() +
+      "'" +
+      ",@userId='" +
+      userId +
+      "'" +
+      ",@type='flex'" +
+      ",@replyToken=''" +
+      ",@quotaToken=''" +
+      ",@text='" +
+      messageToSave +
+      "'" +
+      ",@stickerId=''" +
+      ",@stickerResourceType=''" +
+      ",@sendbyId='" +
+      sendbyId +
+      "'";
+
+    // Execute the query
+    await pool.request().query(cmd); */
+
+
 
     return res.status(200).json({ success: true });
   } catch (err) {
