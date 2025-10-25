@@ -432,7 +432,7 @@ exports.rateProblem = async (req, res) => {
               type: "box",
               layout: "baseline",
               margin: "md",
-             
+
               contents: [
                 {
                   type: "icon",
@@ -516,7 +516,7 @@ exports.rateProblem = async (req, res) => {
 
 exports.sendFlexMsgWaiting = async (req, res) => {
   try {
-    const { userId, oaId, taskNo, actionby, description } = req.body;
+    const { userId, oaId, taskNo, actionby, description, startDate } = req.body;
 
     console.log("userId", userId);
     console.log("oaId", oaId);
@@ -588,6 +588,21 @@ exports.sendFlexMsgWaiting = async (req, res) => {
                       color: "#aaaaaa",
                       size: "sm",
                       wrap: true,
+                    },
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `เวลาเริ่มดำเนินการ: ${startDate}`,
+                      wrap: true,
+                      size: "sm",
+                      color: "#999999",
                     },
                   ],
                 },
