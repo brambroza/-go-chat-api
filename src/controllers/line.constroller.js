@@ -413,9 +413,9 @@ exports.rateProblem = async (req, res) => {
     // 🔐 Token ของ LINE OA (map ตาม oaId ถ้ามีหลายตัว)
     const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
 
-    const flexmessage = {
+    /* const flexmessage = {
       type: "flex",
-      altText: `🙏 ขอบคุณที่ใช้บริการ`,
+      altText: `🙏 ขอบคุณสำหรับคะแนนและความคิดเห็นของท่าน`,
       contents: {
         type: "bubble",
         body: {
@@ -424,10 +424,13 @@ exports.rateProblem = async (req, res) => {
           contents: [
             {
               type: "text",
-              text: `🙏 ขอบคุณที่ใช้บริการ`,
+              text: `🙏 ขอบคุณสำหรับคะแนนและความคิดเห็นของท่าน`,
               size: "md",
               color: "#e38c29ff",
             },
+
+
+
 
             {
               type: "box",
@@ -492,6 +495,83 @@ exports.rateProblem = async (req, res) => {
           ],
         },
       },
+    }; */
+
+    const flexmessage = {
+      type: "flex",
+      altText: "🙏 ขอบคุณสำหรับคะแนนและความคิดเห็นของท่าน",
+      contents: {
+        type: "bubble",
+        size: "mega",
+        body: {
+          type: "box",
+          layout: "vertical",
+          backgroundColor: "#E8F1FF",
+          cornerRadius: "lg",
+          paddingAll: "16px",
+          contents: [
+            {
+              type: "text",
+              text: "🙏 ขอบคุณสำหรับคะแนนและความคิดเห็นของท่าน",
+              weight: "bold",
+              size: "md",
+              color: "#e38c29",
+              wrap: true,
+            },
+            {
+              type: "text",
+              text: "ทีมงาน NIS SUPPORT จะนำคำแนะนำไปปรับปรุงการให้บริการให้ดียิ่งขึ้น",
+              wrap: true,
+              size: "sm",
+              color: "#333333",
+              margin: "md",
+              justifyContent: "center",
+            },
+            {
+              type: "text",
+              text: "ขอบคุณที่ไว้วางใจในบริการของเราเสมอมา",
+              wrap: true,
+              size: "sm",
+              color: "#333333",
+              margin: "md",
+              justifyContent: "center",
+            },
+            {
+              type: "box",
+              layout: "baseline",
+              margin: "md",
+              justifyContent: "center",
+              contents: [
+                {
+                  type: "icon",
+                  url: "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png",
+                  size: "sm",
+                },
+                {
+                  type: "icon",
+                  url: "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png",
+                  size: "sm",
+                },
+                {
+                  type: "icon",
+                  url: "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png",
+                  size: "sm",
+                },
+                {
+                  type: "icon",
+                  url: "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png",
+                  size: "sm",
+                },
+                {
+                  type: "icon",
+                  url: "https://developers-resource.landpress.line.me/fx/img/review_gold_star_28.png",
+                  size: "sm",
+                },
+              ],
+            },
+          ],
+        },
+      },
     };
 
     await axios.post(
@@ -517,8 +597,7 @@ exports.rateProblem = async (req, res) => {
 
 exports.sendFlexMsgWaiting = async (req, res) => {
   try {
-    const { userId, oaId, taskNo, actionby, description, startDate  } = req.body;
-
+    const { userId, oaId, taskNo, actionby, description, startDate } = req.body;
 
     if (!userId || !oaId) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -645,11 +724,8 @@ exports.sendFlexMsgWaiting = async (req, res) => {
 
     await sendLineToTeamSeviceWaiting(taskNo, description, actionby);
 
-
-  
-
     // อาจจะบันทึกลง DB ก่อน
- /* 
+    /* 
    const  messageToSave = JSON.stringify(flexMsg);
     // Build the SQL command string
     let cmd =
@@ -676,8 +752,6 @@ exports.sendFlexMsgWaiting = async (req, res) => {
 
     // Execute the query
     await pool.request().query(cmd); */
-
-
 
     return res.status(200).json({ success: true });
   } catch (err) {
@@ -1253,19 +1327,17 @@ async function sendLineToTeamSeviceFinish(
 }
 
 exports.sendFromproblem = async (req, res) => {
-  const { userId, channelToken ,   cmpId, urlName } = req.body;
+  const { userId, channelToken, cmpId, urlName } = req.body;
 
   if (!userId || !problemId || !score || !cmpId) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   try {
-   
-
     await lineService.senLinkdMessageProblem(
       channelToken,
       userId,
-      'แจ้งปัญหา',
+      "แจ้งปัญหา",
       urlName
     );
 
