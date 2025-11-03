@@ -525,7 +525,7 @@ exports.rateProblem = async (req, res) => {
               size: "sm",
               color: "#333333",
               margin: "md",
-              justifyContent: "center",
+              align: "center",
             },
             {
               type: "text",
@@ -534,13 +534,12 @@ exports.rateProblem = async (req, res) => {
               size: "sm",
               color: "#333333",
               margin: "md",
-              justifyContent: "center",
+              align: "center",
             },
             {
               type: "box",
               layout: "baseline",
               margin: "md",
-              justifyContent: "center",
               contents: [
                 {
                   type: "icon",
@@ -568,6 +567,7 @@ exports.rateProblem = async (req, res) => {
                   size: "sm",
                 },
               ],
+              justifyContent: "center",
             },
           ],
         },
