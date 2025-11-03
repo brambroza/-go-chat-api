@@ -895,10 +895,10 @@ exports.sendCaseClosedMessage = async (req, res) => {
               contents: [
                 {
                   type: "text",
-                  text: "⏱️ ระยะเวลา:",
-                  weight: "bold",
+                  text: `⏳ ระยะเวลา:`,
+                  wrap: true,
                   size: "sm",
-                  color: "#000000",
+                  color: "#e38c29ff",
                 },
                 {
                   type: "text",
