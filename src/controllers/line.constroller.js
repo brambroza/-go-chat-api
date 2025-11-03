@@ -790,7 +790,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
               size: "lg",
               color: "#e38c29ff",
             },
-            {
+            /* {
               type: "text",
               text: `🚩 รายละเอียด: ${issue}`,
               wrap: true,
@@ -818,8 +818,47 @@ exports.sendCaseClosedMessage = async (req, res) => {
               wrap: true,
               size: "sm",
               color: "#666666",
-            },
+            }, */
+
             {
+              type: "box",
+              layout: "vertical",
+              margin: "md",
+              spacing: "sm",
+              contents: [
+                {
+                  type: "text",
+                  text: `🚩 รายละเอียด: ${issue}`,
+                  wrap: true,
+                  size: "sm",
+                  color: "#666666",
+                },
+                {
+                  type: "text",
+                  text: `🕒 สถานะ: ดำเนินการเรียบร้อย`,
+                  wrap: true,
+                  size: "sm",
+                  color: "#666666",
+                },
+                {
+                  type: "text",
+                  text: `📄 รายงาน: ${actiondetail}`,
+                  wrap: true,
+                  size: "sm",
+                  color: "#666666",
+                },
+
+                {
+                  type: "text",
+                  text: `👤 ผู้ดูแลเคส: ${staffName}`,
+                  wrap: true,
+                  size: "sm",
+                  color: "#666666",
+                },
+              ],
+            },
+
+            /*  {
               type: "text",
               text: `⏳ ระยะเวลา:`,
               wrap: true,
@@ -847,6 +886,63 @@ exports.sendCaseClosedMessage = async (req, res) => {
               wrap: true,
               size: "xs",
               color: "#999999",
+            }, */
+
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "md",
+              contents: [
+                {
+                  type: "text",
+                  text: "⏱️ ระยะเวลา:",
+                  weight: "bold",
+                  size: "sm",
+                  color: "#000000",
+                },
+                {
+                  type: "text",
+                  text: `เวลาแจ้ง: ${receiveDate}`,
+                  wrap: true,
+                  size: "xs",
+                  color: "#999999",
+                },
+                {
+                  type: "text",
+                  text: `เวลาดำเนินการ: ${startDate}`,
+                  wrap: true,
+                  size: "xs",
+                  color: "#999999",
+                },
+                {
+                  type: "text",
+                  text: `เวลาปิดงาน: ${closedDate}`,
+                  wrap: true,
+                  size: "xs",
+                  color: "#999999",
+                },
+              ],
+            },
+
+            {
+              type: "separator",
+              margin: "lg",
+            },
+            {
+              type: "text",
+              text: "🙏 ขอบคุณที่ใช้บริการจากทีม NIS SUPPORT",
+              weight: "bold",
+              size: "sm",
+              color: "#e38c29",
+              margin: "md",
+            },
+            {
+              type: "text",
+              text: "💡 ขอบคุณที่ไว้วางใจในบริการของเรา ทีมงานจะนำข้อเสนอแนะเพื่อปรับปรุงให้ดียิ่งขึ้น",
+              wrap: true,
+              size: "xs",
+              color: "#333333",
+              margin: "sm",
             },
           ],
         },
