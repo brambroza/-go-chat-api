@@ -930,11 +930,12 @@ exports.sendCaseClosedMessage = async (req, res) => {
             },
             {
               type: "text",
-              text: "🙏 ขอบคุณที่ใช้บริการจากทีม NIS SUPPORT",
+              text: "🙏ขอบคุณที่ใช้บริการจากทีม NIS SUPPORT",
               weight: "bold",
               size: "sm",
               color: "#e38c29",
               margin: "md",
+              wrap: true,
             },
 
             {
