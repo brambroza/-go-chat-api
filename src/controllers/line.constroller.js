@@ -311,6 +311,73 @@ exports.createHelpdeskCase = async (req, res) => {
   }
 };
 
+export const uploadfiles = async (req, res) => {
+  try {
+    const { cmpId, problemId, userId } = req.body;
+
+    // 🧩 ตรวจสอบค่าเบื้องต้น
+    if (!cmpId || !problemId || !userId || !description || !oaId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: "No files uploaded" });
+    }
+
+    console.log(
+      "📂 Files received:",
+      req.files.map((f) => f.originalname)
+    );
+
+    // 🔹 ตำแหน่งปลายทาง
+    const volumeBase = "/usr/src/app/uploads";
+    const uploadDirnew = path.join(
+      volumeBase,
+      `${cmpId}/serviceproblem/${problemId}`
+    );
+
+    // 🔧 สร้างโฟลเดอร์ (ถ้ายังไม่มี)
+    await fs.mkdir(uploadDirnew, { recursive: true });
+ /*    await fs.chmod(uploadDirnew, 0o777); */
+
+    const pool = await connectDB();
+
+    for (const file of req.files) {
+      const oldPath = file.path;
+      const newPath = path.join(uploadDirnew, file.filename);
+
+      try {
+        // 🔁 ย้ายไฟล์
+        await fs.rename(oldPath, newPath);
+
+        // 🔧 ตั้ง permission ของไฟล์ให้ทุก container เขียน/อ่านได้
+        await fs.chmod(newPath, 0o666);
+
+        console.log(`✅ File moved: ${file.filename}`);
+
+        // 💾 บันทึกข้อมูลลง DB
+        const request = pool.request();
+        request.input("cmpId", sql.VarChar(150), cmpId);
+        request.input("problemId", sql.VarChar(150), problemId);
+        request.input("fileName", sql.VarChar(255), file.filename);
+
+        await request.execute("dbo.setSTProblemFiles");
+        console.log("📦 Stored procedure executed");
+      } catch (err) {
+        console.error(`❌ Error processing file ${file.filename}:`, err);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Files uploaded and saved successfully",
+    });
+  } catch (err) {
+    console.error("Helpdesk upload error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 exports.saveContact = async (req, res) => {
   try {
     const {

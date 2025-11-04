@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const path = require("path"); 
+const path = require("path");
 const router = express.Router();
 const { handleLineWebhook } = require("../controllers/chat.controller");
 const {
@@ -11,6 +11,7 @@ const {
   sendFlexMsgWaiting,
   sendCaseClosedMessage,
   sendFromproblem,
+  uploadfiles,
 } = require("../controllers/line.constroller");
 
 function uuidv4() {
@@ -45,6 +46,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post("/helpdesk", upload.array("image", 10), createHelpdeskCase);
+router.post("/uploadsfiles", upload.array("image", 10), uploadfiles);
 router.post("/contact", saveContact);
 router.post("/problem/rate", rateProblem);
 router.post("/problem/sendmsgwaiting", sendFlexMsgWaiting);
