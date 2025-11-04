@@ -98,24 +98,23 @@ exports.createHelpdeskCase = async (req, res) => {
           const oldPath = file.path;
           const finalPath = path.join(uploadDirnew, file.filename);
 
-          await fs.mkdir(
-            uploadDirnew,
-            { recursive: true, mode: 0o777 },
-            (err) => {
+          await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
+            if (err) {
+              console.error("❌ Error creating directory:", err);
+              return;
+            }
+
+            fs.rename(oldPath, finalPath, (err) => {
               if (err) {
-                console.error("❌ Error creating directory:", err);
+                console.error("❌ Error moving file:", err);
                 return;
               }
+              console.log("✅ File moved successfully");
+            });
+          });
 
-              fs.rename(oldPath, finalPath, (err) => {
-                if (err) {
-                  console.error("❌ Error moving file:", err);
-                  return;
-                }
-                console.log("✅ File moved successfully");
-              });
-            }
-          );
+          await fs.chmod(uploadDirnew, 0o777);
+          await fs.chown(uploadDirnew, 5678, 5678);
 
           console.log(`✅ File moved successfully: ${file.filename}`);
         }
