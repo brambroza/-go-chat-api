@@ -311,7 +311,7 @@ exports.createHelpdeskCase = async (req, res) => {
   }
 };
 
-export const uploadfiles = async (req, res) => {
+exports.uploadfiles = async (req, res) => {
   try {
     const { cmpId, problemId, userId } = req.body;
 
