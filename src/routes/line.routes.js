@@ -9,9 +9,22 @@ const {
   rateProblem,
   sendFlexMsgWaiting,
   sendCaseClosedMessage,
-  sendFromproblem, 
+  sendFromproblem,
 } = require("../controllers/line.constroller");
- 
+
+function uuidv4() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+function sanitizeFileName(originalName) {
+  const ext = path.extname(originalName); // เช่น .jpg
+  return `${uuidv4()}${ext}`;
+}
+
 // configure multer storage
 const storage = multer.diskStorage({
   /*  destination: (_, __, cb) => cb(null, uploadDir), */
@@ -22,10 +35,12 @@ const storage = multer.diskStorage({
 
   // filename: (_, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
   filename: (_, file, cb) => {
-    console.log("📸 Uploading file:", file.originalname);
-    cb(null, `${Date.now()}-${file.originalname}`);
+    const newName = sanitizeFileName(file.originalname);
+    console.log("📸 Uploading file:", file.originalname, "→", newName);
+    cb(null, newName);
   },
 });
+
 const upload = multer({ storage });
 
 router.post("/helpdesk", upload.array("image", 10), createHelpdeskCase);
@@ -35,6 +50,6 @@ router.post("/problem/sendmsgwaiting", sendFlexMsgWaiting);
 router.post("/problem/sendfinish", sendCaseClosedMessage);
 
 // webhook สำหรับ Line Messaging API
-router.post("/webhook/:accountId", handleLineWebhook); 
+router.post("/webhook/:accountId", handleLineWebhook);
 
 module.exports = router;
