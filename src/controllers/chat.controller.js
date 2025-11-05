@@ -332,7 +332,7 @@ exports.sendMessage = async (req, res) => {
     const pool = await connectDB();
 
     // Build the SQL command string
-    let cmd =
+  /*   let cmd =
       "EXEC dbo.setLineChatMessage" +
       " @CmpId='" +
       cmpid +
@@ -349,17 +349,33 @@ exports.sendMessage = async (req, res) => {
       "'" +
       ",@replyToken=''" +
       ",@quotaToken=''" +
-      ",@text='" +
+      ",@text=N'" +
       messageToSave +
       "'" +
       ",@stickerId=''" +
       ",@stickerResourceType=''" +
       ",@sendbyId='" +
       sendbyId +
-      "'";
+      "'"; */
+
+    await pool
+      .request()
+      .input("CmpId", sql.VarChar(50), cmpid)
+      .input("TimeStamp", sql.Int, 0)
+      .input("id", sql.VarChar(50), id)
+      .input("userId", sql.VarChar(50), userId)
+      .input("type", sql.VarChar(20), type)
+      .input("replyToken", sql.VarChar(255), "")
+      .input("quotaToken", sql.VarChar(255), "")
+      .input("text", sql.NVarChar(sql.MAX), messageToSave) 
+      .input("stickerId", sql.VarChar(50), stickerId ?? "")
+      .input("stickerResourceType", sql.VarChar(50), stickerResourceType ?? "")
+      .input("sendbyId", sql.VarChar(50), sendbyId) 
+      
+      .execute("dbo.setLineChatMessage");
 
     // Execute the query
-    await pool.request().query(cmd);
+  /*   await pool.request().query(cmd); */
 
     const date = new Date();
 
