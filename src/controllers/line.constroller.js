@@ -313,10 +313,10 @@ exports.createHelpdeskCase = async (req, res) => {
 
 exports.uploadfiles = async (req, res) => {
   try {
-    const { cmpId, problemId, userId } = req.body;
+    const { cmpId, problemId } = req.body;
 
     // 🧩 ตรวจสอบค่าเบื้องต้น
-    if (!cmpId || !problemId || !userId || !description || !oaId) {
+    if (!cmpId || !problemId  ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
