@@ -523,6 +523,7 @@ exports.getLineFriend = async (req, res) => {
           lineOAName: row.LineOAName,
           position: row.position,
           customerName: row.customerName,
+          customerCode: row.customerCode,
         });
       } catch (err) {
         // Decide how you want to handle errors from the LINE API
