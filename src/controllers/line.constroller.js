@@ -113,9 +113,6 @@ exports.createHelpdeskCase = async (req, res) => {
             });
           });
 
-          await fs.chmod(uploadDirnew, 0o777);
-          await fs.chown(uploadDirnew, 5678, 5678);
-
           console.log(`✅ File moved successfully: ${file.filename}`);
         }
 
@@ -316,7 +313,7 @@ exports.uploadfiles = async (req, res) => {
     const { cmpId, problemId } = req.body;
 
     // 🧩 ตรวจสอบค่าเบื้องต้น
-    if (!cmpId || !problemId  ) {
+    if (!cmpId || !problemId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -326,7 +323,7 @@ exports.uploadfiles = async (req, res) => {
 
     console.log(
       "📂 Files received:",
-      req.files.map((f) => f.originalname)
+      req.files.map((f) => f.filename)
     );
 
     // 🔹 ตำแหน่งปลายทาง
@@ -338,7 +335,7 @@ exports.uploadfiles = async (req, res) => {
 
     // 🔧 สร้างโฟลเดอร์ (ถ้ายังไม่มี)
     await fs.mkdir(uploadDirnew, { recursive: true });
- /*    await fs.chmod(uploadDirnew, 0o777); */
+    /*    await fs.chmod(uploadDirnew, 0o777); */
 
     const pool = await connectDB();
 
@@ -347,15 +344,22 @@ exports.uploadfiles = async (req, res) => {
       const newPath = path.join(uploadDirnew, file.filename);
 
       try {
-        // 🔁 ย้ายไฟล์
-        await fs.rename(oldPath, newPath);
+        await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
+          if (err) {
+            console.error("❌ Error creating directory:", err);
+            return;
+          }
 
-        // 🔧 ตั้ง permission ของไฟล์ให้ทุก container เขียน/อ่านได้
-        await fs.chmod(newPath, 0o666);
+          fs.rename(oldPath, newPath, (err) => {
+            if (err) {
+              console.error("❌ Error moving file:", err);
+              return;
+            }
+            console.log("✅ File moved successfully");
+          });
+        });
 
-        console.log(`✅ File moved: ${file.filename}`);
-
-        // 💾 บันทึกข้อมูลลง DB
+   
         const request = pool.request();
         request.input("cmpId", sql.VarChar(150), cmpId);
         request.input("problemId", sql.VarChar(150), problemId);
