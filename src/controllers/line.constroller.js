@@ -333,9 +333,7 @@ exports.uploadfiles = async (req, res) => {
       `${cmpId}/serviceproblem/${problemId}`
     );
 
-    // 🔧 สร้างโฟลเดอร์ (ถ้ายังไม่มี)
-    await fs.mkdir(uploadDirnew, { recursive: true });
-    /*    await fs.chmod(uploadDirnew, 0o777); */
+ 
 
     const pool = await connectDB();
 
