@@ -737,6 +737,7 @@ exports.getChatConvertsationUserId = async (req, res) => {
         phone: rx.phone,
         customerName: rx.customerName,
         position: rx.position,
+        customerCode: rx.customerCode,
       });
     }
 
