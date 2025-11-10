@@ -258,7 +258,7 @@ exports.createHelpdeskCase = async (req, res) => {
       avatarUrl: userId,
       createdAt: bangkokTime, // new Date().toISOString(),
       isUnAlert: true,
-      urllink: "/productservice/servicerequest?id=" + userId,
+      urllink: "/productservice/servicerequest/" + TaskNoNew,
       sendFrom: userId,
       moduleFormName: "/productservice/servicerequest",
       isUnReadMenu: true,
