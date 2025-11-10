@@ -288,7 +288,7 @@ exports.createHelpdeskCase = async (req, res) => {
     request2.input(
       "linkTo",
       sql.VarChar(500),
-      `/productservice/servicerequest`
+      `/productservice/servicerequest/${TaskNoNew}`
     );
     request2.input(
       "ModuleFormName",
