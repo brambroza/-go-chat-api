@@ -14,6 +14,8 @@ function uuidv4() {
   });
 }
 
+const COMPOUND_EXTS = [".tar.gz", ".tar.bz2", ".user.js"]; 
+
 function getExtFromName(name) {
   const lower = String(name).toLowerCase();
   const found = COMPOUND_EXTS.find((ext) => lower.endsWith(ext));
