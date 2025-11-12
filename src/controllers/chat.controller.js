@@ -14,6 +14,13 @@ function uuidv4() {
   });
 }
 
+function getExtFromName(name) {
+  const lower = String(name).toLowerCase();
+  const found = COMPOUND_EXTS.find((ext) => lower.endsWith(ext));
+  if (found) return found; // เช่น .tar.gz
+  return path.extname(lower) || ""; // เช่น .pdf
+}
+
 exports.handleLineWebhook = async (req, res) => {
   try {
     const accountId = req.params.accountId;
@@ -102,7 +109,7 @@ exports.handleLineWebhook = async (req, res) => {
         // The recordset from the query
         const rows = dt.recordset;
 
-        if (type === "image") {
+        if (type === "image" || type === "file" || type === "video") {
           const volumeBase = "/usr/src/app/uploads";
           const uploadDirnew = path.join(volumeBase, `${cmpId}/linechat`);
 
@@ -124,7 +131,10 @@ exports.handleLineWebhook = async (req, res) => {
             const buffer = Buffer.from(await response.arrayBuffer());
 
             // ตั้งชื่อไฟล์ตาม messageId
-            const filename = `${messageId}.png`;
+            const filename =
+              type === "image"
+                ? `${messageId}.png`
+                : `${messageId}${getExtFromName(event.message.fileName)}`;
             const finalPath = path.join(uploadDirnew, filename);
 
             console.log(`✅ Saved file: ${finalPath}`);
@@ -332,7 +342,7 @@ exports.sendMessage = async (req, res) => {
     const pool = await connectDB();
 
     // Build the SQL command string
-  /*   let cmd =
+    /*   let cmd =
       "EXEC dbo.setLineChatMessage" +
       " @CmpId='" +
       cmpid +
@@ -367,15 +377,15 @@ exports.sendMessage = async (req, res) => {
       .input("type", sql.VarChar(20), type)
       .input("replyToken", sql.VarChar(255), "")
       .input("quotaToken", sql.VarChar(255), "")
-      .input("text", sql.NVarChar(sql.MAX), messageToSave) 
+      .input("text", sql.NVarChar(sql.MAX), messageToSave)
       .input("stickerId", sql.VarChar(50), stickerId ?? "")
       .input("stickerResourceType", sql.VarChar(50), stickerResourceType ?? "")
-      .input("sendbyId", sql.VarChar(50), sendbyId) 
-      
+      .input("sendbyId", sql.VarChar(50), sendbyId)
+
       .execute("dbo.setLineChatMessage");
 
     // Execute the query
-  /*   await pool.request().query(cmd); */
+    /*   await pool.request().query(cmd); */
 
     const date = new Date();
 

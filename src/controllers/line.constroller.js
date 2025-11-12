@@ -380,6 +380,80 @@ exports.uploadfiles = async (req, res) => {
   }
 };
 
+
+
+exports.uploadfilechat = async (req, res) => {
+  try {
+    const { cmpId, problemId } = req.body;
+
+    // 🧩 ตรวจสอบค่าเบื้องต้น
+    if (!cmpId || !problemId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: "No files uploaded" });
+    }
+
+    console.log(
+      "📂 Files received:",
+      req.files.map((f) => f.filename)
+    );
+
+    // 🔹 ตำแหน่งปลายทาง
+    const volumeBase = "/usr/src/app/uploads";
+    const uploadDirnew = path.join(
+      volumeBase,
+      `${cmpId}/serviceproblem/${problemId}`
+    );
+
+ 
+
+    const pool = await connectDB();
+
+    for (const file of req.files) {
+      const oldPath = file.path;
+      const newPath = path.join(uploadDirnew, file.filename);
+
+      try {
+        await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
+          if (err) {
+            console.error("❌ Error creating directory:", err);
+            return;
+          }
+
+          fs.rename(oldPath, newPath, (err) => {
+            if (err) {
+              console.error("❌ Error moving file:", err);
+              return;
+            }
+            console.log("✅ File moved successfully");
+          });
+        });
+
+   
+        const request = pool.request();
+        request.input("cmpId", sql.VarChar(150), cmpId);
+        request.input("problemId", sql.VarChar(150), problemId);
+        request.input("fileName", sql.VarChar(255), file.filename);
+
+        await request.execute("dbo.setSTProblemFiles");
+        console.log("📦 Stored procedure executed");
+      } catch (err) {
+        console.error(`❌ Error processing file ${file.filename}:`, err);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Files uploaded and saved successfully",
+    });
+  } catch (err) {
+    console.error("Helpdesk upload error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 exports.saveContact = async (req, res) => {
   try {
     const {
