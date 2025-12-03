@@ -115,7 +115,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
 
 exports.senLinkdMessageProblem = async (channelToken, userId, text, link) => {
   try {
-    const flexmessage = {
+    /* const flexmessage = {
       type: "flex",
       altText: `🔈 ${text}`,
       contents: {
@@ -154,6 +154,61 @@ exports.senLinkdMessageProblem = async (channelToken, userId, text, link) => {
               },
               style: "primary",
               position: "relative",
+            },
+          ],
+        },
+      },
+    }; */
+
+    const flexmessage = {
+      type: "flex",
+      altText: "🔔 แจ้งปัญหาการใช้งาน",
+      contents: {
+        type: "bubble",
+        body: {
+          type: "box",
+          layout: "vertical",
+          paddingAll: "16px",
+          contents: [
+            {
+              type: "text",
+              text: "🔔 แจ้งปัญหาการใช้งาน",
+              weight: "bold",
+              size: "lg",
+              color: "#e38c29",
+              margin: "sm",
+            },
+            {
+              type: "text",
+              text: "🚩 หากท่านพบปัญหาในการใช้งาน สามารถกดปุ่ม “แจ้งปัญหา” ด้านล่างเพื่อส่งรายละเอียดถึงเจ้าหน้าที่",
+              wrap: true,
+              size: "sm",
+              color: "#333333",
+              margin: "md",
+            },
+            {
+              type: "text",
+              text: "👨🏻‍💻 ทีมงานจะตรวจสอบและติดต่อกลับโดยเร็วที่สุด",
+              wrap: true,
+              size: "sm",
+              color: "#333333",
+              margin: "md",
+            },
+          ],
+        },
+        footer: {
+          type: "box",
+          layout: "vertical",
+          spacing: "md",
+          contents: [
+            {
+              type: "button",
+              style: "primary",
+              action: {
+                type: "uri",
+                label: "แจ้งปัญหา",
+                uri: "https://liff.line.me/2008264962-5GjEvk92",
+              },
             },
           ],
         },
