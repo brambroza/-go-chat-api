@@ -12,6 +12,7 @@ const {
   sendCaseClosedMessage,
   sendFromproblem,
   uploadfiles,
+  checkContact, 
 } = require("../controllers/line.constroller");
 
 function uuidv4() {
@@ -48,6 +49,7 @@ const upload = multer({ storage });
 router.post("/helpdesk", upload.array("image", 10), createHelpdeskCase);
 router.post("/uploadsfiles", upload.array("image", 10), uploadfiles);
 router.post("/contact", saveContact);
+router.post("/contact/check", checkContact);
 router.post("/problem/rate", rateProblem);
 router.post("/problem/sendmsgwaiting", sendFlexMsgWaiting);
 router.post("/problem/sendfinish", sendCaseClosedMessage);

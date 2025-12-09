@@ -333,8 +333,6 @@ exports.uploadfiles = async (req, res) => {
       `${cmpId}/serviceproblem/${problemId}`
     );
 
- 
-
     const pool = await connectDB();
 
     for (const file of req.files) {
@@ -357,7 +355,6 @@ exports.uploadfiles = async (req, res) => {
           });
         });
 
-   
         const request = pool.request();
         request.input("cmpId", sql.VarChar(150), cmpId);
         request.input("problemId", sql.VarChar(150), problemId);
@@ -379,8 +376,6 @@ exports.uploadfiles = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-
 
 exports.uploadfilechat = async (req, res) => {
   try {
@@ -407,8 +402,6 @@ exports.uploadfilechat = async (req, res) => {
       `${cmpId}/serviceproblem/${problemId}`
     );
 
- 
-
     const pool = await connectDB();
 
     for (const file of req.files) {
@@ -431,7 +424,6 @@ exports.uploadfilechat = async (req, res) => {
           });
         });
 
-   
         const request = pool.request();
         request.input("cmpId", sql.VarChar(150), cmpId);
         request.input("problemId", sql.VarChar(150), problemId);
@@ -1596,5 +1588,38 @@ exports.sendFromproblem = async (req, res) => {
   } catch (err) {
     console.error("rateProblem error:", err);
     return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.checkContact = async (req, res) => {
+  try {
+    const { userId, company, branch, oaId, lineid } = req.body;
+
+    // Validation
+    if (!userId || !company || !branch || !oaId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const pool = await connectDB();
+    const request = pool.request();
+
+    request.input("UserId", sql.VarChar(150), userId);
+    request.input("Company", sql.NVarChar(150), company);
+    request.input("Branch", sql.NVarChar(150), branch);
+    request.input("LineOAId", sql.VarChar(100), oaId);
+
+    // MSSQL Stored Procedure
+    const result = await request.execute("dbo.setContactFormLiffCheck");
+
+    const lineAddFriendUrl = `https://line.me/R/ti/p/${lineid}`;
+
+    return res.status(200).json({
+      success: true,
+      result: result.recordset,
+      chatUrl: lineAddFriendUrl,
+    });
+  } catch (err) {
+    console.error("saveContact error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
