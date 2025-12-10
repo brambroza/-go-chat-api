@@ -1614,7 +1614,7 @@ exports.checkContact = async (req, res) => {
     const lineAddFriendUrl = `https://line.me/R/ti/p/${lineid}`;
 
     return res.status(200).json({
-      exists: true,
+      exists: result.recordset.length > 0,
       result: result.recordset,
       chatUrl: lineAddFriendUrl,
     });
