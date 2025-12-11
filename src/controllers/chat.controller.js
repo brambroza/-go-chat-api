@@ -14,7 +14,7 @@ function uuidv4() {
   });
 }
 
-const COMPOUND_EXTS = [".tar.gz", ".tar.bz2", ".user.js"]; 
+const COMPOUND_EXTS = [".tar.gz", ".tar.bz2", ".user.js"];
 
 function getExtFromName(name) {
   const lower = String(name).toLowerCase();
@@ -99,7 +99,7 @@ exports.handleLineWebhook = async (req, res) => {
 
         let problamDetail = null;
         let urlName = null;
-        const { ProbDetail, UrlName } = result.recordset[0];
+        const { ProbDetail, UrlName, UrlLink } = result.recordset[0];
         problamDetail = ProbDetail;
         urlName = UrlName;
 
@@ -243,7 +243,10 @@ exports.handleLineWebhook = async (req, res) => {
           avatarUrl: userId,
           createdAt: bangkokTime, // new Date().toISOString(),
           isUnAlert: true,
-          urllink: "/dashboard/chatsocial?id=" + userId,
+          urllink:
+            UrlLink === ""
+              ? "/dashboard/chatsocial?id=" + userId
+              : "/productservice/servicerequest/" + UrlLink,
           sendFrom: userId,
           moduleFormName: "/dashboard/chatsocial",
           isUnReadMenu: true,
