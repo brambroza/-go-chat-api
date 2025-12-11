@@ -246,7 +246,7 @@ exports.handleLineWebhook = async (req, res) => {
           urllink:
             UrlLink === ""
               ? "/dashboard/chatsocial?id=" + userId
-              : "/productservice/servicerequest/" + UrlLink,
+              : `/productservice/servicerequest/${UrlLink}/chat`,
           sendFrom: userId,
           moduleFormName: "/dashboard/chatsocial",
           isUnReadMenu: true,
