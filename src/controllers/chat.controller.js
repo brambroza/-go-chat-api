@@ -276,7 +276,9 @@ exports.handleLineWebhook = async (req, res) => {
           request2.input(
             "linkTo",
             sql.VarChar(500),
-            `/dashboard/chatsocial?id=${userId}`
+            UrlLink === ""
+              ? `/dashboard/chatsocial?id=${userId}`
+              : `/productservice/servicerequestchat/${UrlLink}`
           );
           request2.input(
             "ModuleFormName",
