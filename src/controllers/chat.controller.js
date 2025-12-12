@@ -283,7 +283,9 @@ exports.handleLineWebhook = async (req, res) => {
           request2.input(
             "ModuleFormName",
             sql.VarChar(500),
-            "/dashboard/chatsocial"
+             UrlLink === ""
+              ? `/dashboard/chatsocial`
+              : `/productservice/servicerequest`
           );
           request2.input("DocNo", sql.VarChar(100), `${messageId}`);
           request2.input("RevNo", sql.Int, 0);
