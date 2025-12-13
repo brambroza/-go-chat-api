@@ -4,7 +4,8 @@ const lineService = require("../services/line.service");
 const fs = require("fs");
 const path = require("path");
 
-const { io } = require("../app");
+/* const { io } = require("../app"); */
+const { getIO } = require("../utils/socket");
 
 function uuidv4() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -139,7 +140,7 @@ exports.handleLineWebhook = async (req, res) => {
                 : `${messageId}${getExtFromName(event.message.fileName)}`;
             const finalPath = path.join(uploadDirnew, filename);
 
-          /*   console.log(`✅ Saved file: ${finalPath}`); */
+            /*   console.log(`✅ Saved file: ${finalPath}`); */
 
             await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
               if (err) {
@@ -184,7 +185,7 @@ exports.handleLineWebhook = async (req, res) => {
           stickerResourceType: stickerResourceType,
           sendbyId: "-",
         };
-
+        const io = getIO();
         io.emit("server_broadcast", {
           from: "LINE",
           event: eventdata,
@@ -283,7 +284,7 @@ exports.handleLineWebhook = async (req, res) => {
           request2.input(
             "ModuleFormName",
             sql.VarChar(500),
-             UrlLink === ""
+            UrlLink === ""
               ? `/dashboard/chatsocial`
               : `/productservice/servicerequest`
           );
@@ -421,7 +422,7 @@ exports.sendMessage = async (req, res) => {
       sendbyId: sendbyId,
       attachments: attachments || [],
     };
-
+    const io = getIO();
     io.emit("server_broadcast", {
       from: "LINE",
       event: eventdata,
