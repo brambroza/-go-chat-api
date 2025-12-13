@@ -230,7 +230,7 @@ exports.createHelpdeskCase = async (req, res) => {
       }
     );
 
-    /*   await sendLineToTeamSevice(TaskNoNew, description); */
+     await sendLineToTeamSevice(TaskNoNew, description);  
     const io = getIO();
     io.emit("helpdesk:new", {
       userId,
