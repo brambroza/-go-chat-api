@@ -54,7 +54,7 @@ app.use("/" , async(req ,res) => {
 app.use("/api", routes);
 
 // ⏱ Cron: เรียกทุก 1 นาที
-/* cron.schedule("* * * * *", async () => {
+ cron.schedule("* * * * *", async () => {
   console.log("⏱  Run job: waitsendmsgagent()");
   try {
     await waitsendmsgagent();
@@ -62,7 +62,7 @@ app.use("/api", routes);
     console.error("Cron waitsendmsgagent error:", err);
   }
 });
- */
+ 
 
 
 // ติดตั้ง swagger

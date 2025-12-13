@@ -1623,7 +1623,7 @@ exports.checkContact = async (req, res) => {
   }
 };
 
-exports.waitsendmsgagent = async (req, res) => {
+exports.waitsendmsgagent = async () => {
   try {
     const pool = await connectDB();
 
@@ -1638,9 +1638,7 @@ exports.waitsendmsgagent = async (req, res) => {
       console.log(
         "✅ ไม่มีเคสที่รอการแจ้งเตือน (getServiceFormLiFFWaiting ว่างเปล่า)"
       );
-      return res
-        .status(200)
-        .json({ success: true, message: "No pending tickets" });
+      
     }
 
     console.log(`⚠️ พบเคสที่รอการแจ้งเตือน ${rows.length} รายการ`);
@@ -1772,12 +1770,8 @@ exports.waitsendmsgagent = async (req, res) => {
       // await pool.request().input('TaskNo', sql.VarChar, TaskNoNew).execute('dbo.setServiceFormMarkNotified');
     }
 
-    return res.status(200).json({
-      success: true,
-      message: `Processed ${rows.length} tickets`,
-    });
+ 
   } catch (err) {
-    console.error("Helpdesk error:", err);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error("Helpdesk error:", err); 
   }
 };
