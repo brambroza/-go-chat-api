@@ -1627,117 +1627,155 @@ exports.waitsendmsgagent = async (req, res) => {
   try {
     const pool = await connectDB();
 
-    let request = pool.request();
+    // 1) ดึงเคสที่รออยู่ทั้งหมดจาก Stored Procedure
+    const spResult = await pool
+      .request()
+      .execute("dbo.getServiceFormLiFFWaiting");
 
-    let TaskNoNew = null;
-    let userlogin = null;
-    let touserId = null;
-    try {
-      const result = await request.execute("dbo.getServiceFormLiFFWaiting");
-      const { TaskNo, userAssign, userId } = result.recordset[0];
-      TaskNoNew = TaskNo;
-      userlogin = userAssign;
-      touserId = userId;
-      console.log("✅ MSSQL stored procedure executed successfully");
-    } catch (e) {
-      console.error("❌ MSSQL Error moving file:", e);
+    const rows = spResult.recordset || [];
+
+    if (!rows.length) {
+      console.log(
+        "✅ ไม่มีเคสที่รอการแจ้งเตือน (getServiceFormLiFFWaiting ว่างเปล่า)"
+      );
+      return res
+        .status(200)
+        .json({ success: true, message: "No pending tickets" });
     }
 
-    // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
-    const flexMsg = {
-      type: "flex",
-      altText: "กรุณารอทีมงานติดต่อกลับ ซักครู่ครับ",
-      contents: {
-        type: "bubble",
-        body: {
-          type: "box",
-          layout: "vertical",
-          contents: [
-            {
-              type: "text",
-              text: `กรุณารอทีมงานติดต่อกลับ ซักครู่ครับ`,
-              weight: "bold",
-              size: "md",
-            },
+    console.log(`⚠️ พบเคสที่รอการแจ้งเตือน ${rows.length} รายการ`);
 
-            {
-              type: "box",
-              layout: "vertical",
-              margin: "lg",
-              spacing: "sm",
-              contents: [
-                {
-                  type: "box",
-                  layout: "baseline",
-                  spacing: "sm",
-                  contents: [
-                    {
-                      type: "text",
-                      text: `📄 Ticket: ${TaskNoNew ?? ""}`,
-                      weight: "bold",
-                      size: "md",
-                      wrap: true,
-                      color: "#666666",
-                    },
-                  ],
-                },
+    // 2) loop ทีละ row
+    for (const row of rows) {
+      // 👉 ปรับชื่อ field ให้ตรงกับ column ที่ proc คืนมา
+      const TaskNoNew = row.TaskNo;
+      const userlogin = row.userAssign; // ถ้าอยากใช้ต่อ
+      const touserId = row.userId;
+      const oaId = row.oaId; // ปรับให้ตรงกับชื่อ column จริง เช่น row.OAId
+      const description = row.description || row.Descriptions || ""; // เผื่อชื่อไม่ตรง
 
-                {
-                  type: "box",
-                  layout: "baseline",
-                  spacing: "sm",
-                  contents: [
-                    {
-                      type: "text",
-                      text: `🚩 รายละเอียด: ${description}`,
-                      size: "sm",
-                      wrap: true,
-                      color: "#666666",
-                    },
-                  ],
-                },
-
-                 
-              ],
-            },
-          ],
-        },
-      },
-    };
-
-    const results = await pool.request().input("oaid", sql.VarChar, oaId)
-      .query(`
-        SELECT top 1 AccessToken as channelToken 
-        FROM [dbo].[CompanySocialChannel]
-        WHERE ChannelId = @oaid
-      `);
-
-    if (results.recordset.length === 0) {
-      return res.status(404).json({ message: "Account not found" });
-    }
-
-    const { channelToken } = results.recordset[0];
-
-    // 🔐 Token ของ LINE OA (map ตาม oaId ถ้ามีหลายตัว)
-    const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken; // หรือ map จาก oaId
-
-    await axios.post(
-      "https://api.line.me/v2/bot/message/push",
-      {
-        to: touserId,
-        messages: [flexMsg],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
+      if (!touserId || !oaId) {
+        console.warn(
+          `⚠️ ข้าม Ticket ${TaskNoNew} เพราะไม่มี userId หรือ oaId (userId=${touserId}, oaId=${oaId})`
+        );
+        continue;
       }
-    );
 
-   
+      console.log(
+        `▶️ กำลังส่งแจ้งเตือน Ticket ${TaskNoNew} ให้ userId=${touserId}, oaId=${oaId}`
+      );
 
-    return res.status(200).json({ success: true });
+      // 2.1 หา channel token ของ OA จากตาราง CompanySocialChannel
+      const tokenResult = await pool
+        .request()
+        .input("oaid", sql.VarChar(150), oaId).query(`
+          SELECT TOP 1 AccessToken AS channelToken 
+          FROM [dbo].[CompanySocialChannel]
+          WHERE ChannelId = @oaid
+        `);
+
+      if (!tokenResult.recordset.length) {
+        console.warn(
+          `⚠️ ไม่พบ AccessToken สำหรับ OA ${oaId} (Ticket ${TaskNoNew}) ข้ามเคสนี้`
+        );
+        continue;
+      }
+
+      const { channelToken } = tokenResult.recordset[0];
+      const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
+
+      // 2.2 Flex Message สำหรับลูกค้า
+      const flexMsg = {
+        type: "flex",
+        altText: "กรุณารอทีมงานติดต่อกลับ ซักครู่ครับ",
+        contents: {
+          type: "bubble",
+          body: {
+            type: "box",
+            layout: "vertical",
+            contents: [
+              {
+                type: "text",
+                text: "กรุณารอทีมงานติดต่อกลับ ซักครู่ครับ",
+                weight: "bold",
+                size: "md",
+              },
+              {
+                type: "box",
+                layout: "vertical",
+                margin: "lg",
+                spacing: "sm",
+                contents: [
+                  {
+                    type: "box",
+                    layout: "baseline",
+                    spacing: "sm",
+                    contents: [
+                      {
+                        type: "text",
+                        text: `📄 Ticket: ${TaskNoNew ?? ""}`,
+                        weight: "bold",
+                        size: "md",
+                        wrap: true,
+                        color: "#666666",
+                      },
+                    ],
+                  },
+                  description && {
+                    type: "box",
+                    layout: "baseline",
+                    spacing: "sm",
+                    contents: [
+                      {
+                        type: "text",
+                        text: `🚩 รายละเอียด: ${description}`,
+                        size: "sm",
+                        wrap: true,
+                        color: "#666666",
+                      },
+                    ],
+                  },
+                ].filter(Boolean),
+              },
+            ],
+          },
+        },
+      };
+
+      // 2.3 ส่ง push message ให้ลูกค้า
+      try {
+        await axios.post(
+          "https://api.line.me/v2/bot/message/push",
+          {
+            to: touserId,
+            messages: [flexMsg],
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log(`✅ ส่งข้อความแจ้งเตือนเรียบร้อย Ticket ${TaskNoNew}`);
+      } catch (err) {
+        console.error(
+          `❌ ส่ง LINE แจ้งเตือน Ticket ${TaskNoNew} ไม่สำเร็จ:`,
+          err.response?.data || err.message
+        );
+        // ถ้า ticket ไหนส่งไม่ผ่าน → ยังไม่ return; ไปต่อ ticket ถัดไป
+        continue;
+      }
+
+      // 👉 ถ้าคุณมี proc เพื่อ mark ว่าบรรทัดนี้ถูกแจ้งแล้ว ให้เรียกต่อท้ายตรงนี้
+      // await pool.request().input('TaskNo', sql.VarChar, TaskNoNew).execute('dbo.setServiceFormMarkNotified');
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Processed ${rows.length} tickets`,
+    });
   } catch (err) {
     console.error("Helpdesk error:", err);
     return res.status(500).json({ error: "Internal Server Error" });
