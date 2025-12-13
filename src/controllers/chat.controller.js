@@ -139,7 +139,7 @@ exports.handleLineWebhook = async (req, res) => {
                 : `${messageId}${getExtFromName(event.message.fileName)}`;
             const finalPath = path.join(uploadDirnew, filename);
 
-            console.log(`✅ Saved file: ${finalPath}`);
+          /*   console.log(`✅ Saved file: ${finalPath}`); */
 
             await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
               if (err) {

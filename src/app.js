@@ -5,6 +5,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
+const cron = require("node-cron");
 
 const { connectDB } = require("./config/database");
 const { initRabbitMQ } = require("./config/rabbitmq");
@@ -15,6 +16,8 @@ const { createClient } = require("redis");
 const { createAdapter } = require("@socket.io/redis-adapter");
 
 const ticketTaskReplyHub = require("./controllers/localchat.controller");
+const { waitsendmsgagent } = require('./controllers/line.constroller'); // ปรับ path ให้ตรงจริง
+
 
 const app = express();
 
@@ -49,6 +52,16 @@ app.use("/" , async(req ,res) => {
 
 // ผูก routes
 app.use("/api", routes);
+
+// ⏱ Cron: เรียกทุก 1 นาที
+cron.schedule("* * * * *", async () => {
+  console.log("⏱  Run job: waitsendmsgagent()");
+  try {
+    await waitsendmsgagent();
+  } catch (err) {
+    console.error("Cron waitsendmsgagent error:", err);
+  }
+});
 
 // ติดตั้ง swagger
 setupSwagger(app);

@@ -170,7 +170,6 @@ exports.createHelpdeskCase = async (req, res) => {
                     {
                       type: "text",
                       text: `🚩 รายละเอียด: ${description}`,
-
                       size: "sm",
                       wrap: true,
                       color: "#666666",
@@ -1620,6 +1619,127 @@ exports.checkContact = async (req, res) => {
     });
   } catch (err) {
     console.error("saveContact error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.waitsendmsgagent = async (req, res) => {
+  try {
+    const pool = await connectDB();
+
+    let request = pool.request();
+
+    let TaskNoNew = null;
+    let userlogin = null;
+    let touserId = null;
+    try {
+      const result = await request.execute("dbo.getServiceFormLiFFWaiting");
+      const { TaskNo, userAssign, userId } = result.recordset[0];
+      TaskNoNew = TaskNo;
+      userlogin = userAssign;
+      touserId = userId;
+      console.log("✅ MSSQL stored procedure executed successfully");
+    } catch (e) {
+      console.error("❌ MSSQL Error moving file:", e);
+    }
+
+    // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
+    const flexMsg = {
+      type: "flex",
+      altText: "กรุณารอทีมงานติดต่อกลับ ซักครู่ครับ",
+      contents: {
+        type: "bubble",
+        body: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "text",
+              text: `กรุณารอทีมงานติดต่อกลับ ซักครู่ครับ`,
+              weight: "bold",
+              size: "md",
+            },
+
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "lg",
+              spacing: "sm",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `📄 Ticket: ${TaskNoNew ?? ""}`,
+                      weight: "bold",
+                      size: "md",
+                      wrap: true,
+                      color: "#666666",
+                    },
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `🚩 รายละเอียด: ${description}`,
+                      size: "sm",
+                      wrap: true,
+                      color: "#666666",
+                    },
+                  ],
+                },
+
+                 
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    const results = await pool.request().input("oaid", sql.VarChar, oaId)
+      .query(`
+        SELECT top 1 AccessToken as channelToken 
+        FROM [dbo].[CompanySocialChannel]
+        WHERE ChannelId = @oaid
+      `);
+
+    if (results.recordset.length === 0) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    const { channelToken } = results.recordset[0];
+
+    // 🔐 Token ของ LINE OA (map ตาม oaId ถ้ามีหลายตัว)
+    const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken; // หรือ map จาก oaId
+
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      {
+        to: touserId,
+        messages: [flexMsg],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+   
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Helpdesk error:", err);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
