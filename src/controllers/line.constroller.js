@@ -1,9 +1,11 @@
 const path = require("path");
 const fs = require("fs");
 const axios = require("axios");
-const { io } = require("../app");
+/* const { io } = require("../app"); */
 const { connectDB, sql } = require("../config/database");
 const lineService = require("../services/line.service");
+
+const { getIO } = require("../utils/socket");
 
 // create upload dir
 //const uploadDir = path.join(__dirname, "../../uploads/helpdesk");
@@ -228,8 +230,8 @@ exports.createHelpdeskCase = async (req, res) => {
       }
     );
 
-  /*   await sendLineToTeamSevice(TaskNoNew, description); */
-
+    /*   await sendLineToTeamSevice(TaskNoNew, description); */
+    const io = getIO();
     io.emit("helpdesk:new", {
       userId,
       displayName,
@@ -266,6 +268,7 @@ exports.createHelpdeskCase = async (req, res) => {
     };
 
     const room = `notification_230015_${userlogin}`;
+    
     io.to(room).emit("ReceiveNotification", JSON.stringify([msgNotification]));
 
     let request2 = pool.request();
@@ -1638,7 +1641,6 @@ exports.waitsendmsgagent = async () => {
       console.log(
         "✅ ไม่มีเคสที่รอการแจ้งเตือน (getServiceFormLiFFWaiting ว่างเปล่า)"
       );
-      
     }
 
     console.log(`⚠️ พบเคสที่รอการแจ้งเตือน ${rows.length} รายการ`);
@@ -1769,9 +1771,7 @@ exports.waitsendmsgagent = async () => {
       // 👉 ถ้าคุณมี proc เพื่อ mark ว่าบรรทัดนี้ถูกแจ้งแล้ว ให้เรียกต่อท้ายตรงนี้
       // await pool.request().input('TaskNo', sql.VarChar, TaskNoNew).execute('dbo.setServiceFormMarkNotified');
     }
-
- 
   } catch (err) {
-    console.error("Helpdesk error:", err); 
+    console.error("Helpdesk error:", err);
   }
 };

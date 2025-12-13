@@ -18,6 +18,7 @@ const { createAdapter } = require("@socket.io/redis-adapter");
 const ticketTaskReplyHub = require("./controllers/localchat.controller");
 const { waitsendmsgagent } = require('./controllers/line.constroller'); // ปรับ path ให้ตรงจริง
 
+const { setIO } = require("./utils/socket");
 
 const app = express();
 
@@ -38,6 +39,7 @@ const io = new Server(server, {
   },
 });
 
+setIO(io);
 // export io เพื่อให้ controller อื่นเรียกใช้ได้
 module.exports.io = io;
 
