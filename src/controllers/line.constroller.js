@@ -230,7 +230,7 @@ exports.createHelpdeskCase = async (req, res) => {
       }
     );
 
-     await sendLineToTeamSevice(TaskNoNew, description);  
+    await sendLineToTeamSevice(TaskNoNew, description);
     const io = getIO();
     io.emit("helpdesk:new", {
       userId,
@@ -268,7 +268,7 @@ exports.createHelpdeskCase = async (req, res) => {
     };
 
     const room = `notification_230015_${userlogin}`;
-    
+
     io.to(room).emit("ReceiveNotification", JSON.stringify([msgNotification]));
 
     let request2 = pool.request();
@@ -1759,6 +1759,84 @@ exports.waitsendmsgagent = async () => {
         );
 
         console.log(`✅ ส่งข้อความแจ้งเตือนเรียบร้อย Ticket ${TaskNoNew}`);
+
+        // 2.4 ส่งแจ้งเตือนทีมงานผ่านฟังก์ชัน
+
+        await sendLineToTeamSevice(TaskNoNew, description);
+
+        let request = pool.request();
+        request.input("TaskNo", sql.VarChar(150), TaskNoNew);
+
+        let newassign = null;
+        let displayName = "";
+        try {
+          const result = await request.execute("dbo.setService_Assign_Chang");
+          const { userAssign, userDisplayName } = result.recordset[0];
+
+          newassign = userAssign;
+          displayName = userDisplayName;
+          console.log("✅ MSSQL stored procedure executed successfully");
+        } catch (e) {
+          console.error("❌ MSSQL Error moving file:", e);
+        }
+
+        const msgNotification = {
+          id: uuidv4(),
+          type: "linechat",
+          title: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
+          category: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
+          isUnRead: true,
+          avatarUrl: userId,
+          createdAt: bangkokTime, // new Date().toISOString(),
+          isUnAlert: true,
+          urllink: "/productservice/servicerequest/" + TaskNoNew,
+          sendFrom: userId,
+          moduleFormName: "/productservice/servicerequest",
+          isUnReadMenu: true,
+          docNo: TaskNoNew,
+          revNo: 0,
+        };
+
+        const io = getIO();
+
+        const room = `notification_230015_${newassign}`;
+
+        io.to(room).emit(
+          "ReceiveNotification",
+          JSON.stringify([msgNotification])
+        );
+
+        let request2 = pool.request();
+        request2.input("CmpId", sql.NVarChar(100), "230015");
+        request2.input("userTo", sql.NVarChar(100), newassign);
+        request2.input("userFrom", sql.NVarChar(100), "0");
+        request2.input("id", sql.VarChar(100), TaskNoNew);
+        request2.input(
+          "Title",
+          sql.VarChar(500),
+          `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `
+        );
+        request2.input(
+          "Category",
+          sql.VarChar(500),
+          `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `
+        );
+        request2.input("type", sql.VarChar(50), "linechat");
+        request2.input(
+          "linkTo",
+          sql.VarChar(500),
+          `/productservice/servicerequest/${TaskNoNew}`
+        );
+        request2.input(
+          "ModuleFormName",
+          sql.VarChar(500),
+          "/productservice/servicerequest"
+        );
+        request2.input("DocNo", sql.VarChar(100), `${TaskNoNew}`);
+        request2.input("RevNo", sql.Int, 0);
+        request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
+
+        await request2.execute("dbo.setNotification");
       } catch (err) {
         console.error(
           `❌ ส่ง LINE แจ้งเตือน Ticket ${TaskNoNew} ไม่สำเร็จ:`,
