@@ -539,16 +539,16 @@ exports.getLineFriend = async (req, res) => {
       const contactToken = row.AccessToken;
 
       try {
-        const lineProfile = await lineService.getLineProfile(
+      /*   const lineProfile = await lineService.getLineProfile(
           userId,
           contactToken
-        );
+        ); */
         responseData.push({
           cmpId: row.CmpId,
           userId: userId,
-          displayName: lineProfile.displayName,
-          pictureUrl: lineProfile.pictureUrl,
-          language: lineProfile.language,
+          displayName: row.displayName,
+          pictureUrl: row.pictureUrl,
+          language: row.language,
           type: row.type,
           name: row.Name,
           channelToken: contactToken,
@@ -805,5 +805,62 @@ exports.setReadLineMsg = async (req, res) => {
   } catch (error) {
     console.error("setReadLineMsg error:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.JobGetLineFriend = async () => {
+  try {
+    // Get a connection from your pool
+    const pool = await connectDB();
+
+    const dt = await pool
+      .request()
+      .input("CmpId", cmpid)
+      .query("EXEC dbo.getLineFriend @CmpId=@CmpId");
+
+    // The recordset from the query
+    const rows = dt.recordset;
+
+    const responseData = [];
+    for (const row of rows) {
+      const userId = row.UserId;
+      const contactToken = row.AccessToken;
+
+      try {
+        const lineProfile = await lineService.getLineProfile(
+          userId,
+          contactToken
+        );
+        
+        await pool
+          .request()
+          .input("CmpId", row.CmpId)
+          .input("LineOAId", row.LineOAId)
+          .input("UserId", row.UserId)
+          .input("DisplayName", lineProfile?.displayName ?? null)
+          .input("PictureUrl", lineProfile?.pictureUrl ?? null)
+          .input("Language", lineProfile?.language ?? null)
+          .input("ProfileJson", profile ? JSON.stringify(profile) : null)
+          .input("LastError", lastError).query(`
+      EXEC dbo.UpsertLineProfileCache
+        @CmpId=@CmpId,
+        @LineOAId=@LineOAId,
+        @UserId=@UserId,
+        @DisplayName=@DisplayName,
+        @PictureUrl=@PictureUrl,
+        @Language=@Language,
+        @ProfileJson=@ProfileJson,
+        @LastError=@LastError
+    `);
+      } catch (err) {
+        // Decide how you want to handle errors from the LINE API
+        console.error("Failed to get profile for user:", userId, err.message);
+        // You could push partial data or skip this user
+        // For example, push partial data:
+        
+      }
+    }
+  } catch (error) {
+    console.error("Error in getLineFriend route:", error.message);
   }
 };

@@ -16,7 +16,8 @@ const { createClient } = require("redis");
 const { createAdapter } = require("@socket.io/redis-adapter");
 
 const ticketTaskReplyHub = require("./controllers/localchat.controller");
-const { waitsendmsgagent } = require('./controllers/line.constroller'); // ปรับ path ให้ตรงจริง
+const { waitsendmsgagent } = require("./controllers/line.constroller"); // ปรับ path ให้ตรงจริง
+const { JobGetLineFriend } = require("./controllers/chat.controller");
 
 const { setIO } = require("./utils/socket");
 
@@ -55,8 +56,33 @@ app.use("/" , async(req ,res) => {
 // ผูก routes
 app.use("/api", routes);
 
+let isRunningJobGetLineFriend = false;
+
+async function runJobGetLineFriend(reason = "manual") {
+  if (isRunningJobGetLineFriend) {
+    console.log("⏭️ JobGetLineFriend already running, skip:", reason);
+    return;
+  }
+  isRunningJobGetLineFriend = true;
+
+  console.log(
+    `⏱ Run job: JobGetLineFriend() [${reason}] at`,
+    new Date().toISOString()
+  );
+  try {
+    await JobGetLineFriend();
+  } catch (err) {
+    console.error("JobGetLineFriend error:", err);
+  } finally {
+    isRunningJobGetLineFriend = false;
+  }
+}
+
+// ✅ รันครั้งแรกทันทีตอน start
+runJobGetLineFriend("startup");
+
 // ⏱ Cron: เรียกทุก 1 นาที
- cron.schedule("* * * * *", async () => {
+cron.schedule("* * * * *", async () => {
   console.log("⏱  Run job: waitsendmsgagent()");
   try {
     await waitsendmsgagent();
@@ -64,8 +90,21 @@ app.use("/api", routes);
     console.error("Cron waitsendmsgagent error:", err);
   }
 });
- 
 
+cron.schedule(
+  "0 0 * * *", // ทุกวัน 00:00
+  async () => {
+    console.log("⏱ Run job: JobGetLineFriend() at", new Date().toISOString());
+    try {
+      await JobGetLineFriend();
+    } catch (err) {
+      console.error("Cron JobGetLineFriend error:", err);
+    }
+  },
+  {
+    timezone: "Asia/Bangkok", // เวลาไทย
+  }
+);
 
 // ติดตั้ง swagger
 setupSwagger(app);
