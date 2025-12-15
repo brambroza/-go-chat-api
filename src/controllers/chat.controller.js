@@ -815,7 +815,7 @@ exports.JobGetLineFriend = async () => {
 
     const dt = await pool
       .request()
-      .input("CmpId", cmpid)
+      .input("CmpId", "230015")
       .query("EXEC dbo.getLineFriend @CmpId=@CmpId");
 
     // The recordset from the query
