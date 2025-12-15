@@ -840,8 +840,8 @@ exports.JobGetLineFriend = async () => {
           .input("DisplayName", lineProfile?.displayName ?? null)
           .input("PictureUrl", lineProfile?.pictureUrl ?? null)
           .input("Language", lineProfile?.language ?? null)
-          .input("ProfileJson", profile ? JSON.stringify(profile) : null)
-          .input("LastError", lastError).query(`
+          .input("ProfileJson", lineProfile ? JSON.stringify(lineProfile) : null)
+          .input("LastError", null).query(`
       EXEC dbo.UpsertLineProfileCache
         @CmpId=@CmpId,
         @LineOAId=@LineOAId,
