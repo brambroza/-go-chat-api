@@ -10,6 +10,10 @@ const shopeeRoutes = require('./shopee.routes');
 const lazadaRoutes = require('./lazada.routes');
 const whatsappRoutes = require('./whatsapp.routes');
 const chatRoutes = require('./chat.routes'); 
+const dashboardRoutes = require('./config.routes');
+
+// ใช้ routes สำหรับ dashboard config
+router.use('/dashboard', dashboardRoutes);
 
 // เพิ่ม prefix path ให้ router
 router.use('/auth', authRoutes);
@@ -20,5 +24,6 @@ router.use('/shopee', shopeeRoutes);
 router.use('/lazada', lazadaRoutes);
 router.use('/whatsapp', whatsappRoutes);
 router.use('/chat', chatRoutes);
+
 
 module.exports = router;
