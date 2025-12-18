@@ -633,16 +633,16 @@ exports.getLineChatConvertsatition = async (req, res) => {
 
       const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
       for (const rx of userRows) {
-        const profile = await lineService.getLineProfile(
+       /*  const profile = await lineService.getLineProfile(
           rx.UserId,
           rd.lineToken
-        );
+        ); */
 
         rd.participants.push({
           userId: rx.UserId,
-          displayName: profile.displayName,
-          pictureUrl: profile.pictureUrl,
-          language: profile.language,
+          displayName: rx.displayName,
+          pictureUrl: rx.pictureUrl,
+          language: rx.language,
           status: "online",
           lineOAName: rx.lineOAName,
           lineOAId: rx.lineOAName,
@@ -754,13 +754,13 @@ exports.getChatConvertsationUserId = async (req, res) => {
     // 👤 participants
     const userRows = dt.recordset.filter((rx) => rx.UserId === userId);
     for (const rx of userRows) {
-      const prof = await lineService.getLineProfile(rx.UserId, rx.channelToken);
+      /* const prof = await lineService.getLineProfile(rx.UserId, rx.channelToken); */
 
       rd.participants.push({
         userId: rx.UserId,
-        displayName: prof.displayName,
-        pictureUrl: prof.pictureUrl,
-        language: prof.language,
+        displayName: rx.displayName,
+        pictureUrl: rx.pictureUrl,
+        language: rx.language,
         status: "online",
         lineOAName: rx.lineOAName,
         lineOAId: rx.lineOAName,
