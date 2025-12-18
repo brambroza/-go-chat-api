@@ -7,10 +7,10 @@ const {
 } = require("../controllers/dashboard.config.controller");
 
  
-router.post("/getconfigdashservice", authMiddleware, handlegetDashboardServiceConfig);
+router.get("/getconfigdashservice", authMiddleware, handlegetDashboardServiceConfig);
 
  
-router.get("/setconfigdashservice", authMiddleware, handlesetDashboardServiceConfig);
+router.post("/setconfigdashservice", authMiddleware, handlesetDashboardServiceConfig);
 
  
 
