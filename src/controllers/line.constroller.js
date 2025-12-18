@@ -1216,21 +1216,17 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
       altText: `มีเคสใหม่เข้ามา !!!! Ticket: ${TaskNoNew ?? ""}`,
       contents: {
         type: "bubble",
-        size: "kilo",
+
         body: {
           type: "box",
           layout: "vertical",
-          paddingAll: "md",
+
           contents: [
             {
               // กรอบการ์ด
-              type: "box",
+              type: "text",
               layout: "vertical",
               paddingAll: "lg",
-              backgroundColor: "#FFFFFF",
-              borderColor: "#DDE6F0",
-              borderWidth: "2px",
-              cornerRadius: "16px",
 
               // ใช้ spacing แทน spacer
               spacing: "md",
@@ -1311,10 +1307,10 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                           {
                             type: "text",
                             text: `${reportCompany}`,
-                            size: "sm",
+                            size: "xs",
                             color: "#999999",
                             wrap: true,
-                            margin: "none",
+
                             offsetStart: "38px", // ถ้าระบบไม่รองรับให้ลบออกได้
                           },
                         ]
@@ -1513,14 +1509,16 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
           paddingAll: "md",
           contents: [
             {
-              // กรอบการ์ด
+              // การ์ด (เอา border ออกแล้ว)
               type: "box",
               layout: "vertical",
               paddingAll: "lg",
               backgroundColor: "#FFFFFF",
-              borderColor: "#DDE6F0",
-              borderWidth: "2px",
               cornerRadius: "16px",
+
+              // ✅ ใช้ spacing แทน spacer
+              spacing: "md",
+
               contents: [
                 // ===== Header =====
                 {
@@ -1539,8 +1537,6 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                     },
                   ],
                 },
-
-                { type: "spacer", size: "md" },
 
                 // ===== Ticket =====
                 {
@@ -1566,11 +1562,11 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   ],
                 },
 
-                // ===== ผู้แจ้ง + บริษัท (2 บรรทัด) =====
+                // ===== ผู้แจ้ง + บริษัท =====
                 {
                   type: "box",
                   layout: "vertical",
-                  margin: "sm",
+                  spacing: "xs",
                   contents: [
                     {
                       type: "box",
@@ -1597,20 +1593,12 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                     ...(reportCompany
                       ? [
                           {
-                            // ย่อหน้าให้เริ่มหลังไอคอน
-                            type: "box",
-                            layout: "vertical",
-                            paddingStart: "38px",
-                            contents: [
-                              {
-                                type: "text",
-                                text: `${reportCompany}`,
-                                size: "sm",
-                                color: "#999999",
-                                wrap: true,
-                                margin: "xs",
-                              },
-                            ],
+                            type: "text",
+                            text: `${reportCompany}`,
+                            size: "sm",
+                            color: "#999999",
+                            wrap: true,
+                            margin: "xs",
                           },
                         ]
                       : []),
@@ -1622,7 +1610,6 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
-                  margin: "sm",
                   contents: [
                     { type: "text", text: "📝", size: "md", flex: 0 },
                     {
@@ -1647,7 +1634,6 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
-                  margin: "sm",
                   contents: [
                     { type: "text", text: "👤", size: "md", flex: 0 },
                     {
@@ -1672,7 +1658,6 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
-                  margin: "sm",
                   contents: [
                     { type: "text", text: "⏳", size: "md", flex: 0 },
                     {
@@ -1684,7 +1669,7 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                     },
                     {
                       type: "text",
-                      text: `${notifyAt ?? ""}`, // เช่น "17 ก.ย. 2568 | 14:35 น."
+                      text: `${notifyAt ?? ""}`,
                       size: "sm",
                       color: "#999999",
                       wrap: true,
@@ -1692,9 +1677,7 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   ],
                 },
 
-                { type: "spacer", size: "md" },
-
-                // ===== ข้อความเตือนสีแดง =====
+                // ===== ข้อความเตือน =====
                 {
                   type: "text",
                   text: "“ลูกค้ารอ 5 นาทีแล้ว”",
@@ -1703,11 +1686,10 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   size: "sm",
                   color: "#f4882fff",
                   wrap: true,
+                  margin: "sm",
                 },
 
-                { type: "spacer", size: "md" },
-
-                // ===== ปุ่มแดงใหญ่ =====
+                // ===== ปุ่ม =====
                 {
                   type: "box",
                   layout: "vertical",
@@ -1715,10 +1697,9 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   cornerRadius: "10px",
                   paddingAll: "md",
                   action: {
-                    // เปลี่ยนเป็น uri ได้ถ้ามีลิงก์เปิดหน้า ticket
-                    type: "postback",
-                    label: "ติดต่อกลับ",
-                    data: `https://erp.nisolution.co.th/productservice/servicerequest/${
+                    type: "uri", // ✅ เปิดเว็บ
+                    label: "เปิดเคส",
+                    uri: `https://erp.nisolution.co.th/productservice/servicerequest/${
                       TaskNoNew ?? ""
                     }`,
                   },
@@ -1935,9 +1916,11 @@ async function sendLineToTeamSeviceFinish(
           layout: "vertical",
           paddingAll: "lg",
           backgroundColor: "#FFFFFF",
-          borderColor: "#DDE6F0",
-          borderWidth: "2px",
           cornerRadius: "16px",
+
+          // ✅ ใช้ spacing แทน spacer
+          spacing: "md",
+
           contents: [
             // ===== Header =====
             {
@@ -1956,8 +1939,6 @@ async function sendLineToTeamSeviceFinish(
                 },
               ],
             },
-
-            { type: "spacer", size: "md" },
 
             // ===== Ticket =====
             {
@@ -1988,6 +1969,7 @@ async function sendLineToTeamSeviceFinish(
               type: "box",
               layout: "vertical",
               margin: "sm",
+              spacing: "xs",
               contents: [
                 {
                   type: "box",
@@ -2109,11 +2091,12 @@ async function sendLineToTeamSeviceFinish(
               ],
             },
 
-            // ===== ระยะเวลา (หัวข้อ + 3 บรรทัด) =====
+            // ===== ระยะเวลา =====
             {
               type: "box",
               layout: "vertical",
               margin: "sm",
+              spacing: "xs",
               contents: [
                 {
                   type: "box",
@@ -2131,7 +2114,6 @@ async function sendLineToTeamSeviceFinish(
                     { type: "text", text: " ", size: "sm", flex: 1 },
                   ],
                 },
-
                 {
                   type: "box",
                   layout: "vertical",
@@ -2165,8 +2147,6 @@ async function sendLineToTeamSeviceFinish(
               ],
             },
 
-            { type: "spacer", size: "lg" },
-
             // ===== ปุ่มเขียว =====
             {
               type: "box",
@@ -2175,9 +2155,10 @@ async function sendLineToTeamSeviceFinish(
               cornerRadius: "10px",
               paddingAll: "md",
               action: {
-                type: "postback",
+                // ถ้าต้องการเปิดลิงก์ให้ใช้ uri
+                type: "uri",
                 label: "ปิดเคสเรียบร้อยแล้ว",
-                data: `https://erp.nisolution.co.th/productservice/servicerequest/${
+                uri: `https://erp.nisolution.co.th/productservice/servicerequest/${
                   TaskNoNew ?? ""
                 }`,
               },
