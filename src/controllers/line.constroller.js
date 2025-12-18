@@ -1178,8 +1178,9 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
     let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
     let actionby = "";
     let userId = "";
-
-    let hellotext = getTimePeriod();
+    let reportBy = "";
+    let reportCompany = "";
+    let notifyAt = "";
 
     const pool = await connectDB();
 
@@ -1191,10 +1192,20 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
       if (result.recordset.length === 0) {
         return res.status(404).json({ message: "Account not found" });
       }
-      const { assignname, channelToken, userIds } = result.recordset[0];
+      const {
+        assignname,
+        channelToken,
+        userIds,
+        requestby,
+        customername,
+        requestdate,
+      } = result.recordset[0];
       actionby = assignname;
       LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
       userId = userIds;
+      reportBy = requestby;
+      reportCompany = customername;
+      notifyAt = requestdate;
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
@@ -1202,84 +1213,536 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
 
     const flexMsg = {
       type: "flex",
-      altText: `สวัสดี มีเคสใหม่เข้ามาครับ`,
+      altText: `มีเคสใหม่เข้ามา !!!! Ticket: ${TaskNoNew ?? ""}`,
       contents: {
         type: "bubble",
+        size: "kilo",
         body: {
           type: "box",
           layout: "vertical",
+          paddingAll: "md",
           contents: [
             {
-              type: "text",
-              text: `สวัสดี  มีเคสใหม่เข้ามาครับ`,
-              weight: "bold",
-              size: "md",
-            },
-
-            {
+              // กรอบการ์ด
               type: "box",
               layout: "vertical",
-              margin: "lg",
-              spacing: "sm",
+              paddingAll: "lg",
+              backgroundColor: "#FFFFFF",
+              borderColor: "#DDE6F0",
+              borderWidth: "2px",
+              cornerRadius: "16px",
               contents: [
+                // ===== Header =====
                 {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
+                    { type: "text", text: "🔔", size: "lg", flex: 0 },
                     {
                       type: "text",
-                      text: `📄 Ticket: ${TaskNoNew ?? ""}`,
+                      text: "มีเคสใหม่เข้ามา !!!!",
+                      weight: "bold",
+                      size: "lg",
+                      color: "#E53935",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                { type: "spacer", size: "md" },
+
+                // ===== Ticket =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "🧾", size: "md", flex: 0 },
+                    {
+                      type: "text",
+                      text: "Ticket:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${TaskNoNew ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== ผู้แจ้ง + บริษัท (2 บรรทัด) =====
+                {
+                  type: "box",
+                  layout: "vertical",
+                  margin: "sm",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        { type: "text", text: "👤", size: "md", flex: 0 },
+                        {
+                          type: "text",
+                          text: "ผู้แจ้ง:",
+                          weight: "bold",
+                          size: "sm",
+                          flex: 0,
+                        },
+                        {
+                          type: "text",
+                          text: `${reportBy ?? ""}`,
+                          size: "sm",
+                          color: "#999999",
+                          wrap: true,
+                        },
+                      ],
+                    },
+                    ...(reportCompany
+                      ? [
+                          {
+                            // ย่อหน้าให้เริ่มหลังไอคอน
+                            type: "box",
+                            layout: "vertical",
+                            paddingStart: "38px",
+                            contents: [
+                              {
+                                type: "text",
+                                text: `${reportCompany}`,
+                                size: "sm",
+                                color: "#999999",
+                                wrap: true,
+                                margin: "xs",
+                              },
+                            ],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+
+                // ===== รายละเอียด =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  margin: "sm",
+                  contents: [
+                    { type: "text", text: "📝", size: "md", flex: 0 },
+                    {
+                      type: "text",
+                      text: "รายละเอียด:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${description ?? ""}`,
+                      size: "sm",
+                      color: "#333333",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== ผู้ดูแลเคส =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  margin: "sm",
+                  contents: [
+                    { type: "text", text: "👤", size: "md", flex: 0 },
+                    {
+                      type: "text",
+                      text: "ผู้ดูแลเคส:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${actionby ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== เวลาแจ้ง =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  margin: "sm",
+                  contents: [
+                    { type: "text", text: "⏳", size: "md", flex: 0 },
+                    {
+                      type: "text",
+                      text: "เวลาแจ้ง:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${notifyAt ?? ""}`, // เช่น "17 ก.ย. 2568 | 14:35 น."
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                { type: "spacer", size: "md" },
+
+                // ===== ข้อความเตือนสีแดง =====
+                {
+                  type: "text",
+                  text: "“กรุณาติดต่อกลับภายใน 5 นาที”",
+                  align: "center",
+                  weight: "bold",
+                  size: "sm",
+                  color: "#E53935",
+                  wrap: true,
+                },
+
+                { type: "spacer", size: "md" },
+
+                // ===== ปุ่มแดงใหญ่ =====
+                {
+                  type: "box",
+                  layout: "vertical",
+                  backgroundColor: "#E53935",
+                  cornerRadius: "10px",
+                  paddingAll: "md",
+                  action: {
+                    // เปลี่ยนเป็น uri ได้ถ้ามีลิงก์เปิดหน้า ticket
+                    type: "postback",
+                    label: "ติดต่อกลับ",
+                    data: `https://erp.nisolution.co.th/productservice/servicerequest/${
+                      TaskNoNew ?? ""
+                    }`,
+                  },
+                  contents: [
+                    {
+                      type: "text",
+                      text: "กรุณาติดต่อกลับลูกค้าโดยเร็ว",
+                      align: "center",
                       weight: "bold",
                       size: "md",
+                      color: "#FFFFFF",
                       wrap: true,
-                      color: "#666666",
                     },
                   ],
                 },
+              ],
+            },
+          ],
+        },
+      },
+    };
 
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      {
+        to: userId,
+        messages: [flexMsg],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return true;
+  } catch (error) {
+    console.error(
+      "Error in sendLineToTeamSevice:",
+      error.response?.data || error.message
+    );
+    return false;
+  }
+}
+
+async function sendLineToTeamSeviceReply(TaskNoNew, description) {
+  try {
+    let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
+    let actionby = "";
+    let userId = "";
+    let reportBy = "";
+    let reportCompany = "";
+    let notifyAt = "";
+
+    const pool = await connectDB();
+
+    let request = pool.request();
+    request.input("TaskNo", sql.VarChar(150), TaskNoNew);
+
+    try {
+      const result = await request.execute("dbo.getServiceTeam");
+      if (result.recordset.length === 0) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+      const {
+        assignname,
+        channelToken,
+        userIds,
+        requestby,
+        customername,
+        requestdate,
+      } = result.recordset[0];
+      actionby = assignname;
+      LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
+      userId = userIds;
+      reportBy = requestby;
+      reportCompany = customername;
+      notifyAt = requestdate;
+      console.log("✅ MSSQL stored procedure executed successfully");
+    } catch (e) {
+      console.error("❌ MSSQL Error moving file:", e);
+    }
+
+    const flexMsg = {
+      type: "flex",
+      altText: `มีเคสใหม่เข้ามา !!!! Ticket: ${TaskNoNew ?? ""}`,
+      contents: {
+        type: "bubble",
+        size: "kilo",
+        body: {
+          type: "box",
+          layout: "vertical",
+          paddingAll: "md",
+          contents: [
+            {
+              // กรอบการ์ด
+              type: "box",
+              layout: "vertical",
+              paddingAll: "lg",
+              backgroundColor: "#FFFFFF",
+              borderColor: "#DDE6F0",
+              borderWidth: "2px",
+              cornerRadius: "16px",
+              contents: [
+                // ===== Header =====
                 {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
+                    { type: "text", text: "🔔", size: "lg", flex: 0 },
                     {
                       type: "text",
-                      text: `🚩 รายละเอียด: ${description}`,
-
-                      size: "sm",
+                      text: "มีเคสใหม่เข้ามา !!!!",
+                      weight: "bold",
+                      size: "lg",
+                      color: "#f4882fff",
                       wrap: true,
-                      color: "#666666",
                     },
                   ],
                 },
 
+                { type: "spacer", size: "md" },
+
+                // ===== Ticket =====
                 {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
+                    { type: "text", text: "🧾", size: "md", flex: 0 },
                     {
                       type: "text",
-                      text: "🕒 สถานะ: รอดำเนินการ กรุณาติดต่อกลับภายใน 10 นาที",
-                      wrap: true,
-                      color: "#666666",
+                      text: "Ticket:",
+                      weight: "bold",
                       size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${TaskNoNew ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
                     },
                   ],
                 },
 
+                // ===== ผู้แจ้ง + บริษัท (2 บรรทัด) =====
+                {
+                  type: "box",
+                  layout: "vertical",
+                  margin: "sm",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        { type: "text", text: "👤", size: "md", flex: 0 },
+                        {
+                          type: "text",
+                          text: "ผู้แจ้ง:",
+                          weight: "bold",
+                          size: "sm",
+                          flex: 0,
+                        },
+                        {
+                          type: "text",
+                          text: `${reportBy ?? ""}`,
+                          size: "sm",
+                          color: "#999999",
+                          wrap: true,
+                        },
+                      ],
+                    },
+                    ...(reportCompany
+                      ? [
+                          {
+                            // ย่อหน้าให้เริ่มหลังไอคอน
+                            type: "box",
+                            layout: "vertical",
+                            paddingStart: "38px",
+                            contents: [
+                              {
+                                type: "text",
+                                text: `${reportCompany}`,
+                                size: "sm",
+                                color: "#999999",
+                                wrap: true,
+                                margin: "xs",
+                              },
+                            ],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+
+                // ===== รายละเอียด =====
                 {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
+                  margin: "sm",
+                  contents: [
+                    { type: "text", text: "📝", size: "md", flex: 0 },
+                    {
+                      type: "text",
+                      text: "รายละเอียด:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${description ?? ""}`,
+                      size: "sm",
+                      color: "#333333",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== ผู้ดูแลเคส =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  margin: "sm",
+                  contents: [
+                    { type: "text", text: "👤", size: "md", flex: 0 },
+                    {
+                      type: "text",
+                      text: "ผู้ดูแลเคส:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${actionby ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== เวลาแจ้ง =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  margin: "sm",
+                  contents: [
+                    { type: "text", text: "⏳", size: "md", flex: 0 },
+                    {
+                      type: "text",
+                      text: "เวลาแจ้ง:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${notifyAt ?? ""}`, // เช่น "17 ก.ย. 2568 | 14:35 น."
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                { type: "spacer", size: "md" },
+
+                // ===== ข้อความเตือนสีแดง =====
+                {
+                  type: "text",
+                  text: "“ลูกค้ารอ 5 นาทีแล้ว”",
+                  align: "center",
+                  weight: "bold",
+                  size: "sm",
+                  color: "#f4882fff",
+                  wrap: true,
+                },
+
+                { type: "spacer", size: "md" },
+
+                // ===== ปุ่มแดงใหญ่ =====
+                {
+                  type: "box",
+                  layout: "vertical",
+                  backgroundColor: "#f4882fff",
+                  cornerRadius: "10px",
+                  paddingAll: "md",
+                  action: {
+                    // เปลี่ยนเป็น uri ได้ถ้ามีลิงก์เปิดหน้า ticket
+                    type: "postback",
+                    label: "ติดต่อกลับ",
+                    data: `https://erp.nisolution.co.th/productservice/servicerequest/${
+                      TaskNoNew ?? ""
+                    }`,
+                  },
                   contents: [
                     {
                       type: "text",
-                      text: `👨🏻‍💻 ผู้ดูแลเคส: ${actionby ?? ""}`,
+                      text: "กรุณาติดต่อกลับลูกค้าโดยเร็ว",
+                      align: "center",
+                      weight: "bold",
+                      size: "md",
+                      color: "#FFFFFF",
                       wrap: true,
-                      color: "#666666",
-                      size: "sm",
                     },
                   ],
                 },
@@ -1448,6 +1911,8 @@ async function sendLineToTeamSeviceFinish(
     let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
 
     let userId = "";
+    let reporterName = "";
+    let reporterCompany = "";
 
     const pool = await connectDB();
 
@@ -1459,10 +1924,13 @@ async function sendLineToTeamSeviceFinish(
       if (result.recordset.length === 0) {
         return res.status(404).json({ message: "Account not found" });
       }
-      const { channelToken, userIds } = result.recordset[0];
+      const { channelToken, userIds, requestby, customername } =
+        result.recordset[0];
 
       LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
       userId = userIds;
+      reporterName = requestby;
+      reporterCompany = customername;
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
@@ -1470,77 +1938,272 @@ async function sendLineToTeamSeviceFinish(
 
     const flexmessage = {
       type: "flex",
-      altText: `🎉 Ticket: ${TaskNoNew} ดำเนินการเรียบร้อย`,
+      altText: `✅ ปิดเคสเรียบร้อย Ticket: ${TaskNoNew ?? ""}`,
       contents: {
         type: "bubble",
+        size: "kilo",
         body: {
           type: "box",
           layout: "vertical",
+          paddingAll: "lg",
+          backgroundColor: "#FFFFFF",
+          borderColor: "#DDE6F0",
+          borderWidth: "2px",
+          cornerRadius: "16px",
           contents: [
+            // ===== Header =====
             {
-              type: "text",
-              text: `📄 Ticket: ${TaskNoNew}`,
-              weight: "bold",
-              size: "lg",
-              color: "#e38c29ff",
-            },
-            {
-              type: "text",
-              text: `🚩 รายละเอียด: ${issue}`,
-              wrap: true,
-              size: "sm",
-              color: "#666666",
-            },
-            {
-              type: "text",
-              text: `🕒 สถานะ: ดำเนินการเรียบร้อย`,
-              wrap: true,
-              size: "sm",
-              color: "#666666",
-            },
-            {
-              type: "text",
-              text: `📄 รายงาน: ${actiondetail}`,
-              wrap: true,
-              size: "sm",
-              color: "#666666",
+              type: "box",
+              layout: "baseline",
+              spacing: "sm",
+              contents: [
+                { type: "text", text: "😊", size: "lg", flex: 0 },
+                {
+                  type: "text",
+                  text: "ปิดเคสเรียบร้อย",
+                  weight: "bold",
+                  size: "lg",
+                  color: "#2E7D32",
+                  wrap: true,
+                },
+              ],
             },
 
+            { type: "spacer", size: "md" },
+
+            // ===== Ticket =====
             {
-              type: "text",
-              text: `ผู้ดูแลเคส: ${staffName}`,
-              wrap: true,
-              size: "sm",
-              color: "#666666",
-            },
-            {
-              type: "text",
-              text: `⏳ ระยะเวลา:`,
-              wrap: true,
-              size: "sm",
-              color: "#e38c29ff",
+              type: "box",
+              layout: "baseline",
+              spacing: "sm",
+              contents: [
+                { type: "text", text: "🧾", size: "md", flex: 0 },
+                {
+                  type: "text",
+                  text: "Ticket:",
+                  weight: "bold",
+                  size: "sm",
+                  flex: 0,
+                },
+                {
+                  type: "text",
+                  text: `${TaskNoNew ?? ""}`,
+                  size: "sm",
+                  color: "#999999",
+                  wrap: true,
+                },
+              ],
             },
 
+            // ===== ผู้แจ้ง + บริษัท (2 บรรทัด) =====
             {
-              type: "text",
-              text: `เวลาแจ้ง: ${receiveDate}`,
-              wrap: true,
-              size: "sm",
-              color: "#999999",
+              type: "box",
+              layout: "vertical",
+              margin: "sm",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "👤", size: "md", flex: 0 },
+                    {
+                      type: "text",
+                      text: "ผู้แจ้ง:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${reporterName ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                ...(reporterCompany
+                  ? [
+                      {
+                        type: "box",
+                        layout: "vertical",
+                        paddingStart: "38px",
+                        contents: [
+                          {
+                            type: "text",
+                            text: `${reporterCompany}`,
+                            size: "sm",
+                            color: "#999999",
+                            wrap: true,
+                            margin: "xs",
+                          },
+                        ],
+                      },
+                    ]
+                  : []),
+              ],
             },
+
+            // ===== รายละเอียด =====
             {
-              type: "text",
-              text: `เวลาดำเนินการ: ${startDate}`,
-              wrap: true,
-              size: "sm",
-              color: "#999999",
+              type: "box",
+              layout: "baseline",
+              spacing: "sm",
+              margin: "sm",
+              contents: [
+                { type: "text", text: "📝", size: "md", flex: 0 },
+                {
+                  type: "text",
+                  text: "รายละเอียด:",
+                  weight: "bold",
+                  size: "sm",
+                  flex: 0,
+                },
+                {
+                  type: "text",
+                  text: `${issue ?? ""}`,
+                  size: "sm",
+                  color: "#333333",
+                  wrap: true,
+                },
+              ],
             },
+
+            // ===== ผู้ดูแลเคส =====
             {
-              type: "text",
-              text: `เวลาปิดงาน: ${closedDate}`,
-              wrap: true,
-              size: "sm",
-              color: "#999999",
+              type: "box",
+              layout: "baseline",
+              spacing: "sm",
+              margin: "sm",
+              contents: [
+                { type: "text", text: "👨🏻‍💻", size: "md", flex: 0 },
+                {
+                  type: "text",
+                  text: "ผู้ดูแลเคส:",
+                  weight: "bold",
+                  size: "sm",
+                  flex: 0,
+                },
+                {
+                  type: "text",
+                  text: `${staffName ?? ""}`,
+                  size: "sm",
+                  color: "#999999",
+                  wrap: true,
+                },
+              ],
+            },
+
+            // ===== รายงาน =====
+            {
+              type: "box",
+              layout: "baseline",
+              spacing: "sm",
+              margin: "sm",
+              contents: [
+                { type: "text", text: "🚩", size: "md", flex: 0 },
+                {
+                  type: "text",
+                  text: "รายงาน:",
+                  weight: "bold",
+                  size: "sm",
+                  flex: 0,
+                },
+                {
+                  type: "text",
+                  text: `${actiondetail ?? ""}`,
+                  size: "sm",
+                  color: "#333333",
+                  wrap: true,
+                },
+              ],
+            },
+
+            // ===== ระยะเวลา (หัวข้อ + 3 บรรทัด) =====
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "sm",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "⏳", size: "md", flex: 0 },
+                    {
+                      type: "text",
+                      text: "ระยะเวลา:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    { type: "text", text: " ", size: "sm", flex: 1 },
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "vertical",
+                  paddingStart: "38px",
+                  margin: "xs",
+                  spacing: "xs",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `เวลาแจ้ง: ${receiveDate ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                    {
+                      type: "text",
+                      text: `เวลาเริ่มดำเนินการ: ${startDate ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                    {
+                      type: "text",
+                      text: `เวลาปิดงาน: ${closedDate ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+              ],
+            },
+
+            { type: "spacer", size: "lg" },
+
+            // ===== ปุ่มเขียว =====
+            {
+              type: "box",
+              layout: "vertical",
+              backgroundColor: "#66BB6A",
+              cornerRadius: "10px",
+              paddingAll: "md",
+              action: {
+                type: "postback",
+                label: "ปิดเคสเรียบร้อยแล้ว",
+                data: `https://erp.nisolution.co.th/productservice/servicerequest/${
+                  TaskNoNew ?? ""
+                }`,
+              },
+              contents: [
+                {
+                  type: "text",
+                  text: "ปิดเคสเรียบร้อยแล้ว",
+                  align: "center",
+                  weight: "bold",
+                  size: "md",
+                  color: "#FFFFFF",
+                  wrap: true,
+                },
+              ],
             },
           ],
         },
@@ -1762,7 +2425,7 @@ exports.waitsendmsgagent = async () => {
 
         // 2.4 ส่งแจ้งเตือนทีมงานผ่านฟังก์ชัน
 
-        await sendLineToTeamSevice(TaskNoNew, description);
+        await sendLineToTeamSeviceReply(TaskNoNew, description);
 
         let request = pool.request();
         request.input("TaskNo", sql.VarChar(150), TaskNoNew);
