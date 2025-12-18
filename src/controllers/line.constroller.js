@@ -1216,21 +1216,21 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
       altText: `มีเคสใหม่เข้ามา !!!! Ticket: ${TaskNoNew ?? ""}`,
       contents: {
         type: "bubble",
-
+        size: "kilo",
         body: {
           type: "box",
           layout: "vertical",
-
+          paddingAll: "md",
           contents: [
             {
-              // กรอบการ์ด
-              type: "text",
+              // ✅ เอากรอบออกแล้ว
+              type: "box",
               layout: "vertical",
               paddingAll: "lg",
+              backgroundColor: "#FFFFFF",
+              cornerRadius: "16px", // ถ้าอยากเหลี่ยม ๆ ให้เปลี่ยนเป็น "0px"
 
-              // ใช้ spacing แทน spacer
               spacing: "md",
-
               contents: [
                 // ===== Header =====
                 {
@@ -1307,11 +1307,10 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                           {
                             type: "text",
                             text: `${reportCompany}`,
-                            size: "xs",
+                            size: "sm",
                             color: "#999999",
                             wrap: true,
-
-                            offsetStart: "38px", // ถ้าระบบไม่รองรับให้ลบออกได้
+                            margin: "none",
                           },
                         ]
                       : []),
