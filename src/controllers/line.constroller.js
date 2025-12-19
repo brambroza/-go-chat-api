@@ -1144,11 +1144,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
       }
     );
 
-    await sendLineToTeamSeviceFinish(
-      taskNo,
-      issue
-      
-    );
+    await sendLineToTeamSeviceFinish(taskNo, issue);
 
     console.log("✅ Case closed message sent to user");
     return res.json({ success: true });
@@ -1305,6 +1301,7 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                             size: "sm",
                             color: "#999999",
                             wrap: true,
+                            paddingStart: "38px",
                             margin: "none",
                           },
                         ]
@@ -1589,8 +1586,9 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                           {
                             type: "text",
                             text: `${reportCompany}`,
-                            size: "sm",
+                            size: "xs",
                             color: "#999999",
+                            paddingStart: "38px",
                             wrap: true,
                             margin: "xs",
                           },
@@ -1860,10 +1858,7 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
   }
 }
 
-async function sendLineToTeamSeviceFinish(
-  TaskNoNew,
-  issue
-) {
+async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
   try {
     let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
 
@@ -1871,9 +1866,9 @@ async function sendLineToTeamSeviceFinish(
     let reporterName = "";
     let reporterCompany = "";
     let reportclosedate = "";
-    let reportstartdate = "" ;
-    let reportactionby = "" ; 
-    let reportactiondetail="";
+    let reportstartdate = "";
+    let reportactionby = "";
+    let reportactiondetail = "";
     let reportrequestdate = "";
 
     const pool = await connectDB();
@@ -1886,17 +1881,26 @@ async function sendLineToTeamSeviceFinish(
       if (result.recordset.length === 0) {
         return res.status(404).json({ message: "Account not found" });
       }
-      const { channelToken, userIds, requestby, customername , closedate , startdate ,ActionBy ,ActionDetail ,requestdate } =
-        result.recordset[0];
+      const {
+        channelToken,
+        userIds,
+        requestby,
+        customername,
+        closedate,
+        startdate,
+        ActionBy,
+        ActionDetail,
+        requestdate,
+      } = result.recordset[0];
 
       LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
       userId = userIds;
       reporterName = requestby;
       reporterCompany = customername;
       reportrequestdate = requestdate;
-      reportstartdate =  startdate;
+      reportstartdate = startdate;
       reportclosedate = closedate;
-      reportactionby =  ActionBy;
+      reportactionby = ActionBy;
       reportactiondetail = ActionDetail;
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
@@ -2002,7 +2006,7 @@ async function sendLineToTeamSeviceFinish(
                           {
                             type: "text",
                             text: `${reporterCompany}`,
-                            size: "sm",
+                            size: "xs",
                             color: "#999999",
                             wrap: true,
                             margin: "xs",
