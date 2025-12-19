@@ -1146,13 +1146,8 @@ exports.sendCaseClosedMessage = async (req, res) => {
 
     await sendLineToTeamSeviceFinish(
       taskNo,
-      issue,
-      actiondetail,
-      staffName,
-      actiondetail,
-      startDate,
-      receiveDate,
-      closedDate
+      issue
+      
     );
 
     console.log("✅ Case closed message sent to user");
@@ -1867,13 +1862,7 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
 
 async function sendLineToTeamSeviceFinish(
   TaskNoNew,
-  issue,
-  actiondetail,
-  staffName,
-  actiondetail,
-  startDate,
-  receiveDate,
-  closedDate
+  issue
 ) {
   try {
     let LINE_OA_CHANNEL_ACCESS_TOKEN = "";
@@ -1881,6 +1870,11 @@ async function sendLineToTeamSeviceFinish(
     let userId = "";
     let reporterName = "";
     let reporterCompany = "";
+    let reportclosedate = "";
+    let reportstartdate = "" ;
+    let reportactionby = "" ; 
+    let reportactiondetail="";
+    let reportrequestdate = "";
 
     const pool = await connectDB();
 
@@ -1888,17 +1882,22 @@ async function sendLineToTeamSeviceFinish(
     request.input("TaskNo", sql.VarChar(150), TaskNoNew);
 
     try {
-      const result = await request.execute("dbo.getServiceTeam");
+      const result = await request.execute("dbo.getServiceTeamClose");
       if (result.recordset.length === 0) {
         return res.status(404).json({ message: "Account not found" });
       }
-      const { channelToken, userIds, requestby, customername } =
+      const { channelToken, userIds, requestby, customername , closedate , startdate ,ActionBy ,ActionDetail ,requestdate } =
         result.recordset[0];
 
       LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
       userId = userIds;
       reporterName = requestby;
       reporterCompany = customername;
+      reportrequestdate = requestdate;
+      reportstartdate =  startdate;
+      reportclosedate = closedate;
+      reportactionby =  ActionBy;
+      reportactiondetail = ActionDetail;
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
@@ -2057,7 +2056,7 @@ async function sendLineToTeamSeviceFinish(
                 },
                 {
                   type: "text",
-                  text: `${staffName ?? ""}`,
+                  text: `${reportactionby ?? ""}`,
                   size: "sm",
                   color: "#999999",
                   wrap: true,
@@ -2082,7 +2081,7 @@ async function sendLineToTeamSeviceFinish(
                 },
                 {
                   type: "text",
-                  text: `${actiondetail ?? ""}`,
+                  text: `${reportactiondetail ?? ""}`,
                   size: "sm",
                   color: "#333333",
                   wrap: true,
@@ -2122,21 +2121,21 @@ async function sendLineToTeamSeviceFinish(
                   contents: [
                     {
                       type: "text",
-                      text: `เวลาแจ้ง: ${receiveDate ?? ""}`,
+                      text: `เวลาแจ้ง: ${reportrequestdate ?? ""}`,
                       size: "sm",
                       color: "#999999",
                       wrap: true,
                     },
                     {
                       type: "text",
-                      text: `เวลาเริ่มดำเนินการ: ${startDate ?? ""}`,
+                      text: `เวลาเริ่มดำเนินการ: ${reportstartdate ?? ""}`,
                       size: "sm",
                       color: "#999999",
                       wrap: true,
                     },
                     {
                       type: "text",
-                      text: `เวลาปิดงาน: ${closedDate ?? ""}`,
+                      text: `เวลาปิดงาน: ${reportclosedate ?? ""}`,
                       size: "sm",
                       color: "#999999",
                       wrap: true,
