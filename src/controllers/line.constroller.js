@@ -1229,12 +1229,12 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "🔔", size: "lg", flex: 0 },
+                    { type: "text", text: "🔔", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "มีเคสใหม่เข้ามา !!!!",
                       weight: "bold",
-                      size: "lg",
+                      size: "sm",
                       color: "#E53935",
                       wrap: true,
                     },
@@ -1247,7 +1247,7 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "🧾", size: "md", flex: 0 },
+                    { type: "text", text: "🧾", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "Ticket:",
@@ -1276,18 +1276,18 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                       layout: "baseline",
                       spacing: "sm",
                       contents: [
-                        { type: "text", text: "👤", size: "md", flex: 0 },
+                        { type: "text", text: "👤", size: "sm", flex: 0 },
                         {
                           type: "text",
                           text: "ผู้แจ้ง:",
                           weight: "bold",
-                          size: "sm",
+                          size: "xs",
                           flex: 0,
                         },
                         {
                           type: "text",
                           text: `${reportBy ?? ""}`,
-                          size: "sm",
+                          size: "xs",
                           color: "#999999",
                           wrap: true,
                         },
@@ -1303,7 +1303,7 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                               {
                                 type: "text",
                                 text: `${reportCompany}`,
-                                size: "sm",
+                                size: "xs",
                                 color: "#999999",
                                 wrap: true,
                                 margin: "none",
@@ -1321,18 +1321,18 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "📝", size: "md", flex: 0 },
+                    { type: "text", text: "📝", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "รายละเอียด:",
                       weight: "bold",
-                      size: "sm",
+                      size: "xs",
                       flex: 0,
                     },
                     {
                       type: "text",
                       text: `${description ?? ""}`,
-                      size: "sm",
+                      size: "xs",
                       color: "#333333",
                       wrap: true,
                     },
@@ -1345,18 +1345,18 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "👤", size: "md", flex: 0 },
+                    { type: "text", text: "👤", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "ผู้ดูแลเคส:",
                       weight: "bold",
-                      size: "sm",
+                      size: "xs",
                       flex: 0,
                     },
                     {
                       type: "text",
                       text: `${actionby ?? ""}`,
-                      size: "sm",
+                      size: "xs",
                       color: "#999999",
                       wrap: true,
                     },
@@ -1369,18 +1369,18 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "⏳", size: "md", flex: 0 },
+                    { type: "text", text: "⏳", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "เวลาแจ้ง:",
                       weight: "bold",
-                      size: "sm",
+                      size: "xs",
                       flex: 0,
                     },
                     {
                       type: "text",
                       text: `${notifyAt ?? ""}`,
-                      size: "sm",
+                      size: "xs",
                       color: "#999999",
                       wrap: true,
                     },
@@ -1523,12 +1523,12 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "🔔", size: "lg", flex: 0 },
+                    { type: "text", text: "🔔", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "มีเคสใหม่เข้ามา !!!!",
                       weight: "bold",
-                      size: "lg",
+                      size: "sm",
                       color: "#f4882fff",
                       wrap: true,
                     },
@@ -1541,7 +1541,7 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "🧾", size: "md", flex: 0 },
+                    { type: "text", text: "🧾", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "Ticket:",
@@ -1570,18 +1570,18 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                       layout: "baseline",
                       spacing: "sm",
                       contents: [
-                        { type: "text", text: "👤", size: "md", flex: 0 },
+                        { type: "text", text: "👤", size: "sm", flex: 0 },
                         {
                           type: "text",
                           text: "ผู้แจ้ง:",
                           weight: "bold",
-                          size: "sm",
+                          size: "xs",
                           flex: 0,
                         },
                         {
                           type: "text",
                           text: `${reportBy ?? ""}`,
-                          size: "sm",
+                          size: "xs",
                           color: "#999999",
                           wrap: true,
                         },
@@ -1592,7 +1592,7 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                           {
                             type: "box",
                             layout: "vertical",
-                            paddingStart: "38px",
+                            paddingStart: "10px",
                             contents: [
                               {
                                 type: "text",
@@ -1615,18 +1615,18 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "📝", size: "md", flex: 0 },
+                    { type: "text", text: "📝", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "รายละเอียด:",
                       weight: "bold",
-                      size: "sm",
+                      size: "xs",
                       flex: 0,
                     },
                     {
                       type: "text",
                       text: `${description ?? ""}`,
-                      size: "sm",
+                      size: "xs",
                       color: "#333333",
                       wrap: true,
                     },
@@ -1639,18 +1639,18 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "👤", size: "md", flex: 0 },
+                    { type: "text", text: "👤", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "ผู้ดูแลเคส:",
                       weight: "bold",
-                      size: "sm",
+                      size: "xs",
                       flex: 0,
                     },
                     {
                       type: "text",
                       text: `${actionby ?? ""}`,
-                      size: "sm",
+                      size: "xs",
                       color: "#999999",
                       wrap: true,
                     },
@@ -1663,18 +1663,18 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "⏳", size: "md", flex: 0 },
+                    { type: "text", text: "⏳", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "เวลาแจ้ง:",
                       weight: "bold",
-                      size: "sm",
+                      size: "xs",
                       flex: 0,
                     },
                     {
                       type: "text",
                       text: `${notifyAt ?? ""}`,
-                      size: "sm",
+                      size: "xs",
                       color: "#999999",
                       wrap: true,
                     },
@@ -1788,7 +1788,7 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
               type: "text",
               text: `📄 Ticket: \n#${TaskNoNew ?? ""}`,
               weight: "bold",
-              size: "md",
+              size: "sm",
             },
             {
               type: "box",
@@ -1805,7 +1805,7 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
                       type: "text",
                       text: `🚩 รายละเอียด: ${description}`,
                       color: "#aaaaaa",
-                      size: "sm",
+                      size: "xs",
                       wrap: true,
                     },
                   ],
@@ -1819,7 +1819,7 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
                       type: "text",
                       text: "🕒 สถานะ : กำลังดำเนินการ",
                       color: "#aaaaaa",
-                      size: "sm",
+                      size: "xs",
                       wrap: true,
                     },
                   ],
@@ -1834,7 +1834,7 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby) {
                       type: "text",
                       text: `👨🏻‍💻 ดำเนินการโดย: ${actionby ?? ""}`,
                       color: "#aaaaaa",
-                      size: "sm",
+                      size: "xs",
                       wrap: true,
                     },
                   ],
@@ -1942,12 +1942,12 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
               layout: "baseline",
               spacing: "sm",
               contents: [
-                { type: "text", text: "😊", size: "lg", flex: 0 },
+                { type: "text", text: "😊", size: "sm", flex: 0 },
                 {
                   type: "text",
                   text: "ปิดเคสเรียบร้อย",
                   weight: "bold",
-                  size: "lg",
+                  size: "sm",
                   color: "#66BB6A",
                   wrap: true,
                 },
@@ -1960,7 +1960,7 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
               layout: "baseline",
               spacing: "sm",
               contents: [
-                { type: "text", text: "🧾", size: "md", flex: 0 },
+                { type: "text", text: "🧾", size: "sm", flex: 0 },
                 {
                   type: "text",
                   text: "Ticket:",
@@ -1990,18 +1990,18 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "👤", size: "md", flex: 0 },
+                    { type: "text", text: "👤", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "ผู้แจ้ง:",
                       weight: "bold",
-                      size: "sm",
+                      size: "xs",
                       flex: 0,
                     },
                     {
                       type: "text",
                       text: `${reporterName ?? ""}`,
-                      size: "sm",
+                      size: "xs",
                       color: "#999999",
                       wrap: true,
                     },
@@ -2013,7 +2013,7 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
                       {
                         type: "box",
                         layout: "vertical",
-                        paddingStart: "38px",
+                        paddingStart: "10px",
                         contents: [
                           {
                             type: "text",
@@ -2034,21 +2034,21 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
             {
               type: "box",
               layout: "baseline",
-              spacing: "sm",
-              margin: "sm",
+              spacing: "xs",
+              margin: "xs",
               contents: [
-                { type: "text", text: "📝", size: "md", flex: 0 },
+                { type: "text", text: "📝", size: "sm", flex: 0 },
                 {
                   type: "text",
                   text: "รายละเอียด:",
                   weight: "bold",
-                  size: "sm",
+                  size: "xs",
                   flex: 0,
                 },
                 {
                   type: "text",
                   text: `${issue ?? ""}`,
-                  size: "sm",
+                  size: "xs",
                   color: "#333333",
                   wrap: true,
                 },
@@ -2059,21 +2059,21 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
             {
               type: "box",
               layout: "baseline",
-              spacing: "sm",
-              margin: "sm",
+              spacing: "xs",
+              margin: "xs",
               contents: [
-                { type: "text", text: "👨🏻‍💻", size: "md", flex: 0 },
+                { type: "text", text: "👨🏻‍💻", size: "sm", flex: 0 },
                 {
                   type: "text",
                   text: "ผู้ดูแลเคส:",
                   weight: "bold",
-                  size: "sm",
+                  size: "xs",
                   flex: 0,
                 },
                 {
                   type: "text",
                   text: `${reportactionby ?? ""}`,
-                  size: "sm",
+                  size: "xs",
                   color: "#999999",
                   wrap: true,
                 },
@@ -2084,21 +2084,21 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
             {
               type: "box",
               layout: "baseline",
-              spacing: "sm",
-              margin: "sm",
+              spacing: "xs",
+              margin: "xs",
               contents: [
-                { type: "text", text: "🚩", size: "md", flex: 0 },
+                { type: "text", text: "🚩", size: "sm", flex: 0 },
                 {
                   type: "text",
                   text: "รายงาน:",
                   weight: "bold",
-                  size: "sm",
+                  size: "xs",
                   flex: 0,
                 },
                 {
                   type: "text",
                   text: `${reportactiondetail ?? ""}`,
-                  size: "sm",
+                  size: "xs",
                   color: "#333333",
                   wrap: true,
                 },
@@ -2117,12 +2117,12 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "⏳", size: "md", flex: 0 },
+                    { type: "text", text: "⏳", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "ระยะเวลา:",
                       weight: "bold",
-                      size: "sm",
+                      size: "xs",
                       flex: 0,
                     },
                     { type: "text", text: " ", size: "sm", flex: 1 },
