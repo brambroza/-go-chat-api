@@ -301,7 +301,7 @@ exports.createHelpdeskCase = async (req, res) => {
     request2.input("RevNo", sql.Int, 0);
     request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
 
-    await request2.execute("dbo.setNotification");
+    await request2.execute("dbo.setNotificationLineChat");
 
     return res.status(200).json({ success: true });
   } catch (err) {
