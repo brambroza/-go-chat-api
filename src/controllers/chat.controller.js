@@ -259,7 +259,7 @@ exports.handleLineWebhook = async (req, res) => {
           request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
           request2.input("UnRead", sql.VarChar(100), "0");
 
-          await request2.execute("dbo.setNotification");
+          await request2.execute("dbo.setNotificationLineChat");
         }
 
         // 5) ส่งลิงก์กลับไปหา user (ถ้ามี)
