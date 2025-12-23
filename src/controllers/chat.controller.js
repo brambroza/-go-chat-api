@@ -24,7 +24,261 @@ function getExtFromName(name) {
   return path.extname(lower) || ""; // เช่น .pdf
 }
 
+// ====== put these helpers at module scope (top of file) ======
+const RECENT_TTL_MS = 5 * 60 * 1000; // 5 นาที
+const recentLineMsgIds = new Map(); // messageId -> timestamp
+
+function seenRecently(messageId) {
+  const now = Date.now();
+
+  // cleanup เก่า
+  for (const [id, ts] of recentLineMsgIds) {
+    if (now - ts > RECENT_TTL_MS) recentLineMsgIds.delete(id);
+  }
+
+  if (recentLineMsgIds.has(messageId)) return true;
+  recentLineMsgIds.set(messageId, now);
+  return false;
+}
+
+function toBangkokDateTimeStringFromEpochMs(epochMs) {
+  // LINE timestamp เป็น ms อยู่แล้ว
+  const d = new Date(epochMs);
+  const bangkok = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+  return bangkok.toISOString().replace("T", " ").substring(0, 19);
+}
+
+function safeStr(x) {
+  return (x ?? "").toString();
+}
+
+// ============================================================
+
 exports.handleLineWebhook = async (req, res) => {
+  const accountId = req.params.accountId;
+  const events = Array.isArray(req.body?.events) ? req.body.events : [];
+
+  // ✅ 1) ตอบ 200 ให้เร็วที่สุด กัน LINE retry ยิงซ้ำ
+  if (!accountId || events.length === 0) {
+    return res.status(200).json({ message: "OK (no content to process)" });
+  }
+
+  // เป็น chat กลุ่ม ไม่ต้องทำต่อ
+  const hasGroup = events.some((ev) => ev?.source?.type === "group");
+  if (hasGroup) return res.sendStatus(200);
+
+  // ตอบกลับ LINE ก่อน แล้วค่อย process ต่อ
+  res.sendStatus(200);
+
+  // ✅ ทำงานต่อแบบ async หลังตอบแล้ว
+  process.nextTick(async () => {
+    try {
+      console.log("LINE events count:", events.length);
+      // console.log("LINE events:", events);
+
+      // ต่อ DB ครั้งเดียว
+      const pool = await connectDB();
+
+      // หา token ตาม accountId
+      const tokenRs = await pool
+        .request()
+        .input("accountId", sql.VarChar, accountId).query(`
+          SELECT ChannelId, AccessToken as channelToken
+          FROM [dbo].[CompanySocialChannel]
+          WHERE Name = @accountId
+        `);
+
+      if (!tokenRs.recordset?.length) {
+        console.error("Account not found:", accountId);
+        return;
+      }
+
+      const { channelToken } = tokenRs.recordset[0];
+      const io = getIO();
+
+      // ค่าคงที่ในโค้ดเดิม
+      const cmpId = "230015";
+      const volumeBase = "/usr/src/app/uploads";
+      const uploadDirnew = path.join(volumeBase, `${cmpId}/linechat`);
+
+      // ✅ getAccountlist เอามาครั้งเดียวพอ (ไม่ต้อง query ทุก event)
+      const dt = await pool
+        .request()
+        .input("cmpId", cmpId)
+        .query("EXEC dbo.getAccountlist @cmpId=@cmpId");
+      const rows = dt.recordset ?? [];
+
+      // ✅ distinct usernames กันยิงซ้ำถ้า SP คืนซ้ำ
+      const usernames = [
+        ...new Set(rows.map((r) => safeStr(r.Username).trim()).filter(Boolean)),
+      ];
+
+      // กันซ้ำใน payload เดียวกัน (บางที LINE ส่ง events หลายอัน)
+      const seenInThisRequest = new Set();
+
+      for (const event of events) {
+        if (event?.type !== "message") continue;
+
+        const messageId = event?.message?.id;
+        const userId = event?.source?.userId;
+        const type = event?.message?.type;
+
+        if (!messageId || !userId || !type) continue;
+
+        // ✅ 2) กันซ้ำข้าม request + ใน request
+        if (seenInThisRequest.has(messageId)) continue;
+        seenInThisRequest.add(messageId);
+
+        if (seenRecently(messageId)) {
+          console.log("skip duplicate (recent cache):", messageId);
+          continue;
+        }
+
+        const timestamp = event.timestamp; // epoch ms
+        const replyToken = event.replyToken;
+        const quotaToken = event.message.quoteToken || "";
+        const text = event.message.text || "";
+        const stickerId = event.message.stickerId || "-";
+        const stickerResourceType = event.message.stickerResourceType || "-";
+
+        // 1) บันทึกข้อความลง DB (ครั้งเดียว)
+        const request = pool.request();
+        request.input("CmpId", sql.VarChar(10), cmpId);
+        request.input("TimeStamp", sql.BigInt, timestamp);
+        request.input("id", sql.VarChar(50), messageId);
+        request.input("userId", sql.VarChar(50), userId);
+        request.input("type", sql.VarChar(50), type);
+        request.input("replyToken", sql.VarChar(50), replyToken);
+        request.input("quotaToken", sql.VarChar(200), quotaToken);
+        request.input("text", sql.NVarChar(sql.MAX), text);
+        request.input("stickerId", sql.VarChar(50), stickerId);
+        request.input(
+          "stickerResourceType",
+          sql.VarChar(50),
+          stickerResourceType
+        );
+
+        const spRs = await request.execute("dbo.setLineChatMessage");
+
+        const first = spRs?.recordset?.[0] ?? {};
+        const ProbDetail = first.ProbDetail ?? null;
+        const UrlName = first.UrlName ?? null;
+        const UrlLink = first.UrlLink ?? "";
+
+        // 2) ถ้าเป็น file/image/video -> ดาวน์โหลดเก็บไฟล์ (ไม่ block event loop)
+        if (type === "image" || type === "file" || type === "video") {
+          try {
+            const response = await fetch(
+              `https://api-data.line.me/v2/bot/message/${messageId}/content`,
+              { headers: { Authorization: `Bearer ${channelToken}` } }
+            );
+
+            if (!response.ok) {
+              console.error(
+                `❌ Failed to fetch content for messageId=${messageId}`
+              );
+            } else {
+              const buffer = Buffer.from(await response.arrayBuffer());
+
+              // ทำโฟลเดอร์
+              await fs.promises.mkdir(uploadDirnew, { recursive: true });
+
+              // ชื่อไฟล์
+              const ext =
+                type === "image"
+                  ? ".png"
+                  : getExtFromName(event?.message?.fileName) || "";
+
+              const filename = `${messageId}${ext}`;
+              const finalPath = path.join(uploadDirnew, filename);
+
+              await fs.promises.writeFile(finalPath, buffer);
+              // console.log("✅ Saved:", finalPath);
+            }
+          } catch (err) {
+            console.error("❌ Error saving content:", err);
+          }
+        }
+
+        // 3) สร้าง notification payload
+        const bangkokTime = toBangkokDateTimeStringFromEpochMs(timestamp);
+
+        const msgNotification = {
+          id: uuidv4(),
+          type: "linechat",
+          title: text,
+          category: text,
+          isUnRead: true,
+          avatarUrl: userId,
+          createdAt: bangkokTime,
+          isUnAlert: true,
+          urllink:
+            UrlLink === ""
+              ? `/dashboard/chatsocial?id=${userId}`
+              : `/productservice/servicerequestchat/${UrlLink}`,
+          sendFrom: userId,
+          moduleFormName: "/dashboard/chatsocial",
+          isUnReadMenu: true,
+          docNo: messageId,
+          revNo: 0,
+        };
+
+        // 4) emit + บันทึก notification (distinct user แล้ว)
+        for (const username of usernames) {
+          const room = `notification_230015_${username}`;
+
+          io.to(room).emit(
+            "ReceiveNotification",
+            JSON.stringify([msgNotification])
+          );
+
+          const request2 = pool.request();
+          request2.input("CmpId", sql.NVarChar(100), cmpId);
+          request2.input("userTo", sql.NVarChar(100), username);
+          request2.input("userFrom", sql.NVarChar(100), "0");
+          request2.input("id", sql.VarChar(100), messageId);
+          request2.input("Title", sql.VarChar(500), text);
+          request2.input("Category", sql.VarChar(500), text);
+          request2.input("type", sql.VarChar(50), "linechat");
+          request2.input(
+            "linkTo",
+            sql.VarChar(500),
+            UrlLink === ""
+              ? `/dashboard/chatsocial?id=${userId}`
+              : `/productservice/servicerequestchat/${UrlLink}`
+          );
+          request2.input(
+            "ModuleFormName",
+            sql.VarChar(500),
+            UrlLink === ""
+              ? `/dashboard/chatsocial`
+              : `/productservice/servicerequest`
+          );
+          request2.input("DocNo", sql.VarChar(100), `${messageId}`);
+          request2.input("RevNo", sql.Int, 0);
+          request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
+          request2.input("UnRead", sql.VarChar(100), "0");
+
+          await request2.execute("dbo.setNotification");
+        }
+
+        // 5) ส่งลิงก์กลับไปหา user (ถ้ามี)
+        if (ProbDetail && UrlName) {
+          await lineService.senLinkdMessageProblem(
+            channelToken,
+            userId,
+            ProbDetail,
+            UrlName
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Line Webhook Background Error:", error);
+    }
+  });
+};
+
+exports.handleLineWebhook_bakup = async (req, res) => {
   try {
     const accountId = req.params.accountId;
 
@@ -190,7 +444,7 @@ exports.handleLineWebhook = async (req, res) => {
         };
         const io = getIO();
         if (event.message.type !== "sticker") {
-         /*  io.emit("server_broadcast", {
+          /*  io.emit("server_broadcast", {
             from: "LINE",
             event: eventdata,
             userId: userId,
