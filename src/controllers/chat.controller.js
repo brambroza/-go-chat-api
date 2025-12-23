@@ -57,6 +57,10 @@ exports.handleLineWebhook = async (req, res) => {
     // lineService.verifySignature(req.headers['x-line-signature'], body, channelSecret) ...
 
     // ประมวลผลข้อความ หรือจะส่งต่อเข้าสู่คิว RabbitMQ ก็ได้
+    // เป็น chat กลุ่ม ไม่ต้องทำต่อ
+    const hasGroup = events.some((ev) => ev?.source?.type === "group");
+    if (hasGroup) return res.sendStatus(200);
+    
 
     for (let event of events) {
       // 1) บันทึกลง DB หรือ
@@ -540,7 +544,7 @@ exports.getLineFriend = async (req, res) => {
       const contactToken = row.AccessToken;
 
       try {
-      /*   const lineProfile = await lineService.getLineProfile(
+        /*   const lineProfile = await lineService.getLineProfile(
           userId,
           contactToken
         ); */
@@ -634,7 +638,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
 
       const userRows = dt.recordset.filter((rx) => rx.UserId === rd.id);
       for (const rx of userRows) {
-       /*  const profile = await lineService.getLineProfile(
+        /*  const profile = await lineService.getLineProfile(
           rx.UserId,
           rd.lineToken
         ); */
@@ -832,7 +836,7 @@ exports.JobGetLineFriend = async () => {
           userId,
           contactToken
         );
-        
+
         await pool
           .request()
           .input("CmpId", row.CmpId)
@@ -841,7 +845,10 @@ exports.JobGetLineFriend = async () => {
           .input("DisplayName", lineProfile?.displayName ?? null)
           .input("PictureUrl", lineProfile?.pictureUrl ?? null)
           .input("Language", lineProfile?.language ?? null)
-          .input("ProfileJson", lineProfile ? JSON.stringify(lineProfile) : null)
+          .input(
+            "ProfileJson",
+            lineProfile ? JSON.stringify(lineProfile) : null
+          )
           .input("LastError", null).query(`
       EXEC dbo.UpsertLineProfileCache
         @CmpId=@CmpId,
@@ -858,7 +865,6 @@ exports.JobGetLineFriend = async () => {
         console.error("Failed to get profile for user:", userId, err.message);
         // You could push partial data or skip this user
         // For example, push partial data:
-        
       }
     }
   } catch (error) {
