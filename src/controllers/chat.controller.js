@@ -60,7 +60,6 @@ exports.handleLineWebhook = async (req, res) => {
     // เป็น chat กลุ่ม ไม่ต้องทำต่อ
     const hasGroup = events.some((ev) => ev?.source?.type === "group");
     if (hasGroup) return res.sendStatus(200);
-    
 
     for (let event of events) {
       // 1) บันทึกลง DB หรือ
@@ -190,12 +189,14 @@ exports.handleLineWebhook = async (req, res) => {
           sendbyId: "-",
         };
         const io = getIO();
-        io.emit("server_broadcast", {
-          from: "LINE",
-          event: eventdata,
-          userId: userId,
-          timestamp: new Date().toISOString(),
-        });
+        if (event.message.type !== "sticker") {
+          io.emit("server_broadcast", {
+            from: "LINE",
+            event: eventdata,
+            userId: userId,
+            timestamp: new Date().toISOString(),
+          });
+        }
         let stickertype = null;
         if (event.message.type === "sticker") {
           stickertype = [
@@ -208,28 +209,28 @@ exports.handleLineWebhook = async (req, res) => {
               url: "",
             },
           ];
-        }
 
-        io.emit("server_broadcast", {
-          id: messageId,
-          userId: userId,
-          type: "LINE",
-          replyToken: replyToken,
-          quotaToken: quotaToken,
-          text: text,
-          timestamp: new Date().toISOString(),
-          attachments:
-            [
-              {
-                createdAt: new Date().toISOString(),
-                id: messageId,
-                stickerId: stickerId,
-                stickerType: stickerResourceType ?? "-",
-                type: "sticker",
-                url: "",
-              },
-            ] ?? stickerResourceType,
-        });
+          io.emit("server_broadcast", {
+            id: messageId,
+            userId: userId,
+            type: "LINE",
+            replyToken: replyToken,
+            quotaToken: quotaToken,
+            text: text,
+            timestamp: new Date().toISOString(),
+            attachments:
+              [
+                {
+                  createdAt: new Date().toISOString(),
+                  id: messageId,
+                  stickerId: stickerId,
+                  stickerType: stickerResourceType ?? "-",
+                  type: "sticker",
+                  url: "",
+                },
+              ] ?? stickerResourceType,
+          });
+        }
 
         const dateTime = new Date(timestamp);
 

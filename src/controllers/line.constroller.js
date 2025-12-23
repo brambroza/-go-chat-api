@@ -2131,7 +2131,7 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
                 {
                   type: "box",
                   layout: "vertical",
-                  paddingStart: "38px",
+                  paddingStart: "10px",
                   margin: "xs",
                   spacing: "xs",
                   contents: [
