@@ -1296,13 +1296,19 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                     ...(reportCompany
                       ? [
                           {
-                            type: "text",
-                            text: `${reportCompany}`,
-                            size: "sm",
-                            color: "#999999",
-                            wrap: true,
+                            type: "box",
+                            layout: "vertical",
                             paddingStart: "38px",
-                            margin: "none",
+                            contents: [
+                              {
+                                type: "text",
+                                text: `${reportCompany}`,
+                                size: "sm",
+                                color: "#999999",
+                                wrap: true,
+                                margin: "none",
+                              },
+                            ],
                           },
                         ]
                       : []),
@@ -1443,7 +1449,7 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
     return true;
   } catch (error) {
     console.error(
-      "Error in sendLineToTeamSevice:",
+      "Error in sendLineToTeamSevice1:",
       error.response?.data || error.message
     );
     return false;
@@ -1584,13 +1590,19 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                     ...(reportCompany
                       ? [
                           {
-                            type: "text",
-                            text: `${reportCompany}`,
-                            size: "xs",
-                            color: "#999999",
+                            type: "box",
+                            layout: "vertical",
                             paddingStart: "38px",
-                            wrap: true,
-                            margin: "xs",
+                            contents: [
+                              {
+                                type: "text",
+                                text: `${reportCompany}`,
+                                size: "xs",
+                                color: "#999999",
+                                wrap: true,
+                                margin: "xs",
+                              },
+                            ],
                           },
                         ]
                       : []),
