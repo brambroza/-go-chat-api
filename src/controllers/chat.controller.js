@@ -208,7 +208,7 @@ exports.handleLineWebhook = async (req, res) => {
           type: "linechat",
           title: text,
           category: text,
-          isUnRead: true,
+          isUnRead: false,
           avatarUrl: userId,
           createdAt: bangkokTime,
           isUnAlert: true,
