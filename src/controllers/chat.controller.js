@@ -190,12 +190,12 @@ exports.handleLineWebhook = async (req, res) => {
         };
         const io = getIO();
         if (event.message.type !== "sticker") {
-          io.emit("server_broadcast", {
+         /*  io.emit("server_broadcast", {
             from: "LINE",
             event: eventdata,
             userId: userId,
             timestamp: new Date().toISOString(),
-          });
+          }); */
         }
         let stickertype = null;
         if (event.message.type === "sticker") {
@@ -210,7 +210,7 @@ exports.handleLineWebhook = async (req, res) => {
             },
           ];
 
-          io.emit("server_broadcast", {
+          /* io.emit("server_broadcast", {
             id: messageId,
             userId: userId,
             type: "LINE",
@@ -229,7 +229,7 @@ exports.handleLineWebhook = async (req, res) => {
                   url: "",
                 },
               ] ?? stickerResourceType,
-          });
+          }); */
         }
 
         const dateTime = new Date(timestamp);
