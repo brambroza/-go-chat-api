@@ -205,7 +205,7 @@ exports.handleLineWebhook = async (req, res) => {
               await fs.promises.writeFile(finalPath, buffer);
               // console.log("✅ Saved:", finalPath);
             }
-            text = "file";
+            
           } catch (err) {
             console.error("❌ Error saving content:", err);
           }
