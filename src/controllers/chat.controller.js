@@ -165,6 +165,7 @@ exports.handleLineWebhook = async (req, res) => {
         const UrlName = first.UrlName ?? null;
         const UrlLink = first.UrlLink ?? "";
         const CustomerName = first.customerName ?? "";
+        const fromDisplay = first.fromDisplay ?? "";
 
         // 2) ถ้าเป็น file/image/video -> ดาวน์โหลดเก็บไฟล์ (ไม่ block event loop)
         if (type === "image" || type === "file" || type === "video") {
@@ -226,14 +227,14 @@ exports.handleLineWebhook = async (req, res) => {
           sendbyId: "-",
         };
         const io = getIO();
-        if (event.message.type !== "sticker") {
-          io.emit("server_broadcast", {
-            from: "LINE",
-            event: eventdata,
-            userId: userId,
-            timestamp: new Date().toISOString(),
-          });
-        }
+
+        io.emit("server_broadcast", {
+          from: "LINE",
+          event: eventdata,
+          userId: userId,
+          timestamp: new Date().toISOString(),
+        });
+
         let stickertype = null;
         if (event.message.type === "sticker") {
           stickertype = [
@@ -275,7 +276,7 @@ exports.handleLineWebhook = async (req, res) => {
         const msgNotification = {
           id: uuidv4(),
           type: "linechat",
-          title: text,
+          title: fromDisplay,
           category: text,
           isUnRead: true,
           avatarUrl: userId,
