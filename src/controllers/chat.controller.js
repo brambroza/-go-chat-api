@@ -117,7 +117,7 @@ exports.handleLineWebhook = async (req, res) => {
       const seenInThisRequest = new Set();
 
       for (const event of events) {
-       //  if (event?.type !== "message") continue;
+        //  if (event?.type !== "message") continue;
 
         const messageId = event?.message?.id;
         const userId = event?.source?.userId;
@@ -140,6 +140,14 @@ exports.handleLineWebhook = async (req, res) => {
         let text = event.message.text || "";
         const stickerId = event.message.stickerId || "-";
         const stickerResourceType = event.message.stickerResourceType || "-";
+
+        if (type === "image" || type === "file" || type === "video") {
+          const ext =
+            type === "image"
+              ? ".png"
+              : getExtFromName(event?.message?.fileName) || "";
+          text = ext;
+        }
 
         // 1) บันทึกข้อความลง DB (ครั้งเดียว)
         const request = pool.request();
