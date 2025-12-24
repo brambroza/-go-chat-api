@@ -164,6 +164,7 @@ exports.handleLineWebhook = async (req, res) => {
         const ProbDetail = first.ProbDetail ?? null;
         const UrlName = first.UrlName ?? null;
         const UrlLink = first.UrlLink ?? "";
+        const CustomerName = first.CustomerName ?? "";
 
         // 2) ถ้าเป็น file/image/video -> ดาวน์โหลดเก็บไฟล์ (ไม่ block event loop)
         if (type === "image" || type === "file" || type === "video") {
@@ -221,6 +222,7 @@ exports.handleLineWebhook = async (req, res) => {
           isUnReadMenu: true,
           docNo: messageId,
           revNo: 0,
+          customerName: CustomerName,
         };
 
         // 4) emit + บันทึก notification (distinct user แล้ว)
