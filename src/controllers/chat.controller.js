@@ -260,6 +260,7 @@ exports.handleLineWebhook = async (req, res) => {
           request2.input("RevNo", sql.Int, 0);
           request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
           request2.input("UnRead", sql.VarChar(100), "0");
+          request2.input("CustomerName", sql.NVarChar(200), CustomerName);
 
           await request2.execute("dbo.setNotificationLineChat");
         }
