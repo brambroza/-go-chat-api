@@ -117,7 +117,7 @@ exports.handleLineWebhook = async (req, res) => {
       const seenInThisRequest = new Set();
 
       for (const event of events) {
-        if (event?.type !== "message") continue;
+       //  if (event?.type !== "message") continue;
 
         const messageId = event?.message?.id;
         const userId = event?.source?.userId;
