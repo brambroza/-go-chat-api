@@ -201,6 +201,74 @@ exports.handleLineWebhook = async (req, res) => {
           }
         }
 
+        const date = new Date();
+
+        // Get current time in milliseconds
+        const utcTime = date.getTime();
+
+        // Calculate the offset in milliseconds (7 hours)
+        const offset = 7 * 60 * 60 * 1000;
+
+        // Create a new Date object with the offset
+        const utc7Date = new Date(utcTime + offset);
+
+        const eventdata = {
+          cmpId: "230015",
+          userId: userId,
+          id: messageId,
+          type: type,
+          replyToken: replyToken,
+          quotaToken: quotaToken,
+          text: text,
+          timeStamp: utc7Date,
+          stickerId: stickerId,
+          stickerResourceType: stickerResourceType,
+          sendbyId: "-",
+        };
+        const io = getIO();
+        if (event.message.type !== "sticker") {
+          io.emit("server_broadcast", {
+            from: "LINE",
+            event: eventdata,
+            userId: userId,
+            timestamp: new Date().toISOString(),
+          });
+        }
+        let stickertype = null;
+        if (event.message.type === "sticker") {
+          stickertype = [
+            {
+              createdAt: new Date().toISOString(),
+              id: messageId,
+              stickerId: stickerId,
+              stickerType: stickerResourceType ?? "-",
+              type: "sticker",
+              url: "",
+            },
+          ];
+
+          io.emit("server_broadcast", {
+            id: messageId,
+            userId: userId,
+            type: "LINE",
+            replyToken: replyToken,
+            quotaToken: quotaToken,
+            text: text,
+            timestamp: new Date().toISOString(),
+            attachments:
+              [
+                {
+                  createdAt: new Date().toISOString(),
+                  id: messageId,
+                  stickerId: stickerId,
+                  stickerType: stickerResourceType ?? "-",
+                  type: "sticker",
+                  url: "",
+                },
+              ] ?? stickerResourceType,
+          });
+        }
+
         // 3) สร้าง notification payload
         const bangkokTime = toBangkokDateTimeStringFromEpochMs(timestamp);
 
