@@ -137,7 +137,7 @@ exports.handleLineWebhook = async (req, res) => {
         const timestamp = event.timestamp; // epoch ms
         const replyToken = event.replyToken;
         const quotaToken = event.message.quoteToken || "";
-        const text = event.message.text || "";
+        let text = event.message.text || "";
         const stickerId = event.message.stickerId || "-";
         const stickerResourceType = event.message.stickerResourceType || "-";
 
