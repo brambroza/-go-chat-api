@@ -197,6 +197,7 @@ exports.handleLineWebhook = async (req, res) => {
               await fs.promises.writeFile(finalPath, buffer);
               // console.log("✅ Saved:", finalPath);
             }
+            text = "file";
           } catch (err) {
             console.error("❌ Error saving content:", err);
           }
@@ -237,6 +238,7 @@ exports.handleLineWebhook = async (req, res) => {
 
         let stickertype = null;
         if (event.message.type === "sticker") {
+          text = "sticker";
           stickertype = [
             {
               createdAt: new Date().toISOString(),
