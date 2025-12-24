@@ -141,12 +141,15 @@ exports.handleLineWebhook = async (req, res) => {
         const stickerId = event.message.stickerId || "-";
         const stickerResourceType = event.message.stickerResourceType || "-";
 
+        let typeimage = "";
+
         if (type === "image" || type === "file" || type === "video") {
           const ext =
             type === "image"
-              ? ".png"
+              ? ""
               : getExtFromName(event?.message?.fileName) || "";
           text = ext;
+          typeimage = ext === "" ? "ส่งรูปแล้ว" : "";
         }
 
         // 1) บันทึกข้อความลง DB (ครั้งเดียว)
@@ -205,7 +208,6 @@ exports.handleLineWebhook = async (req, res) => {
               await fs.promises.writeFile(finalPath, buffer);
               // console.log("✅ Saved:", finalPath);
             }
-            
           } catch (err) {
             console.error("❌ Error saving content:", err);
           }
@@ -287,7 +289,7 @@ exports.handleLineWebhook = async (req, res) => {
           id: uuidv4(),
           type: "linechat",
           title: fromDisplay,
-          category: text,
+          category: typeimage === "" ? text : typeimage,
           isUnRead: true,
           avatarUrl: userId,
           createdAt: bangkokTime,
