@@ -220,7 +220,8 @@ exports.handleLineWebhook = async (req, res) => {
                   thumb: { seekSeconds: 1, width: 480, quality: 75 },
                   upload: {
                     cmpId: "230015",
-                    messageId: `${messageId}`, // หรือ messageId จริงของ LINE ก็ได้
+                    messageId: `${messageId}.jpg`, // หรือ messageId จริงของ LINE ก็ได้
+                    ext: "",
                     volumeBase: "/usr/src/app/uploads",
                     subDir: "linechat",
                     publicBaseUrl: "https://api.nisolution.co.th", // ต้อง map ให้ยิงไฟล์จาก path นี้ได้
