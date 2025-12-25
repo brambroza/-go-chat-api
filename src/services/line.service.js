@@ -26,7 +26,7 @@ exports.replyMessage = async (channelToken, replyToken, messageObject) => {
   }
 };
 
-exports.pushMessage = async (channelToken, to, items = []) => {
+exports.pushMessage = async (channelToken, to, items = [] , id) => {
   try {
     const url = "https://api.line.me/v2/bot/message/push";
     const headers = {
@@ -63,7 +63,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
               thumb: { seekSeconds: 1, width: 480, quality: 75 },
               upload: {
                 cmpId: "230015",
-                messageId: item.id, // หรือ messageId จริงของ LINE ก็ได้
+                messageId: id, // หรือ messageId จริงของ LINE ก็ได้
                 volumeBase: "/usr/src/app/uploads",
                 subDir: "linechat",
                 publicBaseUrl: "https://api.nisolution.co.th", // ต้อง map ให้ยิงไฟล์จาก path นี้ได้
@@ -74,7 +74,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
             preview = thumbUrl;
 
             console.log("preview" ,preview);
-            console.log("previewid" ,item.id);
+            console.log("previewid" ,id);
           }
 
           return {
