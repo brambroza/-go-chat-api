@@ -3,7 +3,7 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
-const generateAndUploadThumb = require("./thumb.service");
+const { generateAndUploadThumb } = require("./thumb.service");
 
 exports.replyMessage = async (channelToken, replyToken, messageObject) => {
   try {
@@ -55,7 +55,6 @@ exports.pushMessage = async (channelToken, to, items = []) => {
 
         // ✅ วิดีโอ
         case "video": {
-         
           let preview = item.thumbnailUrl;
 
           if (!preview) {
@@ -72,6 +71,9 @@ exports.pushMessage = async (channelToken, to, items = []) => {
             });
 
             preview = thumbUrl;
+
+            console.log("preview" ,preview);
+            console.log("previewid" ,item.id);
           }
 
           return {
