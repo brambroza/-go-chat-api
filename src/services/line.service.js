@@ -36,7 +36,8 @@ exports.pushMessage = async (channelToken, to, items = []) => {
 
     console.log("item", items);
 
-    const messages = items.map(async (item) => {
+    const messages =  (await Promise.all(
+     items.map(async (item) => {
       switch (item.type) {
         // ✅ ข้อความธรรมดา
         case "text":
@@ -127,7 +128,8 @@ exports.pushMessage = async (channelToken, to, items = []) => {
         default:
           throw new Error(`Unsupported message type: ${item.type}`);
       }
-    });
+    })
+  )).filter((m) => m && m.type);
 
     const body = {
       to,
