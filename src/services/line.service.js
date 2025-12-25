@@ -3,6 +3,8 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
+const generateAndUploadThumb = require("./thumb.service");
+
 exports.replyMessage = async (channelToken, replyToken, messageObject) => {
   try {
     const url = "https://api.line.me/v2/bot/message/reply";
@@ -34,7 +36,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
 
     console.log("item", items);
 
-    const messages = items.map((item) => {
+    const messages = items.map(async (item) => {
       switch (item.type) {
         // ✅ ข้อความธรรมดา
         case "text":
@@ -52,13 +54,39 @@ exports.pushMessage = async (channelToken, to, items = []) => {
           };
 
         // ✅ วิดีโอ
-        case "video":
+        case "video": {
+         
+          let preview = item.thumbnailUrl;
+
+          if (!preview) {
+            const { thumbUrl } = await generateAndUploadThumb(item.url, {
+              thumb: { seekSeconds: 1, width: 480, quality: 75 },
+              upload: {
+                cmpId: "230015",
+                messageId: item.id, // หรือ messageId จริงของ LINE ก็ได้
+                volumeBase: "/usr/src/app/uploads",
+                subDir: "linechat",
+                publicBaseUrl: "https://api.nisolution.co.th/uploads", // ต้อง map ให้ยิงไฟล์จาก path นี้ได้
+              },
+              cleanup: true,
+            });
+
+            preview = thumbUrl;
+          }
+
           return {
+            type: "video",
+            originalContentUrl: item.url,
+            previewImageUrl: preview,
+          };
+        }
+
+        /*   return {
             type: "video",
             originalContentUrl: item.url,
             previewImageUrl:
                "https://api.nisolution.co.th/230015/serviceproblem/2500268s/d19c77eb-1452-451e-b069-c900d7e41e83.jpg",
-          };
+          }; */
 
         // ✅ ไฟล์เอกสาร (PDF, DOCX, XLSX)
         case "pdf":
