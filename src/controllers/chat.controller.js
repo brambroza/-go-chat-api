@@ -216,19 +216,23 @@ exports.handleLineWebhook = async (req, res) => {
               await fs.promises.writeFile(finalPath, buffer);
 
               if (type === "video") {
-                const urlapi =  "https://api.nisolution.co.th";
-                await generateAndUploadThumb(`${urlapi}${finalPath}`, {
-                  thumb: { seekSeconds: 1, width: 480, quality: 75 },
-                  upload: {
-                    cmpId: "230015",
-                    messageId: `${messageId}.jpg`, // หรือ messageId จริงของ LINE ก็ได้
-                    ext: "",
-                    volumeBase: "/usr/src/app/uploads",
-                    subDir: "linechat",
-                    publicBaseUrl: "https://api.nisolution.co.th", // ต้อง map ให้ยิงไฟล์จาก path นี้ได้
-                  },
-                  cleanup: true,
-                });
+                const { thumbUrl } = await generateAndUploadThumb(
+                  `https://api.nisolution.co.th/fromline/line-video/${messageId}.mp4`,
+                  {
+                    thumb: { seekSeconds: 1, width: 480, quality: 75 },
+                    upload: {
+                      cmpId: "230015",
+                      messageId: `${messageId}.jpg`, // หรือ messageId จริงของ LINE ก็ได้
+                      ext: "",
+                      volumeBase: "/usr/src/app/uploads",
+                      subDir: "linechat",
+                      publicBaseUrl: "https://api.nisolution.co.th", // ต้อง map ให้ยิงไฟล์จาก path นี้ได้
+                    },
+                    cleanup: true,
+                  }
+                );
+
+                   console.log("preview" ,preview);
               }
               // console.log("✅ Saved:", finalPath);
             }
