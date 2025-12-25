@@ -57,7 +57,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
             type: "video",
             originalContentUrl: item.url,
             previewImageUrl:
-              item.thumbnailUrl || "https://example.com/default-thumb.jpg",
+               "https://api.nisolution.co.th/230015/serviceproblem/2500268s/d19c77eb-1452-451e-b069-c900d7e41e83.jpg",
           };
 
         // ✅ ไฟล์เอกสาร (PDF, DOCX, XLSX)
