@@ -132,9 +132,9 @@ async function uploadJpegToServer(jpegPath, opt = {}) {
  */
 async function generateAndUploadThumb(mp4Url, options = {}) {
   const {
-    thumb = {},       // option ตอนดึงเฟรม
-    upload = {},      // (ตอนนี้คือ option สำหรับการ save ลงดิสก์)
-    cleanup = true,   // ลบไฟล์ tmp หลังทำเสร็จ
+    thumb = {}, // option ตอนดึงเฟรม
+    upload = {}, // (ตอนนี้คือ option สำหรับการ save ลงดิสก์)
+    cleanup = true, // ลบไฟล์ tmp หลังทำเสร็จ
   } = options;
 
   const jpegPath = await createJpegThumbnailFromMp4Url(mp4Url, thumb);
@@ -146,8 +146,83 @@ async function generateAndUploadThumb(mp4Url, options = {}) {
     return { thumbUrl: publicUrl, finalPath };
   } finally {
     if (cleanup) {
-      try { await fs.promises.unlink(jpegPath); } catch {}
+      try {
+        await fs.promises.unlink(jpegPath);
+      } catch {}
     }
+  }
+}
+
+async function createThumbForLocalMp4(mp4Path, opt = {}) {
+  const {
+    cmpId = "230015",
+    messageId,
+    volumeBase = "/usr/src/app/uploads",
+    subDir = "linechat",
+    ext = ".jpg",
+    publicBaseUrl = null,
+    seekSeconds = 1,
+    width = 480,
+    quality = 75,
+  } = opt;
+
+  if (!messageId)
+    throw new Error("messageId is required (for thumbnail filename)");
+  if (!mp4Path) throw new Error("mp4Path is required");
+
+  // เช็กไฟล์ mp4 มีจริง
+  if (!fs.existsSync(mp4Path)) {
+    throw new Error(`MP4 file not found: ${mp4Path}`);
+  }
+
+  const uploadDirnew = path.join(volumeBase, `${cmpId}/${subDir}`);
+  await fs.promises.mkdir(uploadDirnew, { recursive: true });
+
+  const filename = `${messageId}${ext}`; // เช่น 5936....jpg
+  const finalThumbPath = path.join(uploadDirnew, filename);
+
+  // ทำ raw ชั่วคราวไว้ใน tmp แล้วค่อย compress ลง finalThumbPath
+  const tmpRaw = path.join(
+    os.tmpdir(),
+    `raw-${sha1(mp4Path)}-${Date.now()}.jpg`
+  );
+
+  try {
+    // extract 1 frame จาก mp4 local
+    await new Promise((resolve, reject) => {
+      ffmpeg(mp4Path)
+        .inputOptions([`-ss ${seekSeconds}`])
+        .outputOptions(["-frames:v 1"])
+        .output(tmpRaw)
+        .on("end", resolve)
+        .on("error", reject)
+        .run();
+    });
+
+    // resize/compress -> เขียนลงตำแหน่งจริงใน uploads
+    await sharp(tmpRaw)
+      .resize({ width, withoutEnlargement: true })
+      .jpeg({ quality, mozjpeg: true })
+      .toFile(finalThumbPath);
+
+    // กันเกิน 1MB
+    const stat = fs.statSync(finalThumbPath);
+    if (stat.size > 1024 * 1024) {
+      const buf = await sharp(finalThumbPath)
+        .jpeg({ quality: Math.max(50, quality - 15), mozjpeg: true })
+        .toBuffer();
+      fs.writeFileSync(finalThumbPath, buf);
+    }
+
+    const publicUrl = publicBaseUrl
+      ? `${publicBaseUrl}/${cmpId}/${subDir}/${filename}`
+      : null;
+
+    return { thumbPath: finalThumbPath, thumbUrl: publicUrl, filename };
+  } finally {
+    try {
+      if (fs.existsSync(tmpRaw)) fs.unlinkSync(tmpRaw);
+    } catch {}
   }
 }
 
@@ -156,4 +231,5 @@ module.exports = {
   createJpegThumbnailFromMp4Url,
   uploadJpegToServer,
   generateAndUploadThumb,
+  createThumbForLocalMp4,
 };
