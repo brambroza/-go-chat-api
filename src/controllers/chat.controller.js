@@ -4,6 +4,8 @@ const lineService = require("../services/line.service");
 const fs = require("fs");
 const path = require("path");
 
+const { generateAndUploadThumb } = require("../services/thumb.service");
+
 /* const { io } = require("../app"); */
 const { getIO } = require("../utils/socket");
 
@@ -206,6 +208,20 @@ exports.handleLineWebhook = async (req, res) => {
               const finalPath = path.join(uploadDirnew, filename);
 
               await fs.promises.writeFile(finalPath, buffer);
+
+              if (type === "video") {
+                await generateAndUploadThumb(finalPath, {
+                  thumb: { seekSeconds: 1, width: 480, quality: 75 },
+                  upload: {
+                    cmpId: "230015",
+                    messageId: messageId, // หรือ messageId จริงของ LINE ก็ได้
+                    volumeBase: "/usr/src/app/uploads",
+                    subDir: "linechat",
+                    publicBaseUrl: "https://api.nisolution.co.th", // ต้อง map ให้ยิงไฟล์จาก path นี้ได้
+                  },
+                  cleanup: true,
+                });
+              }
               // console.log("✅ Saved:", finalPath);
             }
           } catch (err) {
@@ -818,7 +834,7 @@ exports.sendMessage = async (req, res) => {
       messageObject = attachments || [];
     }
 
-    await lineService.pushMessage(channelToken, to, messageObject , id);
+    await lineService.pushMessage(channelToken, to, messageObject, id);
 
     return res.status(200).json({ message: "Message sent." });
   } catch (error) {
