@@ -221,7 +221,7 @@ exports.handleLineWebhook = async (req, res) => {
                   messageId, // ไม่ต้องใส่ .jpg
                   volumeBase: "/usr/src/app/uploads",
                   subDir: "linechat",
-                  publicBaseUrl: "https://api.nisolution.co.th/uploads", // ปรับให้ตรง route ที่เสิร์ฟ static
+                  publicBaseUrl: "https://api.nisolution.co.th", // ปรับให้ตรง route ที่เสิร์ฟ static
                 });
 
                 console.log("preview:", thumbUrl);
