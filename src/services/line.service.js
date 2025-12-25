@@ -65,7 +65,7 @@ exports.pushMessage = async (channelToken, to, items = []) => {
                 messageId: item.id, // หรือ messageId จริงของ LINE ก็ได้
                 volumeBase: "/usr/src/app/uploads",
                 subDir: "linechat",
-                publicBaseUrl: "https://api.nisolution.co.th/uploads", // ต้อง map ให้ยิงไฟล์จาก path นี้ได้
+                publicBaseUrl: "https://api.nisolution.co.th", // ต้อง map ให้ยิงไฟล์จาก path นี้ได้
               },
               cleanup: true,
             });
