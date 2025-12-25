@@ -152,6 +152,12 @@ exports.handleLineWebhook = async (req, res) => {
               : getExtFromName(event?.message?.fileName) || "";
           text = ext;
           typeimage = ext === "" ? "ส่งรูปแล้ว" : "";
+          if (type === "video") {
+            typeimage = "ส่งวิดีโอแล้ว";
+          }
+          if (type === "file") {
+            typeimage = "ส่งไฟล์แล้ว";
+          }
         }
 
         // 1) บันทึกข้อความลง DB (ครั้งเดียว)
