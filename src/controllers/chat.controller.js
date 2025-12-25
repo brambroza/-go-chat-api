@@ -216,7 +216,8 @@ exports.handleLineWebhook = async (req, res) => {
               await fs.promises.writeFile(finalPath, buffer);
 
               if (type === "video") {
-                await generateAndUploadThumb(finalPath, {
+                const urlapi =  "https://api.nisolution.co.th";
+                await generateAndUploadThumb(`${urlapi}${finalPath}`, {
                   thumb: { seekSeconds: 1, width: 480, quality: 75 },
                   upload: {
                     cmpId: "230015",
