@@ -294,6 +294,92 @@ async function generateAndUploadThumb(mp4Url, options = {}) {
     }
   }
 }
+/* 
+async function createThumbForLocalMp4(mp4Path, opt = {}) {
+  const {
+    cmpId = "230015",
+    messageId,
+    volumeBase = "/usr/src/app/uploads",
+    subDir = "linechat",
+    ext = ".jpg",
+    publicBaseUrl = null,
+    seekSeconds = 1,
+    width = 480,
+    quality = 75,
+    overlay = { enabled: true },
+  } = opt;
+
+  if (!messageId)
+    throw new Error("messageId is required (for thumbnail filename)");
+  if (!mp4Path) throw new Error("mp4Path is required");
+ 
+  if (!fs.existsSync(mp4Path)) {
+    throw new Error(`MP4 file not found: ${mp4Path}`);
+  }
+
+  const uploadDirnew = path.join(volumeBase, `${cmpId}/${subDir}`);
+  await fs.promises.mkdir(uploadDirnew, { recursive: true });
+
+  const filename = `${messageId}${ext}`;  
+  const finalThumbPath = path.join(uploadDirnew, filename);
+
+ 
+  const tmpRaw = path.join(
+    os.tmpdir(),
+    `raw-${sha1(mp4Path)}-${Date.now()}.jpg`
+  );
+
+  let durationSec = 0;
+  if (overlay?.enabled) {
+    try {
+      durationSec = await ffprobeDurationSeconds(mp4Path);
+    } catch {}
+  }
+  try {
+ 
+    await new Promise((resolve, reject) => {
+      ffmpeg(mp4Path)
+        .inputOptions([`-ss ${seekSeconds}`])
+        .outputOptions(["-frames:v 1"])
+        .output(tmpRaw)
+        .on("end", resolve)
+        .on("error", reject)
+        .run();
+    });
+
+    
+    await sharp(tmpRaw)
+      .resize({ width, withoutEnlargement: true })
+      .jpeg({ quality, mozjpeg: true })
+      .toFile(finalThumbPath);
+
+    if (overlay?.enabled) {
+      await addPlayIconAndDuration(finalThumbPath, durationSec, {
+        quality,
+        iconSize: overlay.iconSize,
+      });
+    }
+
+  
+    const stat = fs.statSync(finalThumbPath);
+    if (stat.size > 1024 * 1024) {
+      const buf = await sharp(finalThumbPath)
+        .jpeg({ quality: Math.max(50, quality - 15), mozjpeg: true })
+        .toBuffer();
+      fs.writeFileSync(finalThumbPath, buf);
+    }
+
+    const publicUrl = publicBaseUrl
+      ? `${publicBaseUrl}/${cmpId}/${subDir}/${filename}`
+      : null;
+
+    return { thumbPath: finalThumbPath, thumbUrl: publicUrl, filename };
+  } finally {
+    try {
+      if (fs.existsSync(tmpRaw)) fs.unlinkSync(tmpRaw);
+    } catch {}
+  }
+} */
 
 async function createThumbForLocalMp4(mp4Path, opt = {}) {
   const {
@@ -313,7 +399,6 @@ async function createThumbForLocalMp4(mp4Path, opt = {}) {
     throw new Error("messageId is required (for thumbnail filename)");
   if (!mp4Path) throw new Error("mp4Path is required");
 
-  // เช็กไฟล์ mp4 มีจริง
   if (!fs.existsSync(mp4Path)) {
     throw new Error(`MP4 file not found: ${mp4Path}`);
   }
@@ -321,10 +406,13 @@ async function createThumbForLocalMp4(mp4Path, opt = {}) {
   const uploadDirnew = path.join(volumeBase, `${cmpId}/${subDir}`);
   await fs.promises.mkdir(uploadDirnew, { recursive: true });
 
-  const filename = `${messageId}${ext}`; // เช่น 5936....jpg
+  const filename = `${messageId}${ext}`;
   const finalThumbPath = path.join(uploadDirnew, filename);
 
-  // ทำ raw ชั่วคราวไว้ใน tmp แล้วค่อย compress ลง finalThumbPath
+  // ✅ เขียนลง tmp ก่อน แล้วค่อย rename ไป final
+  const tmpThumbPath = finalThumbPath + ".tmp";
+
+  // แตกเฟรม raw ชั่วคราว
   const tmpRaw = path.join(
     os.tmpdir(),
     `raw-${sha1(mp4Path)}-${Date.now()}.jpg`
@@ -336,8 +424,9 @@ async function createThumbForLocalMp4(mp4Path, opt = {}) {
       durationSec = await ffprobeDurationSeconds(mp4Path);
     } catch {}
   }
+
   try {
-    // extract 1 frame จาก mp4 local
+    // 1) extract 1 frame จาก mp4 local
     await new Promise((resolve, reject) => {
       ffmpeg(mp4Path)
         .inputOptions([`-ss ${seekSeconds}`])
@@ -348,33 +437,43 @@ async function createThumbForLocalMp4(mp4Path, opt = {}) {
         .run();
     });
 
-    // resize/compress -> เขียนลงตำแหน่งจริงใน uploads
+    // 2) resize/compress -> เขียนลง tmpThumbPath (ไม่เขียนทับของจริง)
     await sharp(tmpRaw)
       .resize({ width, withoutEnlargement: true })
       .jpeg({ quality, mozjpeg: true })
-      .toFile(finalThumbPath);
+      .toFile(tmpThumbPath);
 
+    // 3) overlay (ทำกับไฟล์ tmp เช่นกัน)
     if (overlay?.enabled) {
-      await addPlayIconAndDuration(finalThumbPath, durationSec, {
+      await addPlayIconAndDuration(tmpThumbPath, durationSec, {
         quality,
         iconSize: overlay.iconSize,
       });
     }
 
-    // กันเกิน 1MB
-    const stat = fs.statSync(finalThumbPath);
+    // 4) กันเกิน 1MB (ทำกับ tmp เช่นกัน)
+    const stat = fs.statSync(tmpThumbPath);
     if (stat.size > 1024 * 1024) {
-      const buf = await sharp(finalThumbPath)
+      const buf = await sharp(tmpThumbPath)
         .jpeg({ quality: Math.max(50, quality - 15), mozjpeg: true })
         .toBuffer();
-      fs.writeFileSync(finalThumbPath, buf);
+      fs.writeFileSync(tmpThumbPath, buf);
     }
+
+    // 5) ✅ rename tmp -> final แบบ atomic
+    await fs.promises.rename(tmpThumbPath, finalThumbPath);
 
     const publicUrl = publicBaseUrl
       ? `${publicBaseUrl}/${cmpId}/${subDir}/${filename}`
       : null;
 
     return { thumbPath: finalThumbPath, thumbUrl: publicUrl, filename };
+  } catch (e) {
+    // กัน .tmp ค้าง
+    try {
+      if (fs.existsSync(tmpThumbPath)) fs.unlinkSync(tmpThumbPath);
+    } catch {}
+    throw e;
   } finally {
     try {
       if (fs.existsSync(tmpRaw)) fs.unlinkSync(tmpRaw);
