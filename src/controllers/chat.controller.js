@@ -216,7 +216,7 @@ exports.handleLineWebhook = async (req, res) => {
               await fs.promises.writeFile(finalPath, buffer);
 
               if (type === "video") {
-               // await new Promise((resolve) => setTimeout(resolve, 1500));
+                // await new Promise((resolve) => setTimeout(resolve, 1500));
                 const { thumbUrl } = await createThumbForLocalMp4(finalPath, {
                   cmpId: "230015",
                   messageId, // ไม่ต้องใส่ .jpg
@@ -1083,20 +1083,26 @@ exports.getChatConvertsationUserId = async (req, res) => {
       };
 
       if (msg.type === "image") {
-        const url = await lineService.downloadImage(msg.id, msg.lineToken);
+        let urlload = "";
+        if (d.text === "") {
+          urlload = await lineService.downloadImage(msg.id, msg.lineToken);
+        }
         msg.attachments.push({
           id: msg.id,
-          url,
+          url: d.text === "" ? urlload : `/${d.text}`,
           createdAt: msg.timestamp,
           type: "image",
         });
       }
 
       if (msg.type === "video") {
-        const url = await lineService.downloadVideo(msg.id, msg.lineToken);
+        let urlload = "";
+        if (d.text === "") {
+          urlload = await lineService.downloadVideo(msg.id, msg.lineToken);
+        }
         msg.attachments.push({
           id: msg.id,
-          url,
+          url: d.text === "" ? urlload : `/${d.text}`,
           createdAt: msg.timestamp,
           type: "video",
         });
