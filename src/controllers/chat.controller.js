@@ -145,47 +145,6 @@ exports.handleLineWebhook = async (req, res) => {
 
         let typeimage = "";
 
-        if (type === "image" || type === "file" || type === "video") {
-          const ext =
-            type === "image"
-              ? ""
-              : getExtFromName(event?.message?.fileName) || "";
-          text = ext;
-          typeimage = ext === "" ? "ส่งรูปแล้ว" : "";
-          if (type === "video") {
-            typeimage = "ส่งวิดีโอแล้ว";
-          }
-          if (type === "file") {
-            typeimage = "ส่งไฟล์แล้ว";
-          }
-        }
-
-        // 1) บันทึกข้อความลง DB (ครั้งเดียว)
-        const request = pool.request();
-        request.input("CmpId", sql.VarChar(10), cmpId);
-        request.input("TimeStamp", sql.BigInt, timestamp);
-        request.input("id", sql.VarChar(50), messageId);
-        request.input("userId", sql.VarChar(50), userId);
-        request.input("type", sql.VarChar(50), type);
-        request.input("replyToken", sql.VarChar(50), replyToken);
-        request.input("quotaToken", sql.VarChar(200), quotaToken);
-        request.input("text", sql.NVarChar(sql.MAX), text);
-        request.input("stickerId", sql.VarChar(50), stickerId);
-        request.input(
-          "stickerResourceType",
-          sql.VarChar(50),
-          stickerResourceType
-        );
-
-        const spRs = await request.execute("dbo.setLineChatMessage");
-
-        const first = spRs?.recordset?.[0] ?? {};
-        const ProbDetail = first.ProbDetail ?? null;
-        const UrlName = first.UrlName ?? null;
-        const UrlLink = first.UrlLink ?? "";
-        const CustomerName = first.customerName ?? "";
-        const fromDisplay = first.fromDisplay ?? "";
-
         // 2) ถ้าเป็น file/image/video -> ดาวน์โหลดเก็บไฟล์ (ไม่ block event loop)
         if (type === "image" || type === "file" || type === "video") {
           try {
@@ -227,10 +186,49 @@ exports.handleLineWebhook = async (req, res) => {
 
                 console.log("preview:", thumbUrl);
               }
+
+              text = `${cmpId}/linechat/${filename}`;
               // console.log("✅ Saved:", finalPath);
             }
           } catch (err) {
             console.error("❌ Error saving content:", err);
+          }
+        }
+
+        // 1) บันทึกข้อความลง DB (ครั้งเดียว)
+        const request = pool.request();
+        request.input("CmpId", sql.VarChar(10), cmpId);
+        request.input("TimeStamp", sql.BigInt, timestamp);
+        request.input("id", sql.VarChar(50), messageId);
+        request.input("userId", sql.VarChar(50), userId);
+        request.input("type", sql.VarChar(50), type);
+        request.input("replyToken", sql.VarChar(50), replyToken);
+        request.input("quotaToken", sql.VarChar(200), quotaToken);
+        request.input("text", sql.NVarChar(sql.MAX), text);
+        request.input("stickerId", sql.VarChar(50), stickerId);
+        request.input(
+          "stickerResourceType",
+          sql.VarChar(50),
+          stickerResourceType
+        );
+
+        const spRs = await request.execute("dbo.setLineChatMessage");
+
+        const first = spRs?.recordset?.[0] ?? {};
+        const ProbDetail = first.ProbDetail ?? null;
+        const UrlName = first.UrlName ?? null;
+        const UrlLink = first.UrlLink ?? "";
+        const CustomerName = first.customerName ?? "";
+        const fromDisplay = first.fromDisplay ?? "";
+
+        if (type === "image" || type === "file" || type === "video") {
+         
+          typeimage =   "ส่งรูปแล้ว"  ;
+          if (type === "video") {
+            typeimage = "ส่งวิดีโอแล้ว";
+          }
+          if (type === "file") {
+            typeimage = "ส่งไฟล์แล้ว";
           }
         }
 
