@@ -216,6 +216,7 @@ exports.handleLineWebhook = async (req, res) => {
               await fs.promises.writeFile(finalPath, buffer);
 
               if (type === "video") {
+                await new Promise((resolve) => setTimeout(resolve, 1500));
                 const { thumbUrl } = await createThumbForLocalMp4(finalPath, {
                   cmpId: "230015",
                   messageId, // ไม่ต้องใส่ .jpg
