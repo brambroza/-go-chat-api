@@ -196,6 +196,37 @@ async function createJpegThumbnailFromMp4Url(mp4Url, options = {}) {
   }
 }
 
+/* async function uploadJpegToServer(jpegPath, opt = {}) {
+  const {
+    cmpId = "230015",
+    messageId,
+    volumeBase = "/usr/src/app/uploads",
+    subDir = "linechat",
+    ext = ".jpg",
+    publicBaseUrl = null,
+  } = opt;
+
+  if (!messageId)
+    throw new Error("messageId is required (for thumbnail filename)");
+
+  const uploadDirnew = path.join(volumeBase, `${cmpId}/${subDir}`);
+  await fs.promises.mkdir(uploadDirnew, { recursive: true });
+
+  const filename = `${messageId}${ext}`;
+  const finalPath = path.join(uploadDirnew, filename);
+
+ 
+  const buffer = await fs.promises.readFile(jpegPath);
+  await fs.promises.writeFile(finalPath, buffer);
+
+ 
+  const publicUrl = publicBaseUrl
+    ? `${publicBaseUrl}/${cmpId}/${subDir}/${filename}`
+    : null;
+
+  return { finalPath, publicUrl, filename };
+} */
+
 async function uploadJpegToServer(jpegPath, opt = {}) {
   const {
     cmpId = "230015",
@@ -215,11 +246,22 @@ async function uploadJpegToServer(jpegPath, opt = {}) {
   const filename = `${messageId}${ext}`;
   const finalPath = path.join(uploadDirnew, filename);
 
-  // แบบเดียวกับที่คุณใช้ (buffer -> writeFile)
-  const buffer = await fs.promises.readFile(jpegPath);
-  await fs.promises.writeFile(finalPath, buffer);
+  // ✅ atomic write: เขียนลง tmp ก่อน แล้วค่อย rename ไปชื่อจริง
+  const tmpPath = finalPath + ".tmp";
 
-  // คืน public url ถ้าคุณมี base url สำหรับ serve ไฟล์นี้
+  const buffer = await fs.promises.readFile(jpegPath);
+
+  try {
+    await fs.promises.writeFile(tmpPath, buffer);
+    await fs.promises.rename(tmpPath, finalPath);
+  } catch (e) {
+    // กันไฟล์ .tmp ค้าง
+    try {
+      await fs.promises.unlink(tmpPath);
+    } catch {}
+    throw e;
+  }
+
   const publicUrl = publicBaseUrl
     ? `${publicBaseUrl}/${cmpId}/${subDir}/${filename}`
     : null;
