@@ -15,6 +15,91 @@ function sha1(str) {
   return crypto.createHash("sha1").update(str).digest("hex");
 }
 
+function ffprobeDurationSeconds(inputPath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(inputPath, (err, data) => {
+      if (err) return reject(err);
+      const sec = Number(data?.format?.duration || 0);
+      resolve(Number.isFinite(sec) ? sec : 0);
+    });
+  });
+}
+
+function formatDuration(sec) {
+  sec = Math.max(0, Math.floor(sec || 0));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+
+function buildOverlaySvg({ width, height, durationText, iconSize }) {
+  // iconSize คร่าว ๆ ให้สัมพันธ์กับความกว้าง
+  const icon = Math.round(iconSize || Math.max(56, Math.min(96, width * 0.18)));
+  const cx = Math.round(width / 2);
+  const cy = Math.round(height / 2);
+
+  // วงกลมดำโปร่ง + สามเหลี่ยม play สีขาว
+  const r = Math.round(icon / 2);
+  const triW = Math.round(icon * 0.36);
+  const triH = Math.round(icon * 0.42);
+  const x1 = cx - Math.round(triW * 0.35);
+  const y1 = cy - Math.round(triH / 2);
+  const x2 = x1;
+  const y2 = cy + Math.round(triH / 2);
+  const x3 = cx + Math.round(triW * 0.65);
+  const y3 = cy;
+
+  // แถบเวลา (มุมขวาล่าง) แบบ youtube-ish
+  const margin = Math.round(Math.max(10, width * 0.02));
+  const fontSize = Math.round(Math.max(18, Math.min(28, width * 0.05)));
+  const paddingX = Math.round(fontSize * 0.55);
+  const paddingY = Math.round(fontSize * 0.35);
+  const boxH = fontSize + paddingY * 2;
+  const boxW = Math.round(
+    durationText.length * (fontSize * 0.6) + paddingX * 2
+  );
+  const boxX = width - margin - boxW;
+  const boxY = height - margin - boxH;
+  const textX = boxX + paddingX;
+  const textY = boxY + Math.round(boxH * 0.72);
+  const rx = Math.round(boxH * 0.25);
+
+  return Buffer.from(
+    `
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+  <!-- play icon -->
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(0,0,0,0.45)"/>
+  <polygon points="${x1},${y1} ${x2},${y2} ${x3},${y3}" fill="white"/>
+
+  <!-- duration box -->
+  <rect x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" rx="${rx}" ry="${rx}" fill="rgba(0,0,0,0.65)"/>
+  <text x="${textX}" y="${textY}" font-family="Arial, sans-serif" font-size="${fontSize}" fill="white">${durationText}</text>
+</svg>`.trim(),
+    "utf8"
+  );
+}
+
+async function addPlayIconAndDuration(jpegPath, durationSeconds, opt = {}) {
+  const { quality = 75, iconSize } = opt;
+
+  const base = sharp(jpegPath);
+  const meta = await base.metadata();
+  const width = meta.width || 480;
+  const height = meta.height || 270;
+
+  const durationText = formatDuration(durationSeconds);
+  const overlay = buildOverlaySvg({ width, height, durationText, iconSize });
+
+  const outBuf = await base
+    .composite([{ input: overlay, top: 0, left: 0 }])
+    .jpeg({ quality, mozjpeg: true })
+    .toBuffer();
+
+  await fs.promises.writeFile(jpegPath, outBuf);
+}
+
 async function downloadToFile(
   url,
   outPath,
@@ -45,6 +130,7 @@ async function createJpegThumbnailFromMp4Url(mp4Url, options = {}) {
     mp4RequestHeaders = {},
     timeoutMs = 20000,
     tmpDir = os.tmpdir(),
+    overlay = { enabled: true },
   } = options;
 
   const key = sha1(`${mp4Url}|${seekSeconds}|${width}|${quality}`);
@@ -53,11 +139,18 @@ async function createJpegThumbnailFromMp4Url(mp4Url, options = {}) {
   const tmpOut = path.join(tmpDir, `thumb-${key}.jpg`);
 
   try {
+    let durationSec = 0;
     // 1) download mp4
     await downloadToFile(mp4Url, tmpMp4, {
       headers: mp4RequestHeaders,
       timeoutMs,
     });
+
+    if (overlay?.enabled) {
+      try {
+        durationSec = await ffprobeDurationSeconds(tmpMp4);
+      } catch {}
+    }
 
     // 2) extract 1 frame
     await new Promise((resolve, reject) => {
@@ -75,6 +168,13 @@ async function createJpegThumbnailFromMp4Url(mp4Url, options = {}) {
       .resize({ width, withoutEnlargement: true })
       .jpeg({ quality, mozjpeg: true })
       .toFile(tmpOut);
+
+    if (overlay?.enabled) {
+      await addPlayIconAndDuration(tmpOut, durationSec, {
+        quality,
+        iconSize: overlay.iconSize,
+      });
+    }
 
     // (option) ถ้าอยากชัวร์ < 1MB
     const stat = fs.statSync(tmpOut);
@@ -164,6 +264,7 @@ async function createThumbForLocalMp4(mp4Path, opt = {}) {
     seekSeconds = 1,
     width = 480,
     quality = 75,
+    overlay = { enabled: true },
   } = opt;
 
   if (!messageId)
@@ -187,6 +288,12 @@ async function createThumbForLocalMp4(mp4Path, opt = {}) {
     `raw-${sha1(mp4Path)}-${Date.now()}.jpg`
   );
 
+  let durationSec = 0;
+  if (overlay?.enabled) {
+    try {
+      durationSec = await ffprobeDurationSeconds(mp4Path);
+    } catch {}
+  }
   try {
     // extract 1 frame จาก mp4 local
     await new Promise((resolve, reject) => {
@@ -204,6 +311,13 @@ async function createThumbForLocalMp4(mp4Path, opt = {}) {
       .resize({ width, withoutEnlargement: true })
       .jpeg({ quality, mozjpeg: true })
       .toFile(finalThumbPath);
+
+    if (overlay?.enabled) {
+      await addPlayIconAndDuration(finalThumbPath, durationSec, {
+        quality,
+        iconSize: overlay.iconSize,
+      });
+    }
 
     // กันเกิน 1MB
     const stat = fs.statSync(finalThumbPath);
@@ -225,7 +339,6 @@ async function createThumbForLocalMp4(mp4Path, opt = {}) {
     } catch {}
   }
 }
-
 
 module.exports = {
   createJpegThumbnailFromMp4Url,
