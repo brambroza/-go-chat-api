@@ -167,6 +167,8 @@ exports.handleLineWebhook = async (req, res) => {
               const ext =
                 type === "image"
                   ? ".png"
+                  : type === "video"
+                  ? ".mp4"
                   : getExtFromName(event?.message?.fileName) || "";
 
               const filename = `${messageId}${ext}`;
@@ -222,8 +224,7 @@ exports.handleLineWebhook = async (req, res) => {
         const fromDisplay = first.fromDisplay ?? "";
 
         if (type === "image" || type === "file" || type === "video") {
-         
-          typeimage =   "ส่งรูปแล้ว"  ;
+          typeimage = "ส่งรูปแล้ว";
           if (type === "video") {
             typeimage = "ส่งวิดีโอแล้ว";
           }
