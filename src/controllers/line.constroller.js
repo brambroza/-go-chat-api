@@ -812,8 +812,6 @@ exports.sendFlexMsgWaiting = async (req, res) => {
                   ],
                 },
 
-               ​
-
                 // ===== รายละเอียด =====
                 {
                   type: "box",
