@@ -745,82 +745,171 @@ exports.sendFlexMsgWaiting = async (req, res) => {
     const pool = await connectDB();
 
     // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
+  
+
     const flexMsg = {
       type: "flex",
       altText: `Ticket: ${taskNo ?? ""} - กำลังดำเนินการ`,
       contents: {
         type: "bubble",
+        size: "kilo",
         body: {
           type: "box",
           layout: "vertical",
+          paddingAll: "md",
           contents: [
             {
-              type: "text",
-              text: `📄 Ticket: \n#${taskNo ?? ""}`,
-              weight: "bold",
-              size: "md",
-            },
-            {
+              // การ์ด (เอา border ออกแล้ว)
               type: "box",
               layout: "vertical",
-              margin: "lg",
-              spacing: "sm",
+              paddingAll: "lg",
+              backgroundColor: "#FFFFFF",
+              cornerRadius: "16px",
+
+              // ✅ ใช้ spacing แทน spacer
+              spacing: "md",
+
               contents: [
+                // ===== Header =====
                 {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
+                    { type: "text", text: "😎", size: "sm", flex: 0 },
                     {
                       type: "text",
-                      text: `🚩 รายละเอียด: ${description}`,
-                      color: "#aaaaaa",
+                      text: "กำลังดำเนินการ",
+                      weight: "bold",
                       size: "sm",
-                      wrap: true,
-                    },
-                  ],
-                },
-                {
-                  type: "box",
-                  layout: "baseline",
-                  spacing: "sm",
-                  contents: [
-                    {
-                      type: "text",
-                      text: "🕒 สถานะ : กำลังดำเนินการ",
-                      color: "#aaaaaa",
-                      size: "xs",
+                      color: "#309deaff",
                       wrap: true,
                     },
                   ],
                 },
 
+                // ===== Ticket =====
                 {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
+                    { type: "text", text: "🧾", size: "sm", flex: 0 },
                     {
                       type: "text",
-                      text: `👨🏻‍💻 ผู้ดูแลเคส: ${actionby ?? ""}`,
-                      color: "#aaaaaa",
-                      size: "xs",
+                      text: "Ticket:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${taskNo ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
                       wrap: true,
                     },
                   ],
                 },
 
+               ​
+
+                // ===== รายละเอียด =====
                 {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
+                    { type: "text", text: "📝", size: "sm", flex: 0 },
                     {
                       type: "text",
-                      text: `⏱️ เวลาเริ่มดำเนินการ: ${startDate}`,
+                      text: "รายละเอียด:",
+                      weight: "bold",
+                      size: "xs",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${description ?? ""}`,
+                      size: "xs",
+                      color: "#333333",
                       wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== ผู้ดูแลเคส =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "👤", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: "ผู้ดูแลเคส:",
+                      weight: "bold",
+                      size: "xs",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${actionby ?? ""}`,
                       size: "xs",
                       color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== เวลาแจ้ง =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "⏳", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: "เวลาเริ่มดำเนินการ:",
+                      weight: "bold",
+                      size: "xs",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${startDate ?? ""}`,
+                      size: "xs",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+ 
+
+                // ===== ปุ่ม =====
+                {
+                  type: "box",
+                  layout: "vertical",
+                  backgroundColor: "#309deaff",
+                  cornerRadius: "10px",
+                  paddingAll: "md",
+                  action: {
+                    type: "uri", // ✅ เปิดเว็บ
+                    label: "รายละเอียดเคส",
+                    uri: `https://erp.nisolution.co.th/productservice/servicerequest/${
+                      taskNo ?? ""
+                    }`,
+                  },
+                  contents: [
+                    {
+                      type: "text",
+                      text: "กำลังดำเนินการ",
+                      align: "center",
+                      weight: "bold",
+                      size: "md",
+                      color: "#FFFFFF",
+                      wrap: true,
                     },
                   ],
                 },
@@ -830,6 +919,8 @@ exports.sendFlexMsgWaiting = async (req, res) => {
         },
       },
     };
+
+
 
     const results = await pool.request().input("oaid", sql.VarChar, oaId)
       .query(`
@@ -1496,7 +1587,7 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
 
     const flexMsg = {
       type: "flex",
-      altText: `มีเคสใหม่เข้ามา !!!! Ticket: ${TaskNoNew ?? ""}`,
+      altText: `ลูกค้ารออยู่ !!!! Ticket: ${TaskNoNew ?? ""}`,
       contents: {
         type: "bubble",
         size: "kilo",
@@ -1523,10 +1614,10 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   layout: "baseline",
                   spacing: "sm",
                   contents: [
-                    { type: "text", text: "🔔", size: "sm", flex: 0 },
+                    { type: "text", text: "😢", size: "sm", flex: 0 },
                     {
                       type: "text",
-                      text: "มีเคสใหม่เข้ามา !!!!",
+                      text: "ลูกค้ารออยู่ !!!!",
                       weight: "bold",
                       size: "sm",
                       color: "#f4882fff",
