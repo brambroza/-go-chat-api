@@ -1919,7 +1919,7 @@ async function sendLineToTeamSeviceWaiting(
                       text: "กำลังดำเนินการ",
                       weight: "bold",
                       size: "sm",
-                      color: "#309deaff",
+                      color: "#529bc8ff",
                       wrap: true,
                     },
                   ],
@@ -2025,7 +2025,7 @@ async function sendLineToTeamSeviceWaiting(
                 {
                   type: "box",
                   layout: "vertical",
-                  backgroundColor: "#309deaff",
+                  backgroundColor: "#529bc8ff",
                   cornerRadius: "10px",
                   paddingAll: "md",
                   action: {
