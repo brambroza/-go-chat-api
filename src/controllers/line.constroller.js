@@ -1997,7 +1997,7 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby ,sta
                     type: "uri", // ✅ เปิดเว็บ
                     label: "รายละเอียดเคส",
                     uri: `https://erp.nisolution.co.th/productservice/servicerequest/${
-                      taskNo ?? ""
+                      TaskNoNew ?? ""
                     }`,
                   },
                   contents: [
