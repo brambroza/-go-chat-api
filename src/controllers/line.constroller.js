@@ -507,6 +507,39 @@ exports.saveContact = async (req, res) => {
 
     const lineAddFriendUrl = `https://line.me/R/ti/p/${lineid}`;
 
+    try {
+      const lineProfile = await lineService.getLineProfile(
+        userId,
+        'UaEPObBVTjBAWADApMvjBgkbudV4eChGvvR/KhX8x6BYxFbl+vljU5NrlLa8/jZBfMgI7fpUWcEOi25xsLTQv+u/8jjwYux17erqtb9zq6Qja5yCjjm+scFPq8DXjti+pMRSsuzzql91Ayx/eCyFqAdB04t89/1O/w1cDnyilFU='
+      );
+
+      await pool
+        .request()
+        .input("CmpId", cmpId)
+        .input("LineOAId", oaId)
+        .input("UserId", userId)
+        .input("DisplayName", lineProfile?.displayName ?? null)
+        .input("PictureUrl", lineProfile?.pictureUrl ?? null)
+        .input("Language", lineProfile?.language ?? null)
+        .input("ProfileJson", lineProfile ? JSON.stringify(lineProfile) : null)
+        .input("LastError", null).query(`
+          EXEC dbo.UpsertLineProfileCache
+            @CmpId=@CmpId,
+            @LineOAId=@LineOAId,
+            @UserId=@UserId,
+            @DisplayName=@DisplayName,
+            @PictureUrl=@PictureUrl,
+            @Language=@Language,
+            @ProfileJson=@ProfileJson,
+            @LastError=@LastError
+        `);
+    } catch (err) {
+      // Decide how you want to handle errors from the LINE API
+      console.error("Failed to get profile for user:", userId, err.message);
+      // You could push partial data or skip this user
+      // For example, push partial data:
+    }
+
     return res.status(200).json({
       success: true,
       result: result.recordset,
@@ -861,7 +894,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
       }
     );
 
-    await sendLineToTeamSeviceWaiting(taskNo, description, actionby ,startDate);
+    await sendLineToTeamSeviceWaiting(taskNo, description, actionby, startDate);
 
     // อาจจะบันทึกลง DB ก่อน
     /* 
@@ -1750,7 +1783,12 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
   }
 }
 
-async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby ,startDate) {
+async function sendLineToTeamSeviceWaiting(
+  TaskNoNew,
+  description,
+  actionby,
+  startDate
+) {
   try {
     let LINE_OA_CHANNEL_ACCESS_TOKEN = null;
 
@@ -1845,8 +1883,6 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby ,sta
         },
       },
     };
-
-
 
     const flexMsg = {
       type: "flex",
@@ -1984,7 +2020,6 @@ async function sendLineToTeamSeviceWaiting(TaskNoNew, description, actionby ,sta
                     },
                   ],
                 },
- 
 
                 // ===== ปุ่ม =====
                 {
