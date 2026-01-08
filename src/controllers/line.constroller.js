@@ -474,8 +474,7 @@ exports.saveContact = async (req, res) => {
       !userId ||
       !name ||
       !company ||
-      !branch ||
-      !province ||
+      !branch || 
       !oaId ||
       !customerCode ||
       !cmpId
