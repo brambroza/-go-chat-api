@@ -328,12 +328,14 @@ exports.handleLineWebhook = async (req, res) => {
 
         // 4) emit + บันทึก notification (distinct user แล้ว)
         for (const username of usernames) {
-          const room = `notification_230015_${username}`;
+
+          // ปิดแจ้งเตือนผ่าน socket ไปก่อนนะครับ
+        /*   const room = `notification_230015_${username}`;
 
           io.to(room).emit(
             "ReceiveNotification",
             JSON.stringify([msgNotification])
-          );
+          ); */
 
           const request2 = pool.request();
           request2.input("CmpId", sql.NVarChar(100), cmpId);
