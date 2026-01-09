@@ -474,7 +474,7 @@ exports.saveContact = async (req, res) => {
       !userId ||
       !name ||
       !company ||
-      !branch || 
+      !branch ||
       !oaId ||
       !customerCode ||
       !cmpId
@@ -509,7 +509,7 @@ exports.saveContact = async (req, res) => {
     try {
       const lineProfile = await lineService.getLineProfile(
         userId,
-        'UaEPObBVTjBAWADApMvjBgkbudV4eChGvvR/KhX8x6BYxFbl+vljU5NrlLa8/jZBfMgI7fpUWcEOi25xsLTQv+u/8jjwYux17erqtb9zq6Qja5yCjjm+scFPq8DXjti+pMRSsuzzql91Ayx/eCyFqAdB04t89/1O/w1cDnyilFU='
+        "UaEPObBVTjBAWADApMvjBgkbudV4eChGvvR/KhX8x6BYxFbl+vljU5NrlLa8/jZBfMgI7fpUWcEOi25xsLTQv+u/8jjwYux17erqtb9zq6Qja5yCjjm+scFPq8DXjti+pMRSsuzzql91Ayx/eCyFqAdB04t89/1O/w1cDnyilFU="
       );
 
       await pool
@@ -568,6 +568,11 @@ exports.rateProblem = async (req, res) => {
     request.input("Description", sql.NVarChar(500), description);
 
     await request.execute("dbo.setProblemRating");
+
+    const io = getIO();
+    io.emit("helpdesk:update", {
+      problemId,
+    });
 
     const results = await pool.request().input("CmpId", sql.VarChar, cmpId)
       .query(`
