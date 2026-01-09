@@ -11,6 +11,7 @@ const lazadaRoutes = require('./lazada.routes');
 const whatsappRoutes = require('./whatsapp.routes');
 const chatRoutes = require('./chat.routes'); 
 const dashboardRoutes = require('./config.routes');
+const serviceRoutes = require('./service.router');
 
 // ใช้ routes สำหรับ dashboard config
 router.use('/dashboard', dashboardRoutes);
@@ -24,6 +25,7 @@ router.use('/shopee', shopeeRoutes);
 router.use('/lazada', lazadaRoutes);
 router.use('/whatsapp', whatsappRoutes);
 router.use('/chat', chatRoutes);
+router.use('/service', serviceRoutes);
 
 
 module.exports = router;
