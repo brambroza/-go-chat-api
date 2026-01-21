@@ -77,7 +77,7 @@ exports.createHelpdeskCase = async (req, res) => {
     const volumeBase = "/usr/src/app/uploads";
     const uploadDirnew = path.join(
       volumeBase,
-      `${cmpId}/serviceproblem/${TaskNoNew}`
+      `${cmpId}/serviceproblem/${TaskNoNew}`,
     );
 
     if (req.files) {
@@ -227,7 +227,7 @@ exports.createHelpdeskCase = async (req, res) => {
           Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     await sendLineToTeamSevice(TaskNoNew, description);
@@ -279,23 +279,23 @@ exports.createHelpdeskCase = async (req, res) => {
     request2.input(
       "Title",
       sql.VarChar(500),
-      `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `
+      `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
     );
     request2.input(
       "Category",
       sql.VarChar(500),
-      `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `
+      `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
     );
     request2.input("type", sql.VarChar(50), "linechat");
     request2.input(
       "linkTo",
       sql.VarChar(500),
-      `/productservice/servicerequest/${TaskNoNew}`
+      `/productservice/servicerequest/${TaskNoNew}`,
     );
     request2.input(
       "ModuleFormName",
       sql.VarChar(500),
-      "/productservice/servicerequest"
+      "/productservice/servicerequest",
     );
     request2.input("DocNo", sql.VarChar(100), `${TaskNoNew}`);
     request2.input("RevNo", sql.Int, 0);
@@ -325,14 +325,14 @@ exports.uploadfiles = async (req, res) => {
 
     console.log(
       "📂 Files received:",
-      req.files.map((f) => f.filename)
+      req.files.map((f) => f.filename),
     );
 
     // 🔹 ตำแหน่งปลายทาง
     const volumeBase = "/usr/src/app/uploads";
     const uploadDirnew = path.join(
       volumeBase,
-      `${cmpId}/serviceproblem/${problemId}`
+      `${cmpId}/serviceproblem/${problemId}`,
     );
 
     const pool = await connectDB();
@@ -394,14 +394,14 @@ exports.uploadfilechat = async (req, res) => {
 
     console.log(
       "📂 Files received:",
-      req.files.map((f) => f.filename)
+      req.files.map((f) => f.filename),
     );
 
     // 🔹 ตำแหน่งปลายทาง
     const volumeBase = "/usr/src/app/uploads";
     const uploadDirnew = path.join(
       volumeBase,
-      `${cmpId}/serviceproblem/${problemId}`
+      `${cmpId}/serviceproblem/${problemId}`,
     );
 
     const pool = await connectDB();
@@ -507,9 +507,10 @@ exports.saveContact = async (req, res) => {
     const lineAddFriendUrl = `https://line.me/R/ti/p/${lineid}`;
 
     try {
-      const lineProfile = await lineService.getLineProfile(
+      const lineProfile = await lineService.getLineProfileWithRetry(
         userId,
-        "UaEPObBVTjBAWADApMvjBgkbudV4eChGvvR/KhX8x6BYxFbl+vljU5NrlLa8/jZBfMgI7fpUWcEOi25xsLTQv+u/8jjwYux17erqtb9zq6Qja5yCjjm+scFPq8DXjti+pMRSsuzzql91Ayx/eCyFqAdB04t89/1O/w1cDnyilFU="
+        "UaEPObBVTjBAWADApMvjBgkbudV4eChGvvR/KhX8x6BYxFbl+vljU5NrlLa8/jZBfMgI7fpUWcEOi25xsLTQv+u/8jjwYux17erqtb9zq6Qja5yCjjm+scFPq8DXjti+pMRSsuzzql91Ayx/eCyFqAdB04t89/1O/w1cDnyilFU=",
+        2,
       );
 
       await pool
@@ -537,6 +538,8 @@ exports.saveContact = async (req, res) => {
       console.error("Failed to get profile for user:", userId, err.message);
       // You could push partial data or skip this user
       // For example, push partial data:
+
+      // set delay 2 sec
     }
 
     return res.status(200).json({
@@ -761,7 +764,7 @@ exports.rateProblem = async (req, res) => {
           Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     return res.json({ success: true });
@@ -895,7 +898,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
           Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     await sendLineToTeamSeviceWaiting(taskNo, description, actionby, startDate);
@@ -1178,7 +1181,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
           Authorization: `Bearer ${channelToken}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     await sendLineToTeamSeviceFinish(taskNo, issue);
@@ -1480,14 +1483,14 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
           Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     return true;
   } catch (error) {
     console.error(
       "Error in sendLineToTeamSevice1:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     return false;
   }
@@ -1774,14 +1777,14 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
           Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     return true;
   } catch (error) {
     console.error(
       "Error in sendLineToTeamSevice:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     return false;
   }
@@ -1791,7 +1794,7 @@ async function sendLineToTeamSeviceWaiting(
   TaskNoNew,
   description,
   actionby,
-  startDate
+  startDate,
 ) {
   try {
     let LINE_OA_CHANNEL_ACCESS_TOKEN = null;
@@ -2069,14 +2072,14 @@ async function sendLineToTeamSeviceWaiting(
           Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     return true;
   } catch (error) {
     console.error(
       "Error in sendLineToTeamSevice:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     return false;
   }
@@ -2416,14 +2419,14 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
           Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     return true;
   } catch (error) {
     console.error(
       "Error in sendLineToTeamSevice:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     return false;
   }
@@ -2441,7 +2444,7 @@ exports.sendFromproblem = async (req, res) => {
       channelToken,
       userId,
       "แจ้งปัญหา",
-      urlName
+      urlName,
     );
 
     return res.json({ success: true });
@@ -2497,7 +2500,7 @@ exports.waitsendmsgagent = async () => {
 
     if (!rows.length) {
       console.log(
-        "✅ ไม่มีเคสที่รอการแจ้งเตือน (getServiceFormLiFFWaiting ว่างเปล่า)"
+        "✅ ไม่มีเคสที่รอการแจ้งเตือน (getServiceFormLiFFWaiting ว่างเปล่า)",
       );
     }
 
@@ -2514,13 +2517,13 @@ exports.waitsendmsgagent = async () => {
 
       if (!touserId || !oaId) {
         console.warn(
-          `⚠️ ข้าม Ticket ${TaskNoNew} เพราะไม่มี userId หรือ oaId (userId=${touserId}, oaId=${oaId})`
+          `⚠️ ข้าม Ticket ${TaskNoNew} เพราะไม่มี userId หรือ oaId (userId=${touserId}, oaId=${oaId})`,
         );
         continue;
       }
 
       console.log(
-        `▶️ กำลังส่งแจ้งเตือน Ticket ${TaskNoNew} ให้ userId=${touserId}, oaId=${oaId}`
+        `▶️ กำลังส่งแจ้งเตือน Ticket ${TaskNoNew} ให้ userId=${touserId}, oaId=${oaId}`,
       );
 
       // 2.1 หา channel token ของ OA จากตาราง CompanySocialChannel
@@ -2534,7 +2537,7 @@ exports.waitsendmsgagent = async () => {
 
       if (!tokenResult.recordset.length) {
         console.warn(
-          `⚠️ ไม่พบ AccessToken สำหรับ OA ${oaId} (Ticket ${TaskNoNew}) ข้ามเคสนี้`
+          `⚠️ ไม่พบ AccessToken สำหรับ OA ${oaId} (Ticket ${TaskNoNew}) ข้ามเคสนี้`,
         );
         continue;
       }
@@ -2613,7 +2616,7 @@ exports.waitsendmsgagent = async () => {
               Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         console.log(`✅ ส่งข้อความแจ้งเตือนเรียบร้อย Ticket ${TaskNoNew}`);
@@ -2661,7 +2664,7 @@ exports.waitsendmsgagent = async () => {
 
         io.to(room).emit(
           "ReceiveNotification",
-          JSON.stringify([msgNotification])
+          JSON.stringify([msgNotification]),
         );
 
         let request2 = pool.request();
@@ -2672,23 +2675,23 @@ exports.waitsendmsgagent = async () => {
         request2.input(
           "Title",
           sql.VarChar(500),
-          `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `
+          `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
         );
         request2.input(
           "Category",
           sql.VarChar(500),
-          `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `
+          `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
         );
         request2.input("type", sql.VarChar(50), "linechat");
         request2.input(
           "linkTo",
           sql.VarChar(500),
-          `/productservice/servicerequest/${TaskNoNew}`
+          `/productservice/servicerequest/${TaskNoNew}`,
         );
         request2.input(
           "ModuleFormName",
           sql.VarChar(500),
-          "/productservice/servicerequest"
+          "/productservice/servicerequest",
         );
         request2.input("DocNo", sql.VarChar(100), `${TaskNoNew}`);
         request2.input("RevNo", sql.Int, 0);
@@ -2698,7 +2701,7 @@ exports.waitsendmsgagent = async () => {
       } catch (err) {
         console.error(
           `❌ ส่ง LINE แจ้งเตือน Ticket ${TaskNoNew} ไม่สำเร็จ:`,
-          err.response?.data || err.message
+          err.response?.data || err.message,
         );
         // ถ้า ticket ไหนส่งไม่ผ่าน → ยังไม่ return; ไปต่อ ticket ถัดไป
         continue;
