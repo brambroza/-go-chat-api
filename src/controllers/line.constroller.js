@@ -506,23 +506,33 @@ exports.saveContact = async (req, res) => {
 
     const lineAddFriendUrl = `https://line.me/R/ti/p/${lineid}`;
 
-    try {
-      const lineProfile = await lineService.getLineProfileWithRetry(
-        userId,
-        "UaEPObBVTjBAWADApMvjBgkbudV4eChGvvR/KhX8x6BYxFbl+vljU5NrlLa8/jZBfMgI7fpUWcEOi25xsLTQv+u/8jjwYux17erqtb9zq6Qja5yCjjm+scFPq8DXjti+pMRSsuzzql91Ayx/eCyFqAdB04t89/1O/w1cDnyilFU=",
-        2,
-      );
+    res.status(200).json({
+      success: true,
+      result: result.recordset,
+      addFriendUrl: lineAddFriendUrl,
+    });
 
-      await pool
-        .request()
-        .input("CmpId", cmpId)
-        .input("LineOAId", oaId)
-        .input("UserId", userId)
-        .input("DisplayName", lineProfile?.displayName ?? null)
-        .input("PictureUrl", lineProfile?.pictureUrl ?? null)
-        .input("Language", lineProfile?.language ?? null)
-        .input("ProfileJson", lineProfile ? JSON.stringify(lineProfile) : null)
-        .input("LastError", null).query(`
+    setImmediate(async () => {
+      try {
+        const lineProfile = await lineService.getLineProfileWithRetry(
+          userId,
+          "UaEPObBVTjBAWADApMvjBgkbudV4eChGvvR/KhX8x6BYxFbl+vljU5NrlLa8/jZBfMgI7fpUWcEOi25xsLTQv+u/8jjwYux17erqtb9zq6Qja5yCjjm+scFPq8DXjti+pMRSsuzzql91Ayx/eCyFqAdB04t89/1O/w1cDnyilFU=",
+          2,
+        );
+        const bgPool = await connectDB();
+        await bgPool
+          .request()
+          .input("CmpId", cmpId)
+          .input("LineOAId", oaId)
+          .input("UserId", userId)
+          .input("DisplayName", lineProfile?.displayName ?? null)
+          .input("PictureUrl", lineProfile?.pictureUrl ?? null)
+          .input("Language", lineProfile?.language ?? null)
+          .input(
+            "ProfileJson",
+            lineProfile ? JSON.stringify(lineProfile) : null,
+          )
+          .input("LastError", null).query(`
           EXEC dbo.UpsertLineProfileCache
             @CmpId=@CmpId,
             @LineOAId=@LineOAId,
@@ -533,20 +543,17 @@ exports.saveContact = async (req, res) => {
             @ProfileJson=@ProfileJson,
             @LastError=@LastError
         `);
-    } catch (err) {
-      // Decide how you want to handle errors from the LINE API
-      console.error("Failed to get profile for user:", userId, err.message);
-      // You could push partial data or skip this user
-      // For example, push partial data:
+      } catch (err) {
+        // Decide how you want to handle errors from the LINE API
+        console.error("Failed to get profile for user:", userId, err.message);
+        // You could push partial data or skip this user
+        // For example, push partial data:
 
-      // set delay 2 sec
-    }
-
-    return res.status(200).json({
-      success: true,
-      result: result.recordset,
-      addFriendUrl: lineAddFriendUrl,
+        // set delay 2 sec
+      }
     });
+
+    return res.status(200).json({ success: true });
   } catch (err) {
     console.error("saveContact error:", err);
     return res.status(500).json({ error: "Internal Server Error" });
