@@ -1152,6 +1152,8 @@ exports.getChatConvertsationUserId = async (req, res) => {
         customerName: rx.customerName,
         position: rx.position,
         customerCode: rx.customerCode,
+        anydeskId: rx.anydeskId,
+        teamviewerId: rx.teamviewerId,
       });
     }
 
