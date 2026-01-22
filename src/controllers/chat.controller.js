@@ -150,12 +150,12 @@ exports.handleLineWebhook = async (req, res) => {
           try {
             const response = await fetch(
               `https://api-data.line.me/v2/bot/message/${messageId}/content`,
-              { headers: { Authorization: `Bearer ${channelToken}` } }
+              { headers: { Authorization: `Bearer ${channelToken}` } },
             );
 
             if (!response.ok) {
               console.error(
-                `❌ Failed to fetch content for messageId=${messageId}`
+                `❌ Failed to fetch content for messageId=${messageId}`,
               );
             } else {
               const buffer = Buffer.from(await response.arrayBuffer());
@@ -168,8 +168,8 @@ exports.handleLineWebhook = async (req, res) => {
                 type === "image"
                   ? ".png"
                   : type === "video"
-                  ? ".mp4"
-                  : getExtFromName(event?.message?.fileName) || "";
+                    ? ".mp4"
+                    : getExtFromName(event?.message?.fileName) || "";
 
               const filename = `${messageId}${ext}`;
               const finalPath = path.join(uploadDirnew, filename);
@@ -211,7 +211,7 @@ exports.handleLineWebhook = async (req, res) => {
         request.input(
           "stickerResourceType",
           sql.VarChar(50),
-          stickerResourceType
+          stickerResourceType,
         );
 
         const spRs = await request.execute("dbo.setLineChatMessage");
@@ -328,9 +328,8 @@ exports.handleLineWebhook = async (req, res) => {
 
         // 4) emit + บันทึก notification (distinct user แล้ว)
         for (const username of usernames) {
-
           // ปิดแจ้งเตือนผ่าน socket ไปก่อนนะครับ
-        /*   const room = `notification_230015_${username}`;
+          /*   const room = `notification_230015_${username}`;
 
           io.to(room).emit(
             "ReceiveNotification",
@@ -350,14 +349,14 @@ exports.handleLineWebhook = async (req, res) => {
             sql.VarChar(500),
             UrlLink === ""
               ? `/dashboard/chatsocial?id=${userId}`
-              : `/productservice/servicerequestchat/${UrlLink}`
+              : `/productservice/servicerequestchat/${UrlLink}`,
           );
           request2.input(
             "ModuleFormName",
             sql.VarChar(500),
             UrlLink === ""
               ? `/dashboard/chatsocial`
-              : `/productservice/servicerequest`
+              : `/productservice/servicerequest`,
           );
           request2.input("DocNo", sql.VarChar(100), `${messageId}`);
           request2.input("RevNo", sql.Int, 0);
@@ -374,7 +373,7 @@ exports.handleLineWebhook = async (req, res) => {
             channelToken,
             userId,
             ProbDetail,
-            UrlName
+            UrlName,
           );
         }
       }
@@ -456,7 +455,7 @@ exports.handleLineWebhook_bakup = async (req, res) => {
         request.input(
           "stickerResourceType",
           sql.VarChar(50),
-          stickerResourceType
+          stickerResourceType,
         );
 
         const result = await request.execute("dbo.setLineChatMessage");
@@ -486,7 +485,7 @@ exports.handleLineWebhook_bakup = async (req, res) => {
                 headers: {
                   Authorization: `Bearer ${channelToken}`,
                 },
-              }
+              },
             );
 
             if (!response.ok) {
@@ -626,7 +625,7 @@ exports.handleLineWebhook_bakup = async (req, res) => {
           const room = `notification_230015_${row.Username}`;
           io.to(room).emit(
             "ReceiveNotification",
-            JSON.stringify([msgNotification])
+            JSON.stringify([msgNotification]),
           );
 
           // บันทึกแจ้งเตือนไปยังแต่ละ user
@@ -644,14 +643,14 @@ exports.handleLineWebhook_bakup = async (req, res) => {
             sql.VarChar(500),
             UrlLink === ""
               ? `/dashboard/chatsocial?id=${userId}`
-              : `/productservice/servicerequestchat/${UrlLink}`
+              : `/productservice/servicerequestchat/${UrlLink}`,
           );
           request2.input(
             "ModuleFormName",
             sql.VarChar(500),
             UrlLink === ""
               ? `/dashboard/chatsocial`
-              : `/productservice/servicerequest`
+              : `/productservice/servicerequest`,
           );
           request2.input("DocNo", sql.VarChar(100), `${messageId}`);
           request2.input("RevNo", sql.Int, 0);
@@ -677,7 +676,7 @@ exports.handleLineWebhook_bakup = async (req, res) => {
             channelToken,
             userId,
             problamDetail,
-            urlName
+            urlName,
           );
         }
       }
@@ -926,6 +925,10 @@ exports.getLineFriend = async (req, res) => {
           position: row.position,
           customerName: row.customerName,
           customerCode: row.customerCode,
+          position: row.position,
+          nickName: row.nickName || "",
+          anydeskId: row.anydeskId,
+          teamviewerId: row.teamviewerId,
         });
       } catch (err) {
         // Decide how you want to handle errors from the LINE API
@@ -981,7 +984,7 @@ exports.getLineChatConvertsatition = async (req, res) => {
       };
 
       const userMessages = dtc.recordset.filter(
-        (dx) => String(dx.UserId) === String(rd.id)
+        (dx) => String(dx.UserId) === String(rd.id),
       );
 
       for (const dx of userMessages) {
@@ -1023,6 +1026,8 @@ exports.getLineChatConvertsatition = async (req, res) => {
           customerName: rx.customerName,
           position: rx.position,
           nickName: rx.nickName || "",
+          anydeskId: rx.anydeskId,
+          teamviewerId: rx.teamviewerId,
         });
       }
 
@@ -1053,7 +1058,7 @@ exports.getChatConvertsationUserId = async (req, res) => {
       .input("CmpId", cmpid)
       .input("userId", userId)
       .query(
-        "EXEC dbo.getLineChatConvertsatitionUserId @CmpId=@CmpId, @userid=@userId"
+        "EXEC dbo.getLineChatConvertsatitionUserId @CmpId=@CmpId, @userid=@userId",
       );
 
     const rd = {
@@ -1201,7 +1206,7 @@ exports.JobGetLineFriend = async () => {
       try {
         const lineProfile = await lineService.getLineProfile(
           userId,
-          contactToken
+          contactToken,
         );
 
         await pool
@@ -1214,7 +1219,7 @@ exports.JobGetLineFriend = async () => {
           .input("Language", lineProfile?.language ?? null)
           .input(
             "ProfileJson",
-            lineProfile ? JSON.stringify(lineProfile) : null
+            lineProfile ? JSON.stringify(lineProfile) : null,
           )
           .input("LastError", null).query(`
       EXEC dbo.UpsertLineProfileCache
