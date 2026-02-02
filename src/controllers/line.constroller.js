@@ -310,6 +310,131 @@ exports.createHelpdeskCase = async (req, res) => {
   }
 };
 
+exports.sendmsgtouser = async (req, res) => {
+  try {
+    const { userLineId, oaLineId, problemId, description } = req.body;
+
+    if (!userLineId || !oaLineId || !problemId || !description) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const pool = await connectDB();
+
+    const results = await pool.request().input("oaid", sql.VarChar, oaLineId)
+      .query(`
+        SELECT top 1 AccessToken as channelToken 
+        FROM [dbo].[CompanySocialChannel]
+        WHERE ChannelId = @oaid
+      `);
+
+    if (results.recordset.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { channelToken } = results.recordset[0];
+
+    // 🔐 Token ของ LINE OA (map ตาม userId ถ้ามีหลายตัว)
+    const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken; // หรือ map จาก userId
+
+    const flexMsg = {
+      type: "flex",
+      altText: "สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ",
+      contents: {
+        type: "bubble",
+        body: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "text",
+              text: `สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ`,
+              weight: "bold",
+              size: "md",
+            },
+
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "lg",
+              spacing: "sm",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `📄 Ticket: ${problemId ?? ""}`,
+                      weight: "bold",
+                      size: "md",
+                      wrap: true,
+                      color: "#666666",
+                    },
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: `🚩 รายละเอียด: ${description}`,
+                      size: "sm",
+                      wrap: true,
+                      color: "#666666",
+                    },
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "🕒 สถานะ: รอดำเนินการ ทีมงานจะติดต่อกลับภายใน 10 นาที",
+                      wrap: true,
+                      color: "#666666",
+                      size: "sm",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      {
+        to: userId,
+        messages: [flexMsg],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    await sendLineToTeamSevice(problemId, description);
+
+    
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Send message error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 exports.uploadfiles = async (req, res) => {
   try {
     const { cmpId, problemId } = req.body;

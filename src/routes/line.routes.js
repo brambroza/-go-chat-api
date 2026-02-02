@@ -13,6 +13,7 @@ const {
   sendFromproblem,
   uploadfiles,
   checkContact, 
+  sendmsgtouser, 
 } = require("../controllers/line.constroller");
 
 function uuidv4() {
@@ -53,6 +54,7 @@ router.post("/contact/check", checkContact);
 router.post("/problem/rate", rateProblem);
 router.post("/problem/sendmsgwaiting", sendFlexMsgWaiting);
 router.post("/problem/sendfinish", sendCaseClosedMessage);
+router.post("/problem/sendmsgtouser", sendmsgtouser);
 
 // webhook สำหรับ Line Messaging API
 router.post("/webhook/:accountId", handleLineWebhook);
