@@ -413,7 +413,7 @@ exports.sendmsgtouser = async (req, res) => {
     await axios.post(
       "https://api.line.me/v2/bot/message/push",
       {
-        to: userId,
+        to: userLineId,
         messages: [flexMsg],
       },
       {
@@ -426,7 +426,7 @@ exports.sendmsgtouser = async (req, res) => {
 
     await sendLineToTeamSevice(problemId, description);
 
-    
+
 
     return res.status(200).json({ success: true });
   } catch (err) {
