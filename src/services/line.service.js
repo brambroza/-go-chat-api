@@ -230,7 +230,7 @@ exports.senLinkdMessageProblem = async (channelToken, userId, text, link) => {
             },
             {
               type: "text",
-              text: "🕒 เวลารับแจ้งปัญหา: วันจันทร์ – ศุกร์ เวลา 08:30 – 17:30 น. ยกเว้นวันหยุดนักขัตฤกษ์)",
+              text: "🕒 เวลารับแจ้งปัญหา:  \r\n     วันจันทร์ – ศุกร์ เวลา 08:30 – 17:30 น.  \r\n     ยกเว้นวันหยุดนักขัตฤกษ์",
               wrap: true,
               size: "sm",
               color: "#333333",
