@@ -912,7 +912,22 @@ exports.sendFlexMsgWaiting = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    let reporterName = "";
+    let reporterCompany = "";
     const pool = await connectDB();
+
+    let request = pool.request();
+    request.input("TaskNo", sql.VarChar(150), taskNo);
+
+    const result = await request.execute("dbo.getServiceTeamClose");
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    const { requestby, customername } = result.recordset[0];
+
+    reporterName = requestby;
+    reporterCompany = customername;
 
     // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
     const flexMsg = {
@@ -930,6 +945,60 @@ exports.sendFlexMsgWaiting = async (req, res) => {
               weight: "bold",
               size: "md",
             },
+
+            // ===== ผู้แจ้ง + บริษัท (2 บรรทัด) =====
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "sm",
+              spacing: "xs",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "👤", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: "ผู้แจ้ง:",
+                      weight: "bold",
+                      size: "xs",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${reporterName ?? ""}`,
+                      size: "xs",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                ...(reporterCompany
+                  ? [
+                      {
+                        type: "box",
+                        layout: "vertical",
+                        paddingStart: "10px",
+                        contents: [
+                          {
+                            type: "text",
+                            text: `${reporterCompany}`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true,
+                            margin: "xs",
+                          },
+                        ],
+                      },
+                    ]
+                  : []),
+              ],
+            },
+
+            // ====== รายละเอียด ======
             {
               type: "box",
               layout: "vertical",
@@ -1443,7 +1512,57 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                   ],
                 },
 
-                // ===== ผู้แจ้ง + บริษัท (2 บรรทัด) =====
+                {
+                  type: "box",
+                  layout: "vertical",
+                  spacing: "xs",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        { type: "text", text: "👤", size: "sm", flex: 0 },
+
+                        {
+                          type: "text",
+                          text: `${reportCompany ?? ""}`,
+                          size: "xs",
+                          color: "#E53935",
+                          wrap: true,
+                          weight: "bold",
+                        },
+                      ],
+                    },
+                    ...(reportBy
+                      ? [
+                          {
+                            type: "box",
+                            layout: "vertical",
+                            paddingStart: "30px",
+                            contents: [
+                              {
+                                type: "text",
+                                text: "ผู้แจ้ง:",
+                                size: "xs",
+                                flex: 0,
+                                weight: "bold",
+                              },
+                              {
+                                type: "text",
+                                text: `${reportBy ?? ""}`,
+                                size: "xs",
+                                color: "#999999",
+                                wrap: true,
+                              },
+                            ],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+
+                /* 
                 {
                   type: "box",
                   layout: "vertical",
@@ -1491,15 +1610,15 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                         ]
                       : []),
                   ],
-                },
+                }, */
 
                 // ===== รายละเอียด =====
                 {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
+                  paddingStart: "30px",
                   contents: [
-                    { type: "text", text: "📝", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "รายละเอียด:",
@@ -1738,7 +1857,59 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                 },
 
                 // ===== ผู้แจ้ง + บริษัท =====
+
                 {
+                  type: "box",
+                  layout: "vertical",
+                  spacing: "xs",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        { type: "text", text: "👤", size: "sm", flex: 0 },
+
+                        {
+                          type: "text",
+                          text: `${reportCompany}`,
+                          size: "xs",
+                          color: "#f4882fff",
+                          wrap: true,
+                          weight: "bold",
+                        },
+                      ],
+                    },
+                    ...(reportBy
+                      ? [
+                          {
+                            type: "box",
+                            layout: "vertical",
+                            paddingStart: "30px",
+                            contents: [
+                              {
+                                type: "text",
+                                text: "ผู้แจ้ง:",
+                                weight: "bold",
+                                size: "xs",
+                                flex: 0,
+                              },
+                              {
+                                type: "text",
+                                text: `${reportBy}`,
+                                size: "xs",
+                                color: "#999999",
+                                wrap: true,
+                                margin: "xs",
+                              },
+                            ],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+
+                /*  {
                   type: "box",
                   layout: "vertical",
                   spacing: "xs",
@@ -1785,15 +1956,15 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                         ]
                       : []),
                   ],
-                },
+                }, */
 
                 // ===== รายละเอียด =====
                 {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
+                  paddingStart: "30px",
                   contents: [
-                    { type: "text", text: "📝", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "รายละเอียด:",
@@ -1938,6 +2109,8 @@ async function sendLineToTeamSeviceWaiting(
     let LINE_OA_CHANNEL_ACCESS_TOKEN = null;
 
     let userId = null;
+    let reportBy = "";
+    let reportCompany = "";
 
     const pool = await connectDB();
 
@@ -1949,10 +2122,13 @@ async function sendLineToTeamSeviceWaiting(
       if (result.recordset.length === 0) {
         return res.status(404).json({ message: "Account not found" });
       }
-      const { channelToken, userIds } = result.recordset[0];
+      const { channelToken, userIds, requestby, customername } =
+        result.recordset[0];
 
       LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
       userId = userIds;
+      reportBy = requestby;
+      reportCompany = customername;
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
@@ -2093,14 +2269,65 @@ async function sendLineToTeamSeviceWaiting(
                     },
                   ],
                 },
+                // ===== ผู้แจ้ง + บริษัท =====
+                {
+                  type: "box",
+                  layout: "vertical",
+                  spacing: "xs",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        { type: "text", text: "👤", size: "sm", flex: 0 },
+
+                        {
+                          type: "text",
+                          text: `${reportCompany}`,
+                          size: "xs",
+                          color: "#529bc8ff",
+                          wrap: true,
+                          weight: "bold",
+                        },
+                      ],
+                    },
+                    ...(reportBy
+                      ? [
+                          {
+                            type: "box",
+                            layout: "vertical",
+                            paddingStart: "30px",
+                            contents: [
+                              {
+                                type: "text",
+                                text: "ผู้แจ้ง:",
+                                weight: "bold",
+                                size: "xs",
+                                flex: 0,
+                              },
+                              {
+                                type: "text",
+                                text: `${reportBy}`,
+                                size: "xs",
+                                color: "#999999",
+                                wrap: true,
+                                margin: "xs",
+                              },
+                            ],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
 
                 // ===== รายละเอียด =====
                 {
                   type: "box",
                   layout: "baseline",
                   spacing: "sm",
+                  paddingStart: "30px",
                   contents: [
-                    { type: "text", text: "📝", size: "sm", flex: 0 },
                     {
                       type: "text",
                       text: "รายละเอียด:",
@@ -2332,7 +2559,59 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
             },
 
             // ===== ผู้แจ้ง + บริษัท (2 บรรทัด) =====
+
             {
+              type: "box",
+              layout: "vertical",
+              margin: "sm",
+              spacing: "xs",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "👤", size: "sm", flex: 0 },
+
+                    {
+                      type: "text",
+                      text: `${reporterCompany ?? ""}`,
+                      size: "xs",
+                      color: "#999999",
+                      weight: "bold",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                ...(reporterName
+                  ? [
+                      {
+                        type: "box",
+                        layout: "vertical",
+                        paddingStart: "30px",
+                        contents: [
+                          {
+                            type: "text",
+                            text: "ผู้แจ้ง:",
+                            weight: "bold",
+                            size: "xs",
+                            flex: 0,
+                          },
+                          {
+                            type: "text",
+                            text: `${reporterName ?? ""}`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true,
+                          },
+                        ],
+                      },
+                    ]
+                  : []),
+              ],
+            },
+            /* {
               type: "box",
               layout: "vertical",
               margin: "sm",
@@ -2381,7 +2660,7 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
                     ]
                   : []),
               ],
-            },
+            }, */
 
             // ===== รายละเอียด =====
             {
@@ -2389,8 +2668,8 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
               layout: "baseline",
               spacing: "xs",
               margin: "xs",
+              paddingStart: "30px",
               contents: [
-                { type: "text", text: "📝", size: "sm", flex: 0 },
                 {
                   type: "text",
                   text: "รายละเอียด:",

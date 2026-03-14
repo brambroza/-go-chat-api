@@ -228,6 +228,14 @@ exports.senLinkdMessageProblem = async (channelToken, userId, text, link) => {
               color: "#333333",
               margin: "md",
             },
+            {
+              type: "text",
+              text: "🕒 เวลารับแจ้งปัญหา: วันจันทร์ – ศุกร์ เวลา 08:30 – 17:30 น. ยกเว้นวันหยุดนักขัตฤกษ์)",
+              wrap: true,
+              size: "sm",
+              color: "#333333",
+              margin: "md",
+            },
           ],
         },
         footer: {
