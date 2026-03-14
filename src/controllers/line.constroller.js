@@ -1538,7 +1538,7 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
                       ? [
                           {
                             type: "box",
-                            layout: "vertical",
+                            layout: "horizontal",
                             paddingStart: "30px",
                             contents: [
                               {
@@ -1884,7 +1884,7 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                       ? [
                           {
                             type: "box",
-                            layout: "vertical",
+                            layout: "horizontal",
                             paddingStart: "30px",
                             contents: [
                               {
@@ -2296,7 +2296,7 @@ async function sendLineToTeamSeviceWaiting(
                       ? [
                           {
                             type: "box",
-                            layout: "vertical",
+                            layout: "horizontal",
                             paddingStart: "30px",
                             contents: [
                               {
@@ -2588,7 +2588,7 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
                   ? [
                       {
                         type: "box",
-                        layout: "vertical",
+                        layout: "horizontal",
                         paddingStart: "30px",
                         contents: [
                           {
