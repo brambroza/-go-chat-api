@@ -18,59 +18,43 @@ exports.setShortenUrl = async (req, res) => {
   try {
     const { url, alias } = req.body;
 
-    if (!url || !url.trim()) {
-      return res.status(400).json({ message: "URL is required" });
+    if (!url) {
+      return res.status(400).json({ message: "url is required" });
     }
 
-    // cleanuri ใช้แค่ url
-    // alias รับมาได้ แต่ยังไม่ได้ใช้
-    void alias;
+    const params = new URLSearchParams({
+      format: "simple",
+      url,
+    });
 
-    const formData = new URLSearchParams();
-    formData.append("url", url);
+    if (alias) {
+      params.append("shorturl", alias);
+    }
 
-    const providerResponse = await fetch(
-      "https://cleanuri.com/api/v1/shorten",
+    const response = await fetch(
+      `https://is.gd/create.php?${params.toString()}`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData.toString(),
+        method: "GET",
       },
     );
 
-    const rawText = await providerResponse.text();
+    const text = await response.text();
 
-    let providerData;
-    try {
-      providerData = JSON.parse(rawText);
-    } catch {
-      return res.status(502).json({
-        message: "Invalid response from short URL provider",
-        raw: rawText,
-      });
-    }
-
-    if (!providerResponse.ok) {
-      return res.status(502).json({
-        message:
-          providerData.error || `Provider error (${providerResponse.status})`,
-      });
-    }
-
-    if (!providerData.result_url) {
-      return res.status(502).json({
-        message: providerData.error || "Short URL provider failed",
+    if (!response.ok || text.startsWith("Error:")) {
+      return res.status(400).json({
+        message: "Short URL creation failed",
+        provider: "is.gd",
+        detail: text,
       });
     }
 
     return res.json({
-      shortUrl: providerData.result_url,
+      shortUrl: text.trim(),
     });
   } catch (error) {
     return res.status(500).json({
-      message: error instanceof Error ? error.message : "Internal server error",
+      message: "Internal server error",
+      detail: error.message,
     });
   }
 };
