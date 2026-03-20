@@ -2577,7 +2577,7 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
                       type: "text",
                       text: `${reporterCompany ?? ""}`,
                       size: "xs",
-                      color: "#999999",
+                      color: "#66BB6A",
                       weight: "bold",
                       wrap: true,
                     },
