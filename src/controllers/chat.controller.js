@@ -1245,3 +1245,66 @@ exports.JobGetLineFriend = async () => {
     console.error("Error in getLineFriend route:", error.message);
   }
 };
+
+
+
+exports.JobGetLineFriendNotProfile = async () => {
+  try {
+    // Get a connection from your pool
+    const pool = await connectDB();
+
+    const dt = await pool
+      .request()
+      .input("CmpId", "230015")
+      .query("EXEC dbo.getLineFriendNotProfile @CmpId=@CmpId");
+
+    // The recordset from the query
+    const rows = dt.recordset;
+
+ 
+    for (const row of rows) {
+      const userId = row.UserId;
+      const contactToken = row.AccessToken;
+
+      try {
+        const lineProfile = await lineService.getLineProfile(
+          userId,
+          contactToken,
+        );
+
+        await pool
+          .request()
+          .input("CmpId", row.CmpId)
+          .input("LineOAId", row.LineOAId)
+          .input("UserId", row.UserId)
+          .input("DisplayName", lineProfile?.displayName ?? null)
+          .input("PictureUrl", lineProfile?.pictureUrl ?? null)
+          .input("Language", lineProfile?.language ?? null)
+          .input(
+            "ProfileJson",
+            lineProfile ? JSON.stringify(lineProfile) : null,
+          )
+          .input("LastError", null).query(`
+      EXEC dbo.UpsertLineProfileCache
+        @CmpId=@CmpId,
+        @LineOAId=@LineOAId,
+        @UserId=@UserId,
+        @DisplayName=@DisplayName,
+        @PictureUrl=@PictureUrl,
+        @Language=@Language,
+        @ProfileJson=@ProfileJson,
+        @LastError=@LastError
+    `);
+      } catch (err) {
+        // Decide how you want to handle errors from the LINE API
+        console.error("Failed to get profile for user:", userId, err.message);
+        // You could push partial data or skip this user
+        // For example, push partial data:
+      }
+    }
+  } catch (error) {
+    console.error("Error in getLineFriend route:", error.message);
+  }
+};
+
+

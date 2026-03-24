@@ -50,6 +50,9 @@ exports.createHelpdeskCase = async (req, res) => {
     if (!userId || !description || !oaId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+ 
+
+
     console.log("📂 Final imagePath:", imagePath);
 
     const pool = await connectDB();

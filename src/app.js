@@ -17,7 +17,10 @@ const { createAdapter } = require("@socket.io/redis-adapter");
 
 const ticketTaskReplyHub = require("./controllers/localchat.controller");
 const { waitsendmsgagent } = require("./controllers/line.constroller"); // ปรับ path ให้ตรงจริง
-const { JobGetLineFriend } = require("./controllers/chat.controller");
+const {
+  JobGetLineFriend,
+  JobGetLineFriendNotProfile,
+} = require("./controllers/chat.controller");
 
 const { setIO } = require("./utils/socket");
 
@@ -67,7 +70,7 @@ async function runJobGetLineFriend(reason = "manual") {
 
   console.log(
     `⏱ Run job: JobGetLineFriend() [${reason}] at`,
-    new Date().toISOString()
+    new Date().toISOString(),
   );
   try {
     await JobGetLineFriend();
@@ -91,6 +94,28 @@ cron.schedule("* * * * *", async () => {
   }
 });
 
+let isJobRunning = false;
+
+cron.schedule("* * * * *", async () => {
+  if (isJobRunning) {
+    console.log(
+      "⏭ Skip JobGetLineFriendNotProfile: previous job still running",
+    );
+    return;
+  }
+
+  isJobRunning = true;
+  console.log("⏱ Run job: JobGetLineFriendNotProfile()");
+
+  try {
+    await JobGetLineFriendNotProfile();
+  } catch (err) {
+    console.error("Cron JobGetLineFriendNotProfile error:", err);
+  } finally {
+    isJobRunning = false;
+  }
+});
+
 cron.schedule(
   "0 0 * * *", // ทุกวัน 00:00
   async () => {
@@ -103,7 +128,7 @@ cron.schedule(
   },
   {
     timezone: "Asia/Bangkok", // เวลาไทย
-  }
+  },
 );
 
 // ติดตั้ง swagger
