@@ -3397,6 +3397,7 @@ exports.waitsendmsgagent = async () => {
       const reportCompany = row.CustomerName ?? "";
       const reportBy = row.RequestBy ?? "";
       const actionby = row.actionby ?? "";
+      const startDate = row.startDate ?? "";
 
       if (!touserId || !oaId) {
         console.warn(
