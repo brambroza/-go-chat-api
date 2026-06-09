@@ -351,7 +351,7 @@ exports.createHelpdeskCase = async (req, res) => {
                   type: "box",
                   layout: "vertical",
                   spacing: "sm",
-                  paddingStart: "30px",
+                 
                   contents: [
                     {
                       type: "box",
@@ -374,7 +374,7 @@ exports.createHelpdeskCase = async (req, res) => {
                     {
                       type: "box",
                       layout: "vertical",
-                      paddingStart: "10px",
+                 
                       margin: "xs",
                       spacing: "xs",
                       contents: [
