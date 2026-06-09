@@ -243,7 +243,7 @@ exports.createHelpdeskCase = async (req, res) => {
                       text: "สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ",
                       weight: "bold",
                       size: "sm",
-                      color: "#f4882fff",
+                      color: "#F4882F",
                       wrap: true,
                     },
                   ],
@@ -289,7 +289,7 @@ exports.createHelpdeskCase = async (req, res) => {
                           type: "text",
                           text: `${reportCompany ?? ""}`,
                           size: "xs",
-                          color: "#f4882fff",
+                          color: "#F4882F",
                           wrap: true,
                           weight: "bold",
                         },
@@ -455,20 +455,27 @@ exports.createHelpdeskCase = async (req, res) => {
 
     // 🔐 Token ของ LINE OA (map ตาม oaId ถ้ามีหลายตัว)
     const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken; // หรือ map จาก oaId
-
-    await axios.post(
-      "https://api.line.me/v2/bot/message/push",
-      {
-        to: userId,
-        messages: [flexMsg],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
+    try {
+      await axios.post(
+        "https://api.line.me/v2/bot/message/push",
+        {
+          to: userId,
+          messages: [flexMsg],
         },
-      },
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    } catch (err) {
+      console.error("❌ LINE Push Error:", err.response?.data || err.message);
+      return res.status(400).json({
+        error: "LINE Push failed",
+        detail: err.response?.data,
+      });
+    }
 
     await sendLineToTeamSevice(TaskNoNew, description);
     const io = getIO();
