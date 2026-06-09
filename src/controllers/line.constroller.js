@@ -349,7 +349,7 @@ exports.createHelpdeskCase = async (req, res) => {
                 // ===== สถานะ =====
                 {
                   type: "box",
-                  layout: "baseline",
+                  layout: "horizontal",
                   spacing: "sm",
                   paddingStart: "30px",
                   contents: [
@@ -364,7 +364,7 @@ exports.createHelpdeskCase = async (req, res) => {
                           type: "text",
                           text: `รอดำเนินการ`,
                           size: "xs",
-                          color: "#f4882fff",
+                          color: "#f4882f",
                           wrap: true,
                           weight: "bold",
                         },
@@ -417,7 +417,7 @@ exports.createHelpdeskCase = async (req, res) => {
                 {
                   type: "box",
                   layout: "vertical",
-                  backgroundColor: "#f4882fff",
+                  backgroundColor: "#f4882f",
                   cornerRadius: "10px",
                   paddingAll: "md",
 
@@ -2288,7 +2288,7 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                       text: "ลูกค้ารออยู่ !!!!",
                       weight: "bold",
                       size: "sm",
-                      color: "#f4882fff",
+                      color: "#f4882f",
                       wrap: true,
                     },
                   ],
@@ -2336,7 +2336,7 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                           type: "text",
                           text: `${reportCompany}`,
                           size: "xs",
-                          color: "#f4882fff",
+                          color: "#f4882f",
                           wrap: true,
                           weight: "bold",
                         },
@@ -2499,7 +2499,7 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                   align: "center",
                   weight: "bold",
                   size: "sm",
-                  color: "#f4882fff",
+                  color: "#f4882f",
                   wrap: true,
                   margin: "sm",
                 },
@@ -2508,7 +2508,7 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
                 {
                   type: "box",
                   layout: "vertical",
-                  backgroundColor: "#f4882fff",
+                  backgroundColor: "#f4882f",
                   cornerRadius: "10px",
                   paddingAll: "md",
                   action: {
