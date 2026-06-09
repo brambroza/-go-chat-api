@@ -349,7 +349,7 @@ exports.createHelpdeskCase = async (req, res) => {
                 // ===== สถานะ =====
                 {
                   type: "box",
-                  layout: "horizontal",
+                  layout: "vertical",
                   spacing: "sm",
                   paddingStart: "30px",
                   contents: [
