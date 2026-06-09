@@ -50,8 +50,6 @@ exports.createHelpdeskCase = async (req, res) => {
     if (!userId || !description || !oaId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
- 
-
 
     console.log("📂 Final imagePath:", imagePath);
 
@@ -66,11 +64,18 @@ exports.createHelpdeskCase = async (req, res) => {
 
     let TaskNoNew = null;
     let userlogin = null;
+    let reportCompany = null;
+    let reportBy = null;
     try {
       const result = await request.execute("dbo.setServiceFormLiFF");
-      const { TaskNo, userAssign } = result.recordset[0];
+      const { TaskNo, userAssign, customername, requestby } =
+        result.recordset[0];
       TaskNoNew = TaskNo;
       userlogin = userAssign;
+      reportCompany = customername;
+
+      reportBy = requestby;
+
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
       console.error("❌ MSSQL Error moving file:", e);
@@ -129,18 +134,20 @@ exports.createHelpdeskCase = async (req, res) => {
     }
 
     // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
-    const flexMsg = {
+    /*  const flexMsg = {
       type: "flex",
-      altText: "สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ",
+      altText: "🙏 สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ",
       contents: {
         type: "bubble",
+        size: "kilo",
         body: {
           type: "box",
           layout: "vertical",
+          paddingAll: "md",
           contents: [
             {
               type: "text",
-              text: `สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ`,
+              text: `🙏 สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ`,
               weight: "bold",
               size: "md",
             },
@@ -193,6 +200,236 @@ exports.createHelpdeskCase = async (req, res) => {
                       wrap: true,
                       color: "#666666",
                       size: "sm",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    }; */
+
+    const flexMsg = {
+      type: "flex",
+      altText: `🙏 สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ`,
+      contents: {
+        type: "bubble",
+        size: "kilo",
+        body: {
+          type: "box",
+          layout: "vertical",
+          paddingAll: "md",
+          contents: [
+            {
+              // ✅ เอากรอบออกแล้ว
+              type: "box",
+              layout: "vertical",
+              paddingAll: "lg",
+              backgroundColor: "#FFFFFF",
+              cornerRadius: "16px", // ถ้าอยากเหลี่ยม ๆ ให้เปลี่ยนเป็น "0px"
+
+              spacing: "md",
+              contents: [
+                // ===== Header =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "🙏", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: "สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ",
+                      weight: "bold",
+                      size: "sm",
+                      color: "#f4882fff",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== Ticket =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "🧾", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: "Ticket:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${TaskNoNew ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                {
+                  type: "box",
+                  layout: "vertical",
+                  spacing: "xs",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        { type: "text", text: "👤", size: "sm", flex: 0 },
+
+                        {
+                          type: "text",
+                          text: `${reportCompany ?? ""}`,
+                          size: "xs",
+                          color: "#f4882fff",
+                          wrap: true,
+                          weight: "bold",
+                        },
+                      ],
+                    },
+                    ...(reportBy
+                      ? [
+                          {
+                            type: "box",
+                            layout: "horizontal",
+                            paddingStart: "30px",
+                            contents: [
+                              {
+                                type: "text",
+                                text: "ผู้แจ้ง:",
+                                size: "xs",
+                                flex: 0,
+                                weight: "bold",
+                              },
+                              {
+                                type: "text",
+                                text: `${reportBy ?? ""}`,
+                                size: "xs",
+                                color: "#999999",
+                                wrap: true,
+                              },
+                            ],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+
+                // ===== รายละเอียด =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  paddingStart: "30px",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "รายละเอียด:",
+                      weight: "bold",
+                      size: "xs",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${description ?? ""}`,
+                      size: "xs",
+                      color: "#333333",
+                      wrap: true,
+                    },
+                  ],
+                },
+                // ===== สถานะ =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  paddingStart: "30px",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        { type: "text", text: "⌛️", size: "sm", flex: 0 },
+
+                        {
+                          type: "text",
+                          text: `รอดำเนินการ`,
+                          size: "xs",
+                          color: "#f4882fff",
+                          wrap: true,
+                          weight: "bold",
+                        },
+                      ],
+                    },
+
+                    {
+                      type: "box",
+                      layout: "vertical",
+                      paddingStart: "10px",
+                      margin: "xs",
+                      spacing: "xs",
+                      contents: [
+                        {
+                          type: "text",
+                          text: `ทีมงานได้รับเรื่องเรียบร้อยแล้ว`,
+                          size: "xs",
+                          color: "#999999",
+                          wrap: true,
+                        },
+                        {
+                          type: "text",
+                          text: `กำลังมอบหมายผู้ดูแลเคส ติดต่อกลับภายใน 10 นาที`,
+                          size: "xs",
+                          color: "#999999",
+                          wrap: true,
+                        },
+                        {
+                          type: "text",
+                          text: `ณ วันและเวลาทำการ จ.-ศ. 8:30-17:30 น.`,
+                          size: "xs",
+                          color: "#999999",
+                          wrap: true,
+                        },
+                        {
+                          type: "text",
+                          text: `ยกเว้นวันหยุดนักขัตฤกษ์`,
+                          size: "xs",
+                          color: "#999999",
+                          wrap: true,
+                        },
+                      ],
+                    },
+                  ],
+                },
+
+                // ===== ข้อความเตือนสีแดง =====
+
+                // ===== ปุ่มแดงใหญ่ =====
+                {
+                  type: "box",
+                  layout: "vertical",
+                  backgroundColor: "#f4882fff",
+                  cornerRadius: "10px",
+                  paddingAll: "md",
+
+                  contents: [
+                    {
+                      type: "text",
+                      text: "รอดำเนินการ",
+                      align: "center",
+                      weight: "bold",
+                      size: "md",
+                      color: "#FFFFFF",
+                      wrap: true,
                     },
                   ],
                 },
@@ -933,7 +1170,7 @@ exports.sendFlexMsgWaiting = async (req, res) => {
     reporterCompany = customername;
 
     // 🔁 ส่ง Flex Message แจ้งเตือนกลับผู้ใช้
-    const flexMsg = {
+    const flexMsgx = {
       type: "flex",
       altText: `Ticket: ${taskNo ?? ""} - กำลังดำเนินการ`,
       contents: {
@@ -1063,6 +1300,221 @@ exports.sendFlexMsgWaiting = async (req, res) => {
                       wrap: true,
                       size: "xs",
                       color: "#999999",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    const flexMsg = {
+      type: "flex",
+      altText: `Ticket: ${taskNo ?? ""} - กำลังดำเนินการ`,
+      contents: {
+        type: "bubble",
+        size: "kilo",
+        body: {
+          type: "box",
+          layout: "vertical",
+          paddingAll: "md",
+          contents: [
+            {
+              // การ์ด (เอา border ออกแล้ว)
+              type: "box",
+              layout: "vertical",
+              paddingAll: "lg",
+              backgroundColor: "#FFFFFF",
+              cornerRadius: "16px",
+
+              // ✅ ใช้ spacing แทน spacer
+              spacing: "md",
+
+              contents: [
+                // ===== Header =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "😎", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: "กำลังดำเนินการ",
+                      weight: "bold",
+                      size: "sm",
+                      color: "#529bc8ff",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== Ticket =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "🧾", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: "Ticket:",
+                      weight: "bold",
+                      size: "sm",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${taskNo ?? ""}`,
+                      size: "sm",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+                // ===== ผู้แจ้ง + บริษัท =====
+                {
+                  type: "box",
+                  layout: "vertical",
+                  spacing: "xs",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        { type: "text", text: "👤", size: "sm", flex: 0 },
+
+                        {
+                          type: "text",
+                          text: `${reporterCompany}`,
+                          size: "xs",
+                          color: "#529bc8ff",
+                          wrap: true,
+                          weight: "bold",
+                        },
+                      ],
+                    },
+                    ...(reporterName
+                      ? [
+                          {
+                            type: "box",
+                            layout: "horizontal",
+                            paddingStart: "30px",
+                            contents: [
+                              {
+                                type: "text",
+                                text: "ผู้แจ้ง:",
+                                weight: "bold",
+                                size: "xs",
+                                flex: 0,
+                              },
+                              {
+                                type: "text",
+                                text: `${reporterName}`,
+                                size: "xs",
+                                color: "#999999",
+                                wrap: true,
+                                margin: "xs",
+                              },
+                            ],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+
+                // ===== รายละเอียด =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  paddingStart: "30px",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "รายละเอียด:",
+                      weight: "bold",
+                      size: "xs",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${description ?? ""}`,
+                      size: "xs",
+                      color: "#333333",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== ผู้ดูแลเคส =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "👤", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: "ผู้ดูแลเคส:",
+                      weight: "bold",
+                      size: "xs",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${actionby ?? ""}`,
+                      size: "xs",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== เวลาแจ้ง =====
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "⏳", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: "เวลาเริ่มดำเนินการ:",
+                      weight: "bold",
+                      size: "xs",
+                      flex: 0,
+                    },
+                    {
+                      type: "text",
+                      text: `${startDate ?? ""}`,
+                      size: "xs",
+                      color: "#999999",
+                      wrap: true,
+                    },
+                  ],
+                },
+
+                // ===== ปุ่ม =====
+                {
+                  type: "box",
+                  layout: "vertical",
+                  backgroundColor: "#529bc8ff",
+                  cornerRadius: "10px",
+                  paddingAll: "md",
+
+                  contents: [
+                    {
+                      type: "text",
+                      text: "กำลังดำเนินการ",
+                      align: "center",
+                      weight: "bold",
+                      size: "md",
+                      color: "#FFFFFF",
+                      wrap: true,
                     },
                   ],
                 },
