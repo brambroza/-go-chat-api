@@ -51,8 +51,6 @@ exports.createHelpdeskCase = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    console.log("📂 Final imagePath:", imagePath);
-
     const pool = await connectDB();
 
     let request = pool.request();
@@ -66,15 +64,17 @@ exports.createHelpdeskCase = async (req, res) => {
     let userlogin = null;
     let reportCompany = null;
     let reportBy = null;
+    let stateoutof = null;
     try {
       const result = await request.execute("dbo.setServiceFormLiFF");
-      const { TaskNo, userAssign, customername, requestby } =
+      const { TaskNo, userAssign, customername, requestby, stateoutofservice } =
         result.recordset[0];
       TaskNoNew = TaskNo;
       userlogin = userAssign;
       reportCompany = customername;
 
       reportBy = requestby;
+      stateoutof = stateoutofservice;
 
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
@@ -210,345 +210,562 @@ exports.createHelpdeskCase = async (req, res) => {
       },
     }; */
 
-    const flexMsg = {
-      type: "flex",
-      altText: `🙏 สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ`,
-      contents: {
-        type: "bubble",
-        size: "kilo",
-        body: {
-          type: "box",
-          layout: "vertical",
-          paddingAll: "md",
-          contents: [
-            {
-              // ✅ เอากรอบออกแล้ว
-              type: "box",
-              layout: "vertical",
-              paddingAll: "lg",
-              backgroundColor: "#FFFFFF",
-              cornerRadius: "16px", // ถ้าอยากเหลี่ยม ๆ ให้เปลี่ยนเป็น "0px"
+    if (stateoutof === "0") {
+      const flexMsg = {
+        type: "flex",
+        altText: `🙏 สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ`,
+        contents: {
+          type: "bubble",
+          size: "kilo",
+          body: {
+            type: "box",
+            layout: "vertical",
+            paddingAll: "md",
+            contents: [
+              {
+                // ✅ เอากรอบออกแล้ว
+                type: "box",
+                layout: "vertical",
+                paddingAll: "lg",
+                backgroundColor: "#FFFFFF",
+                cornerRadius: "16px", // ถ้าอยากเหลี่ยม ๆ ให้เปลี่ยนเป็น "0px"
 
-              spacing: "md",
-              contents: [
-                // ===== Header =====
-                {
-                  type: "box",
-                  layout: "baseline",
-                  spacing: "sm",
-                  contents: [
-                    { type: "text", text: "🙏", size: "sm", flex: 0 },
-                    {
-                      type: "text",
-                      text: "สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ",
-                      weight: "bold",
-                      size: "sm",
-                      color: "#F4882F",
-                      wrap: true,
-                    },
-                  ],
-                },
+                spacing: "md",
+                contents: [
+                  // ===== Header =====
+                  {
+                    type: "box",
+                    layout: "baseline",
+                    spacing: "sm",
+                    contents: [
+                      { type: "text", text: "🙏", size: "sm", flex: 0 },
+                      {
+                        type: "text",
+                        text: "สวัสดีครับ ได้รับเคสเรียบร้อยแล้วครับ",
+                        weight: "bold",
+                        size: "sm",
+                        color: "#F4882F",
+                        wrap: true,
+                      },
+                    ],
+                  },
 
-                // ===== Ticket =====
-                {
-                  type: "box",
-                  layout: "baseline",
-                  spacing: "sm",
-                  contents: [
-                    { type: "text", text: "🧾", size: "sm", flex: 0 },
-                    {
-                      type: "text",
-                      text: "Ticket:",
-                      weight: "bold",
-                      size: "sm",
-                      flex: 0,
-                    },
-                    {
-                      type: "text",
-                      text: `${TaskNoNew ?? ""}`,
-                      size: "sm",
-                      color: "#999999",
-                      wrap: true,
-                    },
-                  ],
-                },
+                  // ===== Ticket =====
+                  {
+                    type: "box",
+                    layout: "baseline",
+                    spacing: "sm",
+                    contents: [
+                      { type: "text", text: "🧾", size: "sm", flex: 0 },
+                      {
+                        type: "text",
+                        text: "Ticket:",
+                        weight: "bold",
+                        size: "sm",
+                        flex: 0,
+                      },
+                      {
+                        type: "text",
+                        text: `${TaskNoNew ?? ""}`,
+                        size: "sm",
+                        color: "#999999",
+                        wrap: true,
+                      },
+                    ],
+                  },
 
-                {
-                  type: "box",
-                  layout: "vertical",
-                  spacing: "xs",
-                  contents: [
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      spacing: "sm",
-                      contents: [
-                        { type: "text", text: "👤", size: "sm", flex: 0 },
+                  {
+                    type: "box",
+                    layout: "vertical",
+                    spacing: "xs",
+                    contents: [
+                      {
+                        type: "box",
+                        layout: "baseline",
+                        spacing: "sm",
+                        contents: [
+                          { type: "text", text: "👤", size: "sm", flex: 0 },
 
-                        {
-                          type: "text",
-                          text: `${reportCompany ?? ""}`,
-                          size: "xs",
-                          color: "#F4882F",
-                          wrap: true,
-                          weight: "bold",
-                        },
-                      ],
-                    },
-                    ...(reportBy
-                      ? [
                           {
-                            type: "box",
-                            layout: "horizontal",
-                            paddingStart: "30px",
-                            contents: [
-                              {
-                                type: "text",
-                                text: "ผู้แจ้ง:",
-                                size: "xs",
-                                flex: 0,
-                                weight: "bold",
-                              },
-                              {
-                                type: "text",
-                                text: `${reportBy ?? ""}`,
-                                size: "xs",
-                                color: "#999999",
-                                wrap: true,
-                              },
-                            ],
+                            type: "text",
+                            text: `${reportCompany ?? ""}`,
+                            size: "xs",
+                            color: "#F4882F",
+                            wrap: true,
+                            weight: "bold",
                           },
-                        ]
-                      : []),
-                  ],
-                },
+                        ],
+                      },
+                      ...(reportBy
+                        ? [
+                            {
+                              type: "box",
+                              layout: "horizontal",
+                              paddingStart: "30px",
+                              contents: [
+                                {
+                                  type: "text",
+                                  text: "ผู้แจ้ง:",
+                                  size: "xs",
+                                  flex: 0,
+                                  weight: "bold",
+                                },
+                                {
+                                  type: "text",
+                                  text: `${reportBy ?? ""}`,
+                                  size: "xs",
+                                  color: "#999999",
+                                  wrap: true,
+                                },
+                              ],
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
 
-                // ===== รายละเอียด =====
-                {
-                  type: "box",
-                  layout: "baseline",
-                  spacing: "sm",
-                  paddingStart: "30px",
-                  contents: [
-                    {
-                      type: "text",
-                      text: "รายละเอียด:",
-                      weight: "bold",
-                      size: "xs",
-                      flex: 0,
-                    },
-                    {
-                      type: "text",
-                      text: `${description ?? ""}`,
-                      size: "xs",
-                      color: "#333333",
-                      wrap: true,
-                    },
-                  ],
-                },
-                // ===== สถานะ =====
-                {
-                  type: "box",
-                  layout: "vertical",
-                  spacing: "sm",
+                  // ===== รายละเอียด =====
+                  {
+                    type: "box",
+                    layout: "baseline",
+                    spacing: "sm",
+                    paddingStart: "30px",
+                    contents: [
+                      {
+                        type: "text",
+                        text: "รายละเอียด:",
+                        weight: "bold",
+                        size: "xs",
+                        flex: 0,
+                      },
+                      {
+                        type: "text",
+                        text: `${description ?? ""}`,
+                        size: "xs",
+                        color: "#333333",
+                        wrap: true,
+                      },
+                    ],
+                  },
+                  // ===== สถานะ =====
+                  {
+                    type: "box",
+                    layout: "vertical",
+                    spacing: "sm",
 
-                  contents: [
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      spacing: "sm",
-                      contents: [
-                        { type: "text", text: "⌛️", size: "sm", flex: 0 },
+                    contents: [
+                      {
+                        type: "box",
+                        layout: "baseline",
+                        spacing: "sm",
+                        contents: [
+                          { type: "text", text: "⌛️", size: "sm", flex: 0 },
 
-                        {
-                          type: "text",
-                          text: `รอดำเนินการ`,
-                          size: "xs",
-                          color: "#f4882f",
-                          wrap: true,
-                          weight: "bold",
-                        },
-                      ],
-                    },
+                          {
+                            type: "text",
+                            text: `รอดำเนินการ`,
+                            size: "xs",
+                            color: "#f4882f",
+                            wrap: true,
+                            weight: "bold",
+                          },
+                        ],
+                      },
 
-                    {
-                      type: "box",
-                      layout: "vertical",
+                      {
+                        type: "box",
+                        layout: "vertical",
 
-                      margin: "xs",
-                      spacing: "xs",
-                      contents: [
-                        {
-                          type: "text",
-                          text: `ทีมงานได้รับเรื่องเรียบร้อยแล้ว`,
-                          size: "xs",
-                          color: "#999999",
-                          wrap: true,
-                        },
-                        {
-                          type: "text",
-                          text: `กำลังมอบหมายผู้ดูแลเคส ติดต่อกลับภายใน 10 นาที`,
-                          size: "xs",
-                          color: "#999999",
-                          wrap: true,
-                        },
-                        {
-                          type: "text",
-                          text: `ณ วันและเวลาทำการ จ.-ศ. 8:30-17:30 น.`,
-                          size: "xs",
-                          color: "#999999",
-                          wrap: true,
-                        },
-                        {
-                          type: "text",
-                          text: `ยกเว้นวันหยุดนักขัตฤกษ์`,
-                          size: "xs",
-                          color: "#999999",
-                          wrap: true,
-                        },
-                      ],
-                    },
-                  ],
-                },
+                        margin: "xs",
+                        spacing: "xs",
+                        contents: [
+                          {
+                            type: "text",
+                            text: `ทีมงานได้รับเรื่องเรียบร้อยแล้ว`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true,
+                          },
+                          {
+                            type: "text",
+                            text: `กำลังมอบหมายผู้ดูแลเคส ติดต่อกลับภายใน 10 นาที`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true,
+                          },
+                          {
+                            type: "text",
+                            text: `ณ วันและเวลาทำการ จ.-ศ. 8:30-17:30 น.`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true,
+                          },
+                          {
+                            type: "text",
+                            text: `ยกเว้นวันหยุดนักขัตฤกษ์`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true,
+                          },
+                        ],
+                      },
+                    ],
+                  },
 
-                // ===== ข้อความเตือนสีแดง =====
+                  // ===== ข้อความเตือนสีแดง =====
 
-                // ===== ปุ่มแดงใหญ่ =====
-                {
-                  type: "box",
-                  layout: "vertical",
-                  backgroundColor: "#f4882f",
-                  cornerRadius: "10px",
-                  paddingAll: "md",
+                  // ===== ปุ่มแดงใหญ่ =====
+                  {
+                    type: "box",
+                    layout: "vertical",
+                    backgroundColor: "#f4882f",
+                    cornerRadius: "10px",
+                    paddingAll: "md",
 
-                  contents: [
-                    {
-                      type: "text",
-                      text: "รอดำเนินการ",
-                      align: "center",
-                      weight: "bold",
-                      size: "md",
-                      color: "#FFFFFF",
-                      wrap: true,
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
+                    contents: [
+                      {
+                        type: "text",
+                        text: "รอดำเนินการ",
+                        align: "center",
+                        weight: "bold",
+                        size: "md",
+                        color: "#FFFFFF",
+                        wrap: true,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
         },
-      },
-    };
+      };
 
-    const results = await pool.request().input("oaid", sql.VarChar, oaId)
-      .query(`
+      const results = await pool.request().input("oaid", sql.VarChar, oaId)
+        .query(`
         SELECT top 1 AccessToken as channelToken 
         FROM [dbo].[CompanySocialChannel]
         WHERE ChannelId = @oaid
       `);
 
-    if (results.recordset.length === 0) {
-      return res.status(404).json({ message: "Account not found" });
+      if (results.recordset.length === 0) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+
+      const { channelToken } = results.recordset[0];
+
+      // 🔐 Token ของ LINE OA (map ตาม oaId ถ้ามีหลายตัว)
+      const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken; // หรือ map จาก oaId
+      try {
+        await axios.post(
+          "https://api.line.me/v2/bot/message/push",
+          {
+            to: userId,
+            messages: [flexMsg],
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      } catch (err) {
+        console.error("❌ LINE Push Error:", err.response?.data || err.message);
+        return res.status(400).json({
+          error: "LINE Push failed",
+          detail: err.response?.data,
+        });
+      }
+
+      await sendLineToTeamSevice(TaskNoNew, description);
+      const io = getIO();
+      io.emit("helpdesk:new", {
+        userId,
+        displayName,
+        description,
+        oaId,
+        cmpId,
+        taskNo: TaskNoNew,
+        imagePath,
+      });
+
+      // const dateTime = new Date().toISOString();
+      const now = new Date();
+      // แปลงเป็นเวลาไทย (UTC+7)
+      const bangkokTime = new Date(now.getTime() + 7 * 60 * 60 * 1000)
+        .toISOString()
+        .replace("T", " ")
+        .substring(0, 19);
+
+      const msgNotification = {
+        id: uuidv4(),
+        type: "linechat",
+        title: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
+        category: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
+        isUnRead: true,
+        avatarUrl: userId,
+        createdAt: bangkokTime, // new Date().toISOString(),
+        isUnAlert: true,
+        urllink: "/productservice/servicerequest/" + TaskNoNew,
+        sendFrom: userId,
+        moduleFormName: "/productservice/servicerequest",
+        isUnReadMenu: true,
+        docNo: TaskNoNew,
+        revNo: 0,
+      };
+
+      const room = `notification_230015_${userlogin}`;
+
+      io.to(room).emit(
+        "ReceiveNotification",
+        JSON.stringify([msgNotification]),
+      );
+
+      let request2 = pool.request();
+      request2.input("CmpId", sql.NVarChar(100), "230015");
+      request2.input("userTo", sql.NVarChar(100), userlogin);
+      request2.input("userFrom", sql.NVarChar(100), "0");
+      request2.input("id", sql.VarChar(100), TaskNoNew);
+      request2.input(
+        "Title",
+        sql.VarChar(500),
+        `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
+      );
+      request2.input(
+        "Category",
+        sql.VarChar(500),
+        `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
+      );
+      request2.input("type", sql.VarChar(50), "linechat");
+      request2.input(
+        "linkTo",
+        sql.VarChar(500),
+        `/productservice/servicerequest/${TaskNoNew}`,
+      );
+      request2.input(
+        "ModuleFormName",
+        sql.VarChar(500),
+        "/productservice/servicerequest",
+      );
+      request2.input("DocNo", sql.VarChar(100), `${TaskNoNew}`);
+      request2.input("RevNo", sql.Int, 0);
+      request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
+
+      await request2.execute("dbo.setNotificationLineChat");
     }
+    if (stateoutof === "1") {
+      // Todo outofmessage
 
-    const { channelToken } = results.recordset[0];
+      const flexMsgOutOf = {
+        type: "flex",
+        altText: `☎️ กรุณาติดต่อฝ่ายขาย`,
+        contents: {
+          type: "bubble",
+          size: "kilo",
+          body: {
+            type: "box",
+            layout: "vertical",
+            paddingAll: "md",
+            contents: [
+              {
+                // ✅ เอากรอบออกแล้ว
+                type: "box",
+                layout: "vertical",
+                paddingAll: "lg",
+                backgroundColor: "#FFFFFF",
+                cornerRadius: "16px", // ถ้าอยากเหลี่ยม ๆ ให้เปลี่ยนเป็น "0px"
 
-    // 🔐 Token ของ LINE OA (map ตาม oaId ถ้ามีหลายตัว)
-    const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken; // หรือ map จาก oaId
-    try {
-      await axios.post(
-        "https://api.line.me/v2/bot/message/push",
-        {
-          to: userId,
-          messages: [flexMsg],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
+                spacing: "md",
+                contents: [
+                  // ===== Header =====
+                  {
+                    type: "box",
+                    layout: "baseline",
+                    spacing: "sm",
+                    contents: [
+                      { type: "text", text: "🙏", size: "sm", flex: 0 },
+                      {
+                        type: "text",
+                        text: "สวัสดีครับ ",
+                        weight: "bold",
+                        size: "sm",
+                        color: "#2a2a2a",
+                        wrap: true,
+                      },
+                    ],
+                  },
+                  {
+                    type: "box",
+                    layout: "vertical",
+                    spacing: "xs",
+                    contents: [
+                      {
+                        type: "box",
+                        layout: "baseline",
+                        spacing: "sm",
+                        contents: [
+                          { type: "text", text: "👤", size: "sm", flex: 0 },
+
+                          {
+                            type: "text",
+                            text: `${reportCompany ?? ""}`,
+                            size: "xs",
+                            color: "#2b00ff",
+                            wrap: true,
+                            weight: "bold",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+
+                  // ===== สถานะ =====
+                  {
+                    type: "box",
+                    layout: "vertical",
+                    spacing: "sm",
+
+                    contents: [
+                      {
+                        type: "box",
+                        layout: "baseline",
+                        spacing: "sm",
+                        contents: [
+                          { type: "text", text: "❌", size: "sm", flex: 0 },
+
+                          {
+                            type: "text",
+                            text: `สถานะ : สิ้นสุดสัญญาบริการ`,
+                            size: "xs",
+                            color: "#bf0502",
+                            wrap: true,
+                            weight: "bold",
+                          },
+                        ],
+                      },
+
+                      {
+                        type: "box",
+                        layout: "vertical",
+
+                        margin: "xs",
+                        spacing: "xs",
+                        contents: [
+                          {
+                            type: "text",
+                            text: `รายละเอียด :`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true,
+                            weight: "bold",
+                          },
+                          {
+                            type: "text",
+                            text: `สัญญาบริการของท่านได้สิ้นสุดลงแล้ว`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true,
+                          },
+                          {
+                            type: "text",
+                            text: `จึงไม่สามารถดำเนินการเปิด Ticket กับทีม NIS Support`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true,
+                          },
+                          {
+                            type: "text",
+                            text: `หากต้องการรับบริการ`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true,
+                              weight: "bold",
+                          },,
+                          {
+                            type: "text",
+                            text: `สามารถติดต่อฝายขายเพื่อขอต่อสัญญา หรือสอบถามเพิ่มเติมได้เลยครับ`,
+                            size: "xs",
+                            color: "#999999",
+                            wrap: true, 
+                          },
+                        ],
+                      },
+                    ],
+                  },
+
+                  // ===== ข้อความเตือนสีแดง =====
+
+                  // ===== ปุ่มแดงใหญ่ =====
+                  {
+                    type: "box",
+                    layout: "vertical",
+                    backgroundColor: "#f4882f",
+                    cornerRadius: "10px",
+                    paddingAll: "md",
+
+                    contents: [
+                      {
+                       
+                        type: "button",
+                        text: "ติดต่อฝ่ายขาย",
+                        align: "center",
+                        weight: "bold",
+                        size: "md",
+                        color: "#FFFFFF",
+                        wrap: true,
+                        action : {
+                          type : 'uri' , 
+                          label: "ติดต่อฝ่ายขาย",
+                          uri: "tel:0932891664"
+                        }
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
           },
         },
-      );
-    } catch (err) {
-      console.error("❌ LINE Push Error:", err.response?.data || err.message);
-      return res.status(400).json({
-        error: "LINE Push failed",
-        detail: err.response?.data,
-      });
+      };
+
+      const results = await pool.request().input("oaid", sql.VarChar, oaId)
+        .query(`
+        SELECT top 1 AccessToken as channelToken 
+        FROM [dbo].[CompanySocialChannel]
+        WHERE ChannelId = @oaid
+      `);
+
+      if (results.recordset.length === 0) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+
+      const { channelToken } = results.recordset[0];
+
+      // 🔐 Token ของ LINE OA (map ตาม oaId ถ้ามีหลายตัว)
+      const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken; // หรือ map จาก oaId
+      try {
+        await axios.post(
+          "https://api.line.me/v2/bot/message/push",
+          {
+            to: userId,
+            messages: [flexMsgOutOf],
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      } catch (err) {
+        console.error("❌ LINE Push Error:", err.response?.data || err.message);
+        return res.status(400).json({
+          error: "LINE Push failed",
+          detail: err.response?.data,
+        });
+      }
     }
-
-    await sendLineToTeamSevice(TaskNoNew, description);
-    const io = getIO();
-    io.emit("helpdesk:new", {
-      userId,
-      displayName,
-      description,
-      oaId,
-      cmpId,
-      taskNo: TaskNoNew,
-      imagePath,
-    });
-
-    // const dateTime = new Date().toISOString();
-    const now = new Date();
-    // แปลงเป็นเวลาไทย (UTC+7)
-    const bangkokTime = new Date(now.getTime() + 7 * 60 * 60 * 1000)
-      .toISOString()
-      .replace("T", " ")
-      .substring(0, 19);
-
-    const msgNotification = {
-      id: uuidv4(),
-      type: "linechat",
-      title: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
-      category: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
-      isUnRead: true,
-      avatarUrl: userId,
-      createdAt: bangkokTime, // new Date().toISOString(),
-      isUnAlert: true,
-      urllink: "/productservice/servicerequest/" + TaskNoNew,
-      sendFrom: userId,
-      moduleFormName: "/productservice/servicerequest",
-      isUnReadMenu: true,
-      docNo: TaskNoNew,
-      revNo: 0,
-    };
-
-    const room = `notification_230015_${userlogin}`;
-
-    io.to(room).emit("ReceiveNotification", JSON.stringify([msgNotification]));
-
-    let request2 = pool.request();
-    request2.input("CmpId", sql.NVarChar(100), "230015");
-    request2.input("userTo", sql.NVarChar(100), userlogin);
-    request2.input("userFrom", sql.NVarChar(100), "0");
-    request2.input("id", sql.VarChar(100), TaskNoNew);
-    request2.input(
-      "Title",
-      sql.VarChar(500),
-      `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
-    );
-    request2.input(
-      "Category",
-      sql.VarChar(500),
-      `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
-    );
-    request2.input("type", sql.VarChar(50), "linechat");
-    request2.input(
-      "linkTo",
-      sql.VarChar(500),
-      `/productservice/servicerequest/${TaskNoNew}`,
-    );
-    request2.input(
-      "ModuleFormName",
-      sql.VarChar(500),
-      "/productservice/servicerequest",
-    );
-    request2.input("DocNo", sql.VarChar(100), `${TaskNoNew}`);
-    request2.input("RevNo", sql.Int, 0);
-    request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
-
-    await request2.execute("dbo.setNotificationLineChat");
 
     return res.status(200).json({ success: true });
   } catch (err) {
@@ -3702,8 +3919,6 @@ exports.waitsendmsgagent = async () => {
                         : []),
                     ],
                   },
-
- 
 
                   // ===== ปุ่ม =====
                   {
