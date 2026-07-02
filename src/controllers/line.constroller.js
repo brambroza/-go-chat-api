@@ -645,52 +645,96 @@ exports.createHelpdeskCase = async (req, res) => {
                         ],
                       },
 
-                      {
-                        type: "box",
-                        layout: "vertical",
-
-                        margin: "xs",
-                        spacing: "xs",
-                        contents: [
-                          {
-                            type: "text",
-                            text: `รายละเอียด :`,
-                            size: "xs",
-                            color: "#999999",
-                            wrap: true,
-                            weight: "bold",
-                          },
-                          {
-                            type: "text",
-                            text: `สัญญาบริการของท่านได้สิ้นสุดลงแล้ว`,
-                            size: "xs",
-                            color: "#999999",
-                            wrap: true,
-                          },
-                          {
-                            type: "text",
-                            text: `จึงไม่สามารถดำเนินการเปิด Ticket กับทีม NIS Support`,
-                            size: "xs",
-                            color: "#999999",
-                            wrap: true,
-                          },
-                          {
-                            type: "text",
-                            text: `หากต้องการรับบริการ`,
-                            size: "xs",
-                            color: "#999999",
-                            wrap: true,
+                       {
+                      type: "box",
+                      layout: "vertical",
+                      margin: "xs",
+                      spacing: "md",
+                      contents: [
+                        // ===== หัวข้อ + 2 บรรทัดแรก =====
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          spacing: "xs",
+                          contents: [
+                            {
+                              type: "text",
+                              text: `รายละเอียด :`,
+                              size: "xs",
+                              color: "#2a2a2a",
                               weight: "bold",
-                          },,
-                          {
-                            type: "text",
-                            text: `สามารถติดต่อฝายขายเพื่อขอต่อสัญญา หรือสอบถามเพิ่มเติมได้เลยครับ`,
-                            size: "xs",
-                            color: "#999999",
-                            wrap: true, 
-                          },
-                        ],
-                      },
+                              wrap: true,
+                            },
+                            {
+                              type: "text",
+                              text: `สัญญาบริการของท่านได้สิ้นสุดลงแล้ว`,
+                              size: "xs",
+                              color: "#4a4a4a",
+                              wrap: true,
+                            },
+                            {
+                              type: "text",
+                              text: `จึงไม่สามารถดำเนินการเปิด Ticket กับทีม NIS Support`,
+                              size: "xs",
+                              color: "#4a4a4a",
+                              wrap: true,
+                            },
+                          ],
+                        },
+
+                        // ===== กล่องเทา + ไอคอน info =====
+                        {
+                          type: "box",
+                          layout: "horizontal",
+                          backgroundColor: "#f2f2f2",
+                          cornerRadius: "12px",
+                          paddingAll: "md",
+                          spacing: "sm",
+                          contents: [
+                            {
+                              type: "text",
+                              text: "ⓘ",
+                              size: "lg",
+                              color: "#555555",
+                              flex: 0,
+                              gravity: "center",
+                            },
+                            {
+                              type: "box",
+                              layout: "vertical",
+                              spacing: "xs",
+                              contents: [
+                                {
+                                  type: "text",
+                                  text: `หากต้องการรับบริการ`,
+                                  size: "xs",
+                                  color: "#2a2a2a",
+                                  weight: "bold",
+                                  align: "center",
+                                  wrap: true,
+                                },
+                                {
+                                  type: "text",
+                                  text: `สามารถติดต่อฝ่ายขายเพื่อขอต่อสัญญา`,
+                                  size: "xs",
+                                  color: "#555555",
+                                  align: "center",
+                                  wrap: true,
+                                },
+                                {
+                                  type: "text",
+                                  text: `หรือสอบถามเพิ่มเติมได้เลยครับ`,
+                                  size: "xs",
+                                  color: "#555555",
+                                  align: "center",
+                                  wrap: true,
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
                     ],
                   },
 
@@ -706,20 +750,16 @@ exports.createHelpdeskCase = async (req, res) => {
 
                     contents: [
                       {
-                       
                         type: "button",
-                        text: "ติดต่อฝ่ายขาย",
-                        align: "center",
-                        weight: "bold",
-                        size: "md",
-                        color: "#FFFFFF",
-                        wrap: true,
-                        action : {
-                          type : 'uri' , 
-                          label: "ติดต่อฝ่ายขาย",
+                        style: "primary",
+                        color: "#f4882f",          // สีพื้นปุ่ม
+                        height: "md",
+                        action: {
+                          type: "uri",
+                          label: "ติดต่อฝ่ายขาย",   // ตัวหนังสือบนปุ่มมาจากตรงนี้
                           uri: "tel:0932891664"
                         }
-                      },
+                      }
                     ],
                   },
                 ],
