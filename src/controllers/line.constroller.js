@@ -757,7 +757,7 @@ exports.createHelpdeskCase = async (req, res) => {
                         action: {
                           type: "uri",
                           label: "ติดต่อฝ่ายขาย",   // ตัวหนังสือบนปุ่มมาจากตรงนี้
-                          uri: "tel:0932891664"
+                          uri: "https://line.me/R/ti/p/@nisolution"
                         }
                       }
                     ],
