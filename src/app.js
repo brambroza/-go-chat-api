@@ -23,6 +23,7 @@ const {
 } = require("./controllers/chat.controller");
 
 const { setIO } = require("./utils/socket");
+const { registerNisNamespace } = require("./sockets/nis.namespace"); 
 
 const app = express();
 
@@ -46,6 +47,8 @@ const io = new Server(server, {
 setIO(io);
 // export io เพื่อให้ controller อื่นเรียกใช้ได้
 module.exports.io = io;
+
+registerNisNamespace(io);
 
 const routes = require("./routes");
 const os = require("os");

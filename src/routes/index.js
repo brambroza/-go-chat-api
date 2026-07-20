@@ -12,7 +12,7 @@ const whatsappRoutes = require('./whatsapp.routes');
 const chatRoutes = require('./chat.routes'); 
 const dashboardRoutes = require('./config.routes');
 const serviceRoutes = require('./service.router');
-
+const nisRoutes = require('./nis.routes');
 // ใช้ routes สำหรับ dashboard config
 router.use('/dashboard', dashboardRoutes);
 
@@ -26,6 +26,7 @@ router.use('/lazada', lazadaRoutes);
 router.use('/whatsapp', whatsappRoutes);
 router.use('/chat', chatRoutes);
 router.use('/service', serviceRoutes);
+router.use('/nis', nisRoutes);
 
 
 module.exports = router;
