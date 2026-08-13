@@ -8,7 +8,7 @@ const { getIO } = require("../utils/socket");
 const { getMessages, nowIsoBangkok } = require("../services/nischat.service");
 const { userRoom } = require("../sockets/nis.namespace");
 
-const NOTIFY_TYPES = new Set(["assign", "reject_close", "overdue"]);
+const NOTIFY_TYPES = new Set(["assign", "reject_close", "overdue", "accept"]);
 
 /** GET /api/nis/chat/:ticketId/messages?cmpid=&limit= */
 async function getChatHistory(req, res) {
@@ -45,7 +45,9 @@ function postNotify(req, res) {
     (u) => typeof u === "string" && u
   );
   if (!cmpid || userList.length === 0 || !NOTIFY_TYPES.has(type)) {
-    return res.status(400).json({ message: "cmpid, users, type(assign|reject_close|overdue) required" });
+    return res
+      .status(400)
+      .json({ message: "cmpid, users, type(assign|reject_close|overdue|accept) required" });
   }
 
   const evt = {
