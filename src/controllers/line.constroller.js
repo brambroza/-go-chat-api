@@ -3656,6 +3656,8 @@ exports.waitsendmsgagent = async () => {
       const actionby = row.actionby ?? "";
       const startDate = row.startDate ?? "";
 
+      const replycount = row.ReplyCount ?? 0 ;
+
       if (!touserId || !oaId) {
         console.warn(
           `⚠️ ข้าม Ticket ${TaskNoNew} เพราะไม่มี userId หรือ oaId (userId=${touserId}, oaId=${oaId})`,
@@ -3989,21 +3991,27 @@ exports.waitsendmsgagent = async () => {
 
       // 2.3 ส่ง push message ให้ลูกค้า
       try {
-        await axios.post(
-          "https://api.line.me/v2/bot/message/push",
-          {
-            to: touserId,
-            messages: [flexMsg],
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
 
-        console.log(`✅ ส่งข้อความแจ้งเตือนเรียบร้อย Ticket ${TaskNoNew}`);
+        if (replycount <= 2)
+        {
+          await axios.post(
+                    "https://api.line.me/v2/bot/message/push",
+                    {
+                      to: touserId,
+                      messages: [flexMsg],
+                    },
+                    {
+                      headers: {
+                        Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+                        "Content-Type": "application/json",
+                      },
+                    },
+                  );
+
+                  console.log(`✅ ส่งข้อความแจ้งเตือนเรียบร้อย Ticket ${TaskNoNew}`);
+
+        }
+       
 
         // 2.4 ส่งแจ้งเตือนทีมงานผ่านฟังก์ชัน
 
