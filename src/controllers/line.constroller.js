@@ -3886,7 +3886,9 @@ exports.waitsendmsgagent = async () => {
                     ],
                   },
                   // ===== ผู้ดูแลเคส =====
-                  {
+                 
+                 
+             /*      {
                     type: "box",
                     layout: "baseline",
                     spacing: "xs",
@@ -3908,7 +3910,9 @@ exports.waitsendmsgagent = async () => {
                         wrap: true,
                       },
                     ],
-                  },
+                  },  */
+                  
+
 
                   // ===== สถานะ =====
                   {
@@ -3992,7 +3996,7 @@ exports.waitsendmsgagent = async () => {
       // 2.3 ส่ง push message ให้ลูกค้า
       try {
 
-        if (replycount <= 2)
+        if (replycount <= 1)
         {
           await axios.post(
                     "https://api.line.me/v2/bot/message/push",
