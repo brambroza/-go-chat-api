@@ -511,7 +511,7 @@ exports.createHelpdeskCase = async (req, res) => {
 
       const msgNotification = {
         id: uuidv4(),
-        type: "linechat",
+        type: "friendline",
         title: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
         category: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
         isUnRead: true,
@@ -4077,7 +4077,7 @@ exports.waitsendmsgagent = async () => {
 
         const msgNotification = {
           id: uuidv4(),
-          type: "linechat",
+          type: "friendline",
           title: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
           category: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
           isUnRead: true,
