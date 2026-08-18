@@ -547,7 +547,7 @@ exports.createHelpdeskCase = async (req, res) => {
         sql.VarChar(500),
         `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
       );
-      request2.input("type", sql.VarChar(50), "linechat");
+      request2.input("type", sql.VarChar(50), "friendline");
       request2.input(
         "linkTo",
         sql.VarChar(500),
@@ -4115,7 +4115,7 @@ exports.waitsendmsgagent = async () => {
           sql.VarChar(500),
           `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
         );
-        request2.input("type", sql.VarChar(50), "linechat");
+        request2.input("type", sql.VarChar(50), "friendline");
         request2.input(
           "linkTo",
           sql.VarChar(500),
