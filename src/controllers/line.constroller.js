@@ -528,10 +528,9 @@ exports.createHelpdeskCase = async (req, res) => {
 
       const room = `notification_230015_${userlogin}`;
 
-      io.to(room).emit(
-        "ReceiveNotification",
-        JSON.stringify([msgNotification]),
-      );
+      await io
+        .to(room)
+        .emit("ReceiveNotification", JSON.stringify([msgNotification]));
 
       let request2 = pool.request();
       request2.input("CmpId", sql.NVarChar(100), "230015");
@@ -4061,15 +4060,14 @@ exports.waitsendmsgagent = async () => {
         await sendLineToTeamSeviceReply(TaskNoNew, description);
         const io = getIO();
         io.emit("helpdesk:new", {
-          touserId,
+          userId: touserId,
           displayName,
           description,
           oaId,
-          cmpId : cmpIdS,
+          cmpId: cmpIdS,
           taskNo: TaskNoNew,
           imagePath,
         });
-
 
         // เวลาไทย (UTC+7) รูปแบบเดียวกับ createHelpdeskCase
         const bangkokTime = new Date(Date.now() + 7 * 60 * 60 * 1000)
@@ -4094,14 +4092,13 @@ exports.waitsendmsgagent = async () => {
           revNo: 0,
         };
 
-       // const io = getIO();
+        // const io = getIO();
 
         const room = `notification_230015_${newassign}`;
 
-        io.to(room).emit(
-          "ReceiveNotification",
-          JSON.stringify([msgNotification]),
-        );
+        await io
+          .to(room)
+          .emit("ReceiveNotification", JSON.stringify([msgNotification]));
 
         let request2 = pool.request();
         request2.input("CmpId", sql.NVarChar(100), "230015");
