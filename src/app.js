@@ -173,10 +173,37 @@ const PORT = process.env.PORT || 3000;
         });
       });
 
-      socket.on("joinRoom", ({ cmpid, userlogin }) => {
-        const room = `notification_${cmpid}_${userlogin}`;
+      /**
+       * เข้าห้องแจ้งเตือนของผู้ใช้ — client เรียกใหม่ทุกครั้งที่ต่อติด (รวมตอน reconnect)
+       * @param {{cmpid?: string|number, userlogin?: string}} payload ข้อมูลผู้ใช้ที่จะเข้าห้อง
+       * @param {(res: {ok: boolean, room?: string, error?: string}) => void} [ack] callback ผลลัพธ์ (ไม่บังคับ)
+       * @returns {void}
+       */
+      socket.on("joinRoom", ({ cmpid, userlogin } = {}, ack) => {
+        const cmpIdStr = String(cmpid ?? "").trim();
+        const userStr = String(userlogin ?? "").trim();
+
+        if (!cmpIdStr || !userStr || cmpIdStr.length > 50 || userStr.length > 100) {
+          if (typeof ack === "function") ack({ ok: false, error: "invalid payload" });
+          return;
+        }
+
+        const room = `notification_${cmpIdStr}_${userStr}`;
+
+        // ออกจากห้องแจ้งเตือนเดิมก่อน กันค้างหลายห้องตอนสลับผู้ใช้ในแท็บเดิม
+        for (const joined of socket.rooms) {
+          if (
+            joined !== socket.id &&
+            joined !== room &&
+            joined.startsWith("notification_")
+          ) {
+            socket.leave(joined);
+          }
+        }
+
         socket.join(room);
-        console.log(`👥 ${userlogin} joined ${room}`);
+        if (typeof ack === "function") ack({ ok: true, room });
+        console.log(`👥 ${userStr} joined ${room}`);
       });
 
       socket.on("disconnect", () => {

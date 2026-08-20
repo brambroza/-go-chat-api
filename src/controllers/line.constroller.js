@@ -510,7 +510,8 @@ exports.createHelpdeskCase = async (req, res) => {
         .substring(0, 19);
 
       const msgNotification = {
-        id: uuidv4(),
+        // ใช้ TaskNo เป็น id ให้ตรงกับ @id ที่บันทึกลง DB ด้านล่าง ไม่งั้นกดอ่าน/ลบจากกระดิ่งไม่ได้
+        id: TaskNoNew,
         type: "friendline",
         title: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
         category: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
@@ -527,10 +528,6 @@ exports.createHelpdeskCase = async (req, res) => {
       };
 
       const room = `notification_230015_${userlogin}`;
-
-      await io
-        .to(room)
-        .emit("ReceiveNotification", JSON.stringify([msgNotification]));
 
       let request2 = pool.request();
       request2.input("CmpId", sql.NVarChar(100), "230015");
@@ -563,6 +560,9 @@ exports.createHelpdeskCase = async (req, res) => {
       request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
 
       await request2.execute("dbo.setNotificationLineChat");
+
+      // emit หลังบันทึก DB เสร็จ — กันรายการกระพริบหายถ้า SignalR ดึง snapshot แทรกกลาง
+      io.to(room).emit("ReceiveNotification", JSON.stringify([msgNotification]));
     }
     if (stateoutof === "1") {
       // Todo outofmessage
@@ -4076,7 +4076,8 @@ exports.waitsendmsgagent = async () => {
           .substring(0, 19);
 
         const msgNotification = {
-          id: uuidv4(),
+          // ใช้ TaskNo เป็น id ให้ตรงกับ @id ที่บันทึกลง DB ด้านล่าง ไม่งั้นกดอ่าน/ลบจากกระดิ่งไม่ได้
+          id: TaskNoNew,
           type: "friendline",
           title: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
           category: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
@@ -4095,10 +4096,6 @@ exports.waitsendmsgagent = async () => {
         // const io = getIO();
 
         const room = `notification_230015_${newassign}`;
-
-        await io
-          .to(room)
-          .emit("ReceiveNotification", JSON.stringify([msgNotification]));
 
         let request2 = pool.request();
         request2.input("CmpId", sql.NVarChar(100), "230015");
@@ -4131,6 +4128,9 @@ exports.waitsendmsgagent = async () => {
         request2.input("AvatarUrl", sql.VarChar(100), `${touserId}`);
 
         await request2.execute("dbo.setNotification");
+
+        // emit หลังบันทึก DB เสร็จ — กันรายการกระพริบหายถ้า SignalR ดึง snapshot แทรกกลาง
+        io.to(room).emit("ReceiveNotification", JSON.stringify([msgNotification]));
       } catch (err) {
         console.error(
           `❌ ส่ง LINE แจ้งเตือน Ticket ${TaskNoNew} ไม่สำเร็จ:`,
