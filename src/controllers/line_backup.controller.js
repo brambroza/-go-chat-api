@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs");
+const fsp = require("fs/promises"); // ใช้ย้ายไฟล์แบบ await ได้จริง (fs ปกติเป็น callback API)
 const axios = require("axios");
 /* const { io } = require("../app"); */
 const { connectDB, sql } = require("../config/database");
@@ -21,6 +22,25 @@ function uuidv4() {
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
+}
+
+/**
+ * ดึง LINE Channel Access Token ของ OA จากตาราง CompanySocialChannel
+ * @param {import("mssql").ConnectionPool} pool - connection pool ที่เปิดไว้แล้ว
+ * @param {string} oaId - ChannelId ของ LINE OA
+ * @returns {Promise<string|null>} channel access token หรือ null ถ้าไม่พบ
+ */
+async function getChannelTokenByOaId(pool, oaId) {
+  if (!oaId) return null;
+
+  const result = await pool.request().input("oaid", sql.VarChar(150), oaId)
+    .query(`
+      SELECT TOP 1 AccessToken AS channelToken
+      FROM [dbo].[CompanySocialChannel]
+      WHERE ChannelId = @oaid
+    `);
+
+  return result.recordset.length ? result.recordset[0].channelToken : null;
 }
 
 exports.createHelpdeskCase = async (req, res) => {
@@ -74,11 +94,18 @@ exports.createHelpdeskCase = async (req, res) => {
       reportCompany = customername;
 
       reportBy = requestby;
-      stateoutof = stateoutofservice;
+      // SP อาจคืน int/bit ได้ — normalize เป็น string ก่อนเทียบ ไม่งั้นไม่เข้าสาขาไหนเลย
+      stateoutof = String(stateoutofservice ?? "").trim();
 
       console.log("✅ MSSQL stored procedure executed successfully");
     } catch (e) {
-      console.error("❌ MSSQL Error moving file:", e);
+      console.error("❌ MSSQL Error setServiceFormLiFF:", e);
+    }
+
+    // ถ้า SP ไม่คืนเลขตั๋ว = เปิดเคสไม่สำเร็จ ห้ามไปต่อ (กันโฟลเดอร์ .../null และ Flex ที่ Ticket ว่าง)
+    if (!TaskNoNew) {
+      console.error("❌ setServiceFormLiFF ไม่คืน TaskNo — ยกเลิกการเปิดเคส");
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
     let finalPath = null;
@@ -102,32 +129,16 @@ exports.createHelpdeskCase = async (req, res) => {
       // move file (rename = ย้าย)
 
       try {
-        /*   await fs.mkdir(uploadDirnew, { recursive: true }); */
+        await fsp.mkdir(uploadDirnew, { recursive: true });
 
         for (const file of req.files) {
           const oldPath = file.path;
           const finalPath = path.join(uploadDirnew, file.filename);
 
-          await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
-            if (err) {
-              console.error("❌ Error creating directory:", err);
-              return;
-            }
-
-            fs.rename(oldPath, finalPath, (err) => {
-              if (err) {
-                console.error("❌ Error moving file:", err);
-                return;
-              }
-              console.log("✅ File moved successfully");
-            });
-          });
+          await fsp.rename(oldPath, finalPath);
 
           console.log(`✅ File moved successfully: ${file.filename}`);
         }
-
-        /*  await rename(oldPath, finalPath); */
-        console.log("✅ File moved successfully");
       } catch (e) {
         console.error("❌ Error moving file:", e);
       }
@@ -499,8 +510,9 @@ exports.createHelpdeskCase = async (req, res) => {
         .substring(0, 19);
 
       const msgNotification = {
-        id: uuidv4(),
-        type: "linechat",
+        // ใช้ TaskNo เป็น id ให้ตรงกับ @id ที่บันทึกลง DB ด้านล่าง ไม่งั้นกดอ่าน/ลบจากกระดิ่งไม่ได้
+        id: TaskNoNew,
+        type: "friendline",
         title: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
         category: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
         isUnRead: true,
@@ -517,11 +529,6 @@ exports.createHelpdeskCase = async (req, res) => {
 
       const room = `notification_230015_${userlogin}`;
 
-      io.to(room).emit(
-        "ReceiveNotification",
-        JSON.stringify([msgNotification]),
-      );
-
       let request2 = pool.request();
       request2.input("CmpId", sql.NVarChar(100), "230015");
       request2.input("userTo", sql.NVarChar(100), userlogin);
@@ -537,7 +544,7 @@ exports.createHelpdeskCase = async (req, res) => {
         sql.VarChar(500),
         `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
       );
-      request2.input("type", sql.VarChar(50), "linechat");
+      request2.input("type", sql.VarChar(50), "friendline");
       request2.input(
         "linkTo",
         sql.VarChar(500),
@@ -553,6 +560,9 @@ exports.createHelpdeskCase = async (req, res) => {
       request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
 
       await request2.execute("dbo.setNotificationLineChat");
+
+      // emit หลังบันทึก DB เสร็จ — กันรายการกระพริบหายถ้า SignalR ดึง snapshot แทรกกลาง
+      io.to(room).emit("ReceiveNotification", JSON.stringify([msgNotification]));
     }
     if (stateoutof === "1") {
       // Todo outofmessage
@@ -807,6 +817,12 @@ exports.createHelpdeskCase = async (req, res) => {
       }
     }
 
+    if (stateoutof !== "0" && stateoutof !== "1") {
+      console.warn(
+        `⚠️ stateoutofservice ไม่ตรงค่าที่รองรับ (ได้ "${stateoutof}") Ticket ${TaskNoNew} — ไม่ได้ส่งข้อความให้ลูกค้า`,
+      );
+    }
+
     return res.status(200).json({ success: true });
   } catch (err) {
     console.error("Helpdesk error:", err);
@@ -969,20 +985,10 @@ exports.uploadfiles = async (req, res) => {
       const newPath = path.join(uploadDirnew, file.filename);
 
       try {
-        await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
-          if (err) {
-            console.error("❌ Error creating directory:", err);
-            return;
-          }
-
-          fs.rename(oldPath, newPath, (err) => {
-            if (err) {
-              console.error("❌ Error moving file:", err);
-              return;
-            }
-            console.log("✅ File moved successfully");
-          });
-        });
+        // ย้ายไฟล์ให้เสร็จก่อน ถ้าล้มจะ throw เข้า catch ด้านล่างและไม่บันทึกลง DB
+        await fsp.mkdir(uploadDirnew, { recursive: true });
+        await fsp.rename(oldPath, newPath);
+        console.log(`✅ File moved successfully: ${file.filename}`);
 
         const request = pool.request();
         request.input("cmpId", sql.VarChar(150), cmpId);
@@ -1038,20 +1044,10 @@ exports.uploadfilechat = async (req, res) => {
       const newPath = path.join(uploadDirnew, file.filename);
 
       try {
-        await fs.mkdir(uploadDirnew, { recursive: true }, (err) => {
-          if (err) {
-            console.error("❌ Error creating directory:", err);
-            return;
-          }
-
-          fs.rename(oldPath, newPath, (err) => {
-            if (err) {
-              console.error("❌ Error moving file:", err);
-              return;
-            }
-            console.log("✅ File moved successfully");
-          });
-        });
+        // ย้ายไฟล์ให้เสร็จก่อน ถ้าล้มจะ throw เข้า catch ด้านล่างและไม่บันทึกลง DB
+        await fsp.mkdir(uploadDirnew, { recursive: true });
+        await fsp.rename(oldPath, newPath);
+        console.log(`✅ File moved successfully: ${file.filename}`);
 
         const request = pool.request();
         request.input("cmpId", sql.VarChar(150), cmpId);
@@ -1141,12 +1137,22 @@ exports.saveContact = async (req, res) => {
 
     setImmediate(async () => {
       try {
+        const bgPool = await connectDB();
+
+        // ดึง token ของ OA จาก DB (เดิม hardcode ไว้ในซอร์ส)
+        const channelToken = await getChannelTokenByOaId(bgPool, oaId);
+        if (!channelToken) {
+          console.warn(
+            `⚠️ ไม่พบ AccessToken ของ OA ${oaId} — ข้ามการ cache LINE profile ของ ${userId}`,
+          );
+          return;
+        }
+
         const lineProfile = await lineService.getLineProfileWithRetry(
           userId,
-          "UaEPObBVTjBAWADApMvjBgkbudV4eChGvvR/KhX8x6BYxFbl+vljU5NrlLa8/jZBfMgI7fpUWcEOi25xsLTQv+u/8jjwYux17erqtb9zq6Qja5yCjjm+scFPq8DXjti+pMRSsuzzql91Ayx/eCyFqAdB04t89/1O/w1cDnyilFU=",
+          channelToken,
           2,
         );
-        const bgPool = await connectDB();
         await bgPool
           .request()
           .input("CmpId", cmpId)
@@ -1180,16 +1186,18 @@ exports.saveContact = async (req, res) => {
       }
     });
 
-    return res.status(200).json({ success: true });
+    // response ถูกส่งไปแล้วด้านบน (พร้อม addFriendUrl) — ห้ามส่งซ้ำ
+    return;
   } catch (err) {
     console.error("saveContact error:", err);
+    if (res.headersSent) return;
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 // controllers/problemController.js
 exports.rateProblem = async (req, res) => {
-  const { userId, problemId, score, cmpId, description } = req.body;
+  const { userId, problemId, score, cmpId, description, oaId } = req.body;
 
   if (!userId || !problemId || !score || !cmpId) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -1211,18 +1219,24 @@ exports.rateProblem = async (req, res) => {
       problemId,
     });
 
-    const results = await pool.request().input("CmpId", sql.VarChar, cmpId)
-      .query(`
-        SELECT top 1 AccessToken as channelToken 
+    // ถ้า LIFF ส่ง oaId มาด้วย ให้ล็อก OA ให้ตรงตัว (บริษัทเดียวอาจมีหลาย channel)
+    let channelToken = await getChannelTokenByOaId(pool, oaId);
+
+    if (!channelToken) {
+      const results = await pool.request().input("CmpId", sql.VarChar, cmpId)
+        .query(`
+        SELECT top 1 AccessToken as channelToken
         FROM [dbo].[CompanySocialChannel]
       WHERE CmpId = @CmpId
+      ORDER BY ChannelId
       `);
 
-    if (results.recordset.length === 0) {
-      return res.status(404).json({ message: "Account not found" });
-    }
+      if (results.recordset.length === 0) {
+        return res.status(404).json({ message: "Account not found" });
+      }
 
-    const { channelToken } = results.recordset[0];
+      channelToken = results.recordset[0].channelToken;
+    }
 
     // 🔐 Token ของ LINE OA (map ตาม oaId ถ้ามีหลายตัว)
     const LINE_OA_CHANNEL_ACCESS_TOKEN = channelToken;
@@ -2116,6 +2130,7 @@ exports.sendCaseClosedMessage = async (req, res) => {
     return res.json({ success: true });
   } catch (err) {
     console.error("❌ Error sending case closed message:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -2147,7 +2162,10 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
     try {
       const result = await request.execute("dbo.getServiceTeam");
       if (result.recordset.length === 0) {
-        return res.status(404).json({ message: "Account not found" });
+        console.warn(
+          `⚠️ ไม่พบทีมงานที่รับผิดชอบ Ticket ${TaskNoNew} — ไม่ส่งแจ้งเตือนทีม`,
+        );
+        return false;
       }
       const {
         assignname,
@@ -2489,7 +2507,10 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
     try {
       const result = await request.execute("dbo.getServiceTeam");
       if (result.recordset.length === 0) {
-        return res.status(404).json({ message: "Account not found" });
+        console.warn(
+          `⚠️ ไม่พบทีมงานที่รับผิดชอบ Ticket ${TaskNoNew} — ไม่ส่งแจ้งเตือนทีม`,
+        );
+        return false;
       }
       const {
         assignname,
@@ -2839,7 +2860,10 @@ async function sendLineToTeamSeviceWaiting(
     try {
       const result = await request.execute("dbo.getServiceTeam");
       if (result.recordset.length === 0) {
-        return res.status(404).json({ message: "Account not found" });
+        console.warn(
+          `⚠️ ไม่พบทีมงานที่รับผิดชอบ Ticket ${TaskNoNew} — ไม่ส่งแจ้งเตือนทีม`,
+        );
+        return false;
       }
       const { channelToken, userIds, requestby, customername } =
         result.recordset[0];
@@ -3190,7 +3214,10 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
     try {
       const result = await request.execute("dbo.getServiceTeamClose");
       if (result.recordset.length === 0) {
-        return res.status(404).json({ message: "Account not found" });
+        console.warn(
+          `⚠️ ไม่พบทีมงานที่รับผิดชอบ Ticket ${TaskNoNew} — ไม่ส่งแจ้งเตือนทีม`,
+        );
+        return false;
       }
       const {
         channelToken,
@@ -3571,7 +3598,7 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
 exports.sendFromproblem = async (req, res) => {
   const { userId, channelToken, cmpId, urlName } = req.body;
 
-  if (!userId || !problemId || !score || !cmpId) {
+  if (!userId || !channelToken || !urlName || !cmpId) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -3656,7 +3683,7 @@ exports.waitsendmsgagent = async () => {
       const actionby = row.actionby ?? "";
       const startDate = row.startDate ?? "";
 
-      const replycount = row.ReplyCount ?? 0 ;
+      const replycount = Number(row.ReplyCount ?? 0);
 
       if (!touserId || !oaId) {
         console.warn(
@@ -3886,9 +3913,8 @@ exports.waitsendmsgagent = async () => {
                     ],
                   },
                   // ===== ผู้ดูแลเคส =====
-                 
-                 
-             /*      {
+
+                  /*      {
                     type: "box",
                     layout: "baseline",
                     spacing: "xs",
@@ -3911,8 +3937,6 @@ exports.waitsendmsgagent = async () => {
                       },
                     ],
                   },  */
-                  
-
 
                   // ===== สถานะ =====
                   {
@@ -3995,27 +4019,23 @@ exports.waitsendmsgagent = async () => {
 
       // 2.3 ส่ง push message ให้ลูกค้า
       try {
-
-        if (replycount <= 1)
-        {
+        if (Number.isFinite(replycount) && replycount < 1) {
           await axios.post(
-                    "https://api.line.me/v2/bot/message/push",
-                    {
-                      to: touserId,
-                      messages: [flexMsg],
-                    },
-                    {
-                      headers: {
-                        Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
-                        "Content-Type": "application/json",
-                      },
-                    },
-                  );
+            "https://api.line.me/v2/bot/message/push",
+            {
+              to: touserId,
+              messages: [flexMsg],
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${LINE_OA_CHANNEL_ACCESS_TOKEN}`,
+                "Content-Type": "application/json",
+              },
+            },
+          );
 
-                  console.log(`✅ ส่งข้อความแจ้งเตือนเรียบร้อย Ticket ${TaskNoNew}`);
-
+          console.log(`✅ ส่งข้อความแจ้งเตือนเรียบร้อย Ticket ${TaskNoNew}`);
         }
-       
 
         // 2.4 ส่งแจ้งเตือนทีมงานผ่านฟังก์ชัน
 
@@ -4035,33 +4055,47 @@ exports.waitsendmsgagent = async () => {
           console.error("❌ MSSQL Error moving file:", e);
         }
 
+        const cmpIdS = "230015";
+        const imagePath = "";
         await sendLineToTeamSeviceReply(TaskNoNew, description);
+        const io = getIO();
+        io.emit("helpdesk:new", {
+          userId: touserId,
+          displayName,
+          description,
+          oaId,
+          cmpId: cmpIdS,
+          taskNo: TaskNoNew,
+          imagePath,
+        });
+
+        // เวลาไทย (UTC+7) รูปแบบเดียวกับ createHelpdeskCase
+        const bangkokTime = new Date(Date.now() + 7 * 60 * 60 * 1000)
+          .toISOString()
+          .replace("T", " ")
+          .substring(0, 19);
 
         const msgNotification = {
-          id: uuidv4(),
-          type: "linechat",
+          // ใช้ TaskNo เป็น id ให้ตรงกับ @id ที่บันทึกลง DB ด้านล่าง ไม่งั้นกดอ่าน/ลบจากกระดิ่งไม่ได้
+          id: TaskNoNew,
+          type: "friendline",
           title: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
           category: `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
           isUnRead: true,
-          avatarUrl: userId,
-          createdAt: bangkokTime, // new Date().toISOString(),
+          avatarUrl: touserId,
+          createdAt: bangkokTime,
           isUnAlert: true,
           urllink: "/productservice/servicerequest/" + TaskNoNew,
-          sendFrom: userId,
+          sendFrom: touserId,
           moduleFormName: "/productservice/servicerequest",
           isUnReadMenu: true,
           docNo: TaskNoNew,
           revNo: 0,
         };
 
-        const io = getIO();
+        // const io = getIO();
 
         const room = `notification_230015_${newassign}`;
-
-        io.to(room).emit(
-          "ReceiveNotification",
-          JSON.stringify([msgNotification]),
-        );
 
         let request2 = pool.request();
         request2.input("CmpId", sql.NVarChar(100), "230015");
@@ -4078,7 +4112,7 @@ exports.waitsendmsgagent = async () => {
           sql.VarChar(500),
           `มีเคสใหม่ Ticket: ${TaskNoNew} จาก ${displayName} เรื่อง ${description} `,
         );
-        request2.input("type", sql.VarChar(50), "linechat");
+        request2.input("type", sql.VarChar(50), "friendline");
         request2.input(
           "linkTo",
           sql.VarChar(500),
@@ -4091,9 +4125,12 @@ exports.waitsendmsgagent = async () => {
         );
         request2.input("DocNo", sql.VarChar(100), `${TaskNoNew}`);
         request2.input("RevNo", sql.Int, 0);
-        request2.input("AvatarUrl", sql.VarChar(100), `${userId}`);
+        request2.input("AvatarUrl", sql.VarChar(100), `${touserId}`);
 
         await request2.execute("dbo.setNotification");
+
+        // emit หลังบันทึก DB เสร็จ — กันรายการกระพริบหายถ้า SignalR ดึง snapshot แทรกกลาง
+        io.to(room).emit("ReceiveNotification", JSON.stringify([msgNotification]));
       } catch (err) {
         console.error(
           `❌ ส่ง LINE แจ้งเตือน Ticket ${TaskNoNew} ไม่สำเร็จ:`,

@@ -5,6 +5,10 @@ const axios = require("axios");
 /* const { io } = require("../app"); */
 const { connectDB, sql } = require("../config/database");
 const lineService = require("../services/line.service");
+const {
+  getStaffMentionUserId,
+  buildMentionMessage,
+} = require("../services/linemention.service");
 
 const { getIO } = require("../utils/socket");
 
@@ -2466,11 +2470,30 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
       },
     };
 
+    // หา LINE userId ของผู้ดูแลเคส เพื่อ mention ในกลุ่ม
+    // (Flex message mention ไม่ได้ ต้องส่ง text อีก 1 ข้อความใน push เดียวกัน)
+    let mentionMsg = null;
+    try {
+      const mentionUserId = await getStaffMentionUserId(pool, {
+        lineGroupId: userId,
+        assignName: actionby,
+      });
+      mentionMsg = buildMentionMessage({
+        lineUserId: mentionUserId,
+        assignName: actionby,
+        headline: `มีเคสใหม่เข้ามา Ticket: ${
+          TaskNoNew ?? ""
+        } กรุณาติดต่อกลับภายใน 5 นาที`,
+      });
+    } catch (e) {
+      console.error("⚠️ หา mention ไม่สำเร็จ — ส่ง Flex อย่างเดียว:", e.message);
+    }
+
     await axios.post(
       "https://api.line.me/v2/bot/message/push",
       {
         to: userId,
-        messages: [flexMsg],
+        messages: mentionMsg ? [mentionMsg, flexMsg] : [flexMsg],
       },
       {
         headers: {
@@ -2815,11 +2838,28 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
       },
     };
 
+    // หา LINE userId ของผู้ดูแลเคส เพื่อ mention ในกลุ่ม
+    // (Flex message mention ไม่ได้ ต้องส่ง text อีก 1 ข้อความใน push เดียวกัน)
+    let mentionMsg = null;
+    try {
+      const mentionUserId = await getStaffMentionUserId(pool, {
+        lineGroupId: userId,
+        assignName: actionby,
+      });
+      mentionMsg = buildMentionMessage({
+        lineUserId: mentionUserId,
+        assignName: actionby,
+        headline: `ลูกค้ารอเกิน 5 นาทีแล้ว Ticket: ${TaskNoNew ?? ""}`,
+      });
+    } catch (e) {
+      console.error("⚠️ หา mention ไม่สำเร็จ — ส่ง Flex อย่างเดียว:", e.message);
+    }
+
     await axios.post(
       "https://api.line.me/v2/bot/message/push",
       {
         to: userId,
-        messages: [flexMsg],
+        messages: mentionMsg ? [mentionMsg, flexMsg] : [flexMsg],
       },
       {
         headers: {

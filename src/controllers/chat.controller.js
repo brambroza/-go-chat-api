@@ -1,6 +1,10 @@
 const { publishToQueue } = require("../config/rabbitmq");
 const { connectDB, sql } = require("../config/database");
 const lineService = require("../services/line.service");
+const {
+  upsertGroupMember,
+  getGroupMemberProfile,
+} = require("../services/linemention.service");
 const fs = require("fs");
 const path = require("path");
 
@@ -54,6 +58,65 @@ function safeStr(x) {
   return (x ?? "").toString();
 }
 
+/**
+ * เก็บ mapping ของสมาชิกกลุ่ม LINE (groupId + userId + displayName)
+ * ไว้ใช้ mention ผู้ดูแลเคสตอนแจ้งเตือนเข้ากลุ่ม staff
+ * ทำงานหลังตอบ 200 ให้ LINE แล้ว — error ทุกกรณีต้องไม่หลุดออกไป
+ *
+ * @param {string} accountId - ชื่อ account ของ OA (param ของ webhook)
+ * @param {Array<Object>} events - events ที่ LINE ส่งมา
+ * @returns {Promise<void>}
+ */
+async function harvestGroupMembers(accountId, events) {
+  try {
+    const groupEvents = events.filter(
+      (ev) => ev?.source?.type === "group" && ev?.source?.groupId,
+    );
+    if (groupEvents.length === 0) return;
+
+    const pool = await connectDB();
+
+    const tokenRs = await pool
+      .request()
+      .input("accountId", sql.VarChar, accountId).query(`
+        SELECT TOP 1 AccessToken as channelToken
+        FROM [dbo].[CompanySocialChannel]
+        WHERE Name = @accountId
+      `);
+
+    if (!tokenRs.recordset?.length) return;
+    const { channelToken } = tokenRs.recordset[0];
+
+    const cmpId = "230015";
+    const seen = new Set();
+
+    for (const ev of groupEvents) {
+      const groupId = ev.source.groupId;
+      const memberId = ev.source.userId;
+      if (!memberId) continue;
+
+      const key = `${groupId}|${memberId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const profile = await getGroupMemberProfile(
+        channelToken,
+        groupId,
+        memberId,
+      );
+
+      await upsertGroupMember(pool, {
+        cmpId,
+        lineGroupId: groupId,
+        lineUserId: memberId,
+        displayName: profile?.displayName ?? "",
+      });
+    }
+  } catch (err) {
+    console.error("⚠️ harvestGroupMembers error:", err.message);
+  }
+}
+
 // ============================================================
 
 exports.handleLineWebhook = async (req, res) => {
@@ -65,9 +128,13 @@ exports.handleLineWebhook = async (req, res) => {
     return res.status(200).json({ message: "OK (no content to process)" });
   }
 
-  // เป็น chat กลุ่ม ไม่ต้องทำต่อ
+  // เป็น chat กลุ่ม ไม่ต้องทำต่อ (แต่เก็บ mapping สมาชิกกลุ่มไว้ใช้ mention)
   const hasGroup = events.some((ev) => ev?.source?.type === "group");
-  if (hasGroup) return res.sendStatus(200);
+  if (hasGroup) {
+    res.sendStatus(200);
+    process.nextTick(() => harvestGroupMembers(accountId, events));
+    return;
+  }
 
   // ตอบกลับ LINE ก่อน แล้วค่อย process ต่อ
   res.sendStatus(200);
