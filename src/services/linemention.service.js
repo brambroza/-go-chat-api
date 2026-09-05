@@ -12,6 +12,16 @@ const MAX_NAME_LEN = 200;
 const MAX_TEXT_LEN = 5000;
 
 /**
+ * คีย์ของ substitution ใน textV2 (ใช้ได้เฉพาะ 0-9 a-z A-Z _ ยาวไม่เกิน 20 ตัว)
+ */
+const MENTION_KEY = "m0";
+
+/**
+ * placeholder ที่วางในข้อความ แล้ว LINE จะแทนด้วยชื่อผู้ถูก mention
+ */
+const MENTION_KEY_TOKEN = `{${MENTION_KEY}}`;
+
+/**
  * หาข้อมูล mention ของผู้ดูแลเคส (LINE userId + ชื่อใน LINE) เพื่อเอาไป mention ในกลุ่ม staff
  *
  * @param {import("mssql").ConnectionPool} pool - connection pool ที่เปิดไว้แล้ว
@@ -49,51 +59,43 @@ async function getStaffMention(pool, { lineGroupId, assignName } = {}) {
 }
 
 /**
- * สร้าง LINE text message ที่ mention ผู้ดูแลเคส
- * (Flex message mention ไม่ได้ — ต้องส่ง text แยกอีก 1 ข้อความในการ push เดียวกัน)
+ * สร้าง LINE message ที่ mention ผู้ดูแลเคส
+ * (Flex message mention ไม่ได้ — ต้องส่งข้อความแยกอีก 1 ข้อความในการ push เดียวกัน)
  *
- * ชื่อหลังเครื่องหมาย @ ใช้ชื่อใน LINE ก่อน ถ้าไม่มีค่อยใช้ชื่อในระบบ
+ * ใช้ message แบบ textV2 + substitution ซึ่งเป็นรูปแบบเดียวที่บอทส่ง mention ออกไปแล้วขึ้นเป็น tag จริง
+ * (รูปแบบ text + mention.mentionees เป็นของฝั่งรับ webhook ส่งออกไปจะกลายเป็นตัวหนังสือธรรมดา)
+ * ชื่อที่แสดงแทน placeholder LINE เป็นคนเติมให้เอง
+ *
+ * mention ใช้ได้เฉพาะ reply/push และปลายทางต้องเป็นกลุ่มหรือห้องแชทหลายคน
  *
  * @param {Object} params
  * @param {string|null} params.lineUserId - LINE userId ของคนที่จะ mention
- * @param {string} params.assignName - ชื่อผู้ดูแลเคสในระบบ (ใช้เมื่อไม่มีชื่อใน LINE)
- * @param {string} [params.displayName] - ชื่อใน LINE ของคนที่จะ mention
- * @param {string} params.headline - ข้อความต่อท้ายชื่อ เช่น "มีเคสใหม่เข้ามา Ticket: TK-0001"
- * @returns {{type: string, text: string, mention: Object}|null} message object หรือ null ถ้า mention ไม่ได้
+ * @param {string} params.headline - ข้อความต่อท้าย เช่น "มีเคสใหม่เข้ามา Ticket: TK-0001"
+ * @returns {{type: string, text: string, substitution: Object}|null} message object หรือ null ถ้า mention ไม่ได้
  */
-function buildMentionMessage({
-  lineUserId,
-  assignName,
-  displayName,
-  headline,
-} = {}) {
+function buildMentionMessage({ lineUserId, headline } = {}) {
   const userId = (lineUserId ?? "").toString().trim();
-  const lineName = (displayName ?? "").toString().trim();
-  const systemName = (assignName ?? "").toString().trim();
-  const name = lineName || systemName;
-  const tail = (headline ?? "").toString().trim();
 
-  if (!userId || !name) return null;
-  if (name.length > MAX_NAME_LEN) return null;
+  // ตัดปีกกาออก กันชนกับ placeholder ของ textV2
+  const tail = (headline ?? "")
+    .toString()
+    .replace(/[{}]/g, "")
+    .trim();
 
-  const mentionText = `@${name}`;
-  const text = tail ? `${mentionText} ${tail}` : mentionText;
+  if (!userId) return null;
+
+  const text = tail ? `${MENTION_KEY_TOKEN} ${tail}` : MENTION_KEY_TOKEN;
 
   if (text.length > MAX_TEXT_LEN) return null;
 
   return {
-    type: "text",
+    type: "textV2",
     text,
-    mention: {
-      mentionees: [
-        {
-          // index/length นับเป็น UTF-16 code unit และต้องครอบ "@" + ชื่อ
-          index: 0,
-          length: mentionText.length,
-          type: "user",
-          userId,
-        },
-      ],
+    substitution: {
+      [MENTION_KEY]: {
+        type: "mention",
+        mentionee: { type: "user", userId },
+      },
     },
   };
 }

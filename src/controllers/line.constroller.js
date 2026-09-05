@@ -2480,8 +2480,6 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
       });
       mentionMsg = buildMentionMessage({
         lineUserId: mention?.lineUserId,
-        assignName: actionby,
-        displayName: mention?.displayName,
         headline: `มีเคสใหม่เข้ามา Ticket: ${
           TaskNoNew ?? ""
         } กรุณาติดต่อกลับภายใน 5 นาที`,
@@ -2849,8 +2847,6 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
       });
       mentionMsg = buildMentionMessage({
         lineUserId: mention?.lineUserId,
-        assignName: actionby,
-        displayName: mention?.displayName,
         headline: `ลูกค้ารอเกิน 5 นาทีแล้ว Ticket: ${TaskNoNew ?? ""}`,
       });
     } catch (e) {
