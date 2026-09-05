@@ -6,7 +6,7 @@ const axios = require("axios");
 const { connectDB, sql } = require("../config/database");
 const lineService = require("../services/line.service");
 const {
-  getStaffMentionUserId,
+  getStaffMention,
   buildMentionMessage,
 } = require("../services/linemention.service");
 
@@ -2474,13 +2474,14 @@ async function sendLineToTeamSevice(TaskNoNew, description) {
     // (Flex message mention ไม่ได้ ต้องส่ง text อีก 1 ข้อความใน push เดียวกัน)
     let mentionMsg = null;
     try {
-      const mentionUserId = await getStaffMentionUserId(pool, {
+      const mention = await getStaffMention(pool, {
         lineGroupId: userId,
         assignName: actionby,
       });
       mentionMsg = buildMentionMessage({
-        lineUserId: mentionUserId,
+        lineUserId: mention?.lineUserId,
         assignName: actionby,
+        displayName: mention?.displayName,
         headline: `มีเคสใหม่เข้ามา Ticket: ${
           TaskNoNew ?? ""
         } กรุณาติดต่อกลับภายใน 5 นาที`,
@@ -2842,13 +2843,14 @@ async function sendLineToTeamSeviceReply(TaskNoNew, description) {
     // (Flex message mention ไม่ได้ ต้องส่ง text อีก 1 ข้อความใน push เดียวกัน)
     let mentionMsg = null;
     try {
-      const mentionUserId = await getStaffMentionUserId(pool, {
+      const mention = await getStaffMention(pool, {
         lineGroupId: userId,
         assignName: actionby,
       });
       mentionMsg = buildMentionMessage({
-        lineUserId: mentionUserId,
+        lineUserId: mention?.lineUserId,
         assignName: actionby,
+        displayName: mention?.displayName,
         headline: `ลูกค้ารอเกิน 5 นาทีแล้ว Ticket: ${TaskNoNew ?? ""}`,
       });
     } catch (e) {
