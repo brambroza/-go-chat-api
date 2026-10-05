@@ -12,8 +12,13 @@ const { initRabbitMQ } = require("./config/rabbitmq");
 const { setupSwagger } = require("./config/swagger");
 
 // Redis Adapter
-const { createClient } = require("redis");
 const { createAdapter } = require("@socket.io/redis-adapter");
+const { connectRedis } = require("./config/redis");
+const {
+  runCronExclusive,
+  minuteSlot,
+  bangkokDaySlot,
+} = require("./utils/redisLock");
 
 const ticketTaskReplyHub = require("./controllers/localchat.controller");
 const { waitsendmsgagent } = require("./controllers/line.constroller"); // ปรับ path ให้ตรงจริง
@@ -62,39 +67,60 @@ app.use("/" , async(req ,res) => {
 // ผูก routes
 app.use("/api", routes);
 
+const ONE_MINUTE_MS = 60 * 1000;
+const JOB_LOCK_TTL_MS = 10 * ONE_MINUTE_MS; // งานรายนาที — กันรอบใหม่ซ้อนรอบเก่า (ข้าม instance)
+const LINE_FRIEND_LOCK_TTL_MS = 120 * ONE_MINUTE_MS; // JobGetLineFriend ไล่ทุก friend ใช้เวลานาน
+
 let isRunningJobGetLineFriend = false;
 
-async function runJobGetLineFriend(reason = "manual") {
+/**
+ * รัน JobGetLineFriend โดยมี instance เดียวทำงาน (Redis lock) + กันซ้อนใน instance เดียวกัน
+ * @param {string} [reason] เหตุที่เรียก (startup / cron) ไว้แสดงใน log
+ * @param {string} [slot] slot ของ tick (cron รายวัน) — ไม่ส่ง = ใช้ running lock อย่างเดียว
+ * @returns {Promise<void>}
+ */
+async function runJobGetLineFriend(reason = "manual", slot) {
   if (isRunningJobGetLineFriend) {
     console.log("⏭️ JobGetLineFriend already running, skip:", reason);
     return;
   }
   isRunningJobGetLineFriend = true;
 
-  console.log(
-    `⏱ Run job: JobGetLineFriend() [${reason}] at`,
-    new Date().toISOString(),
-  );
   try {
-    await JobGetLineFriend();
-  } catch (err) {
-    console.error("JobGetLineFriend error:", err);
+    await runCronExclusive(
+      "JobGetLineFriend",
+      { slot, slotTtlSec: 2 * 24 * 60 * 60, lockTtlMs: LINE_FRIEND_LOCK_TTL_MS },
+      async () => {
+        console.log(
+          `⏱ Run job: JobGetLineFriend() [${reason}] at`,
+          new Date().toISOString(),
+        );
+        try {
+          await JobGetLineFriend();
+        } catch (err) {
+          console.error("JobGetLineFriend error:", err);
+        }
+      },
+    );
   } finally {
     isRunningJobGetLineFriend = false;
   }
 }
 
-// ✅ รันครั้งแรกทันทีตอน start
-runJobGetLineFriend("startup");
-
-// ⏱ Cron: เรียกทุก 1 นาที
+// ⏱ Cron: เรียกทุก 1 นาที (instance เดียวต่อ tick ผ่าน Redis lock)
 cron.schedule("* * * * *", async () => {
-  console.log("⏱  Run job: waitsendmsgagent()");
-  try {
-    await waitsendmsgagent();
-  } catch (err) {
-    console.error("Cron waitsendmsgagent error:", err);
-  }
+  await runCronExclusive(
+    "waitsendmsgagent",
+    { slot: minuteSlot(), lockTtlMs: JOB_LOCK_TTL_MS },
+    async () => {
+      console.log("⏱  Run job: waitsendmsgagent()");
+      try {
+        await waitsendmsgagent();
+      } catch (err) {
+        console.error("Cron waitsendmsgagent error:", err);
+      }
+    },
+  );
 });
 
 let isJobRunning = false;
@@ -108,12 +134,19 @@ cron.schedule("* * * * *", async () => {
   }
 
   isJobRunning = true;
-  console.log("⏱ Run job: JobGetLineFriendNotProfile()");
-
   try {
-    await JobGetLineFriendNotProfile();
-  } catch (err) {
-    console.error("Cron JobGetLineFriendNotProfile error:", err);
+    await runCronExclusive(
+      "JobGetLineFriendNotProfile",
+      { slot: minuteSlot(), lockTtlMs: JOB_LOCK_TTL_MS },
+      async () => {
+        console.log("⏱ Run job: JobGetLineFriendNotProfile()");
+        try {
+          await JobGetLineFriendNotProfile();
+        } catch (err) {
+          console.error("Cron JobGetLineFriendNotProfile error:", err);
+        }
+      },
+    );
   } finally {
     isJobRunning = false;
   }
@@ -122,12 +155,7 @@ cron.schedule("* * * * *", async () => {
 cron.schedule(
   "0 0 * * *", // ทุกวัน 00:00
   async () => {
-    console.log("⏱ Run job: JobGetLineFriend() at", new Date().toISOString());
-    try {
-      await JobGetLineFriend();
-    } catch (err) {
-      console.error("Cron JobGetLineFriend error:", err);
-    }
+    await runJobGetLineFriend("cron", bangkokDaySlot());
   },
   {
     timezone: "Asia/Bangkok", // เวลาไทย
@@ -149,15 +177,13 @@ const PORT = process.env.PORT || 3000;
     await initRabbitMQ();
 
     // 3) เชื่อมต่อ Redis เพื่อใช้เป็น Adapter ของ Socket.IO
-    const pubClient = createClient({
-      url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-    });
-    const subClient = pubClient.duplicate();
-    await pubClient.connect();
-    await subClient.connect();
-    console.log("[Redis] connected");
+    //    (+ client แยกสำหรับ cron lock / dedupe LINE messageId)
+    const { pubClient, subClient } = await connectRedis();
 
     io.adapter(createAdapter(pubClient, subClient));
+
+    // ✅ รัน JobGetLineFriend ครั้งแรกตอน start (หลัง Redis พร้อม — instance เดียวถ้ามีหลาย replica)
+    runJobGetLineFriend("startup");
 
     // 4) ตั้งค่า event ของ Socket.IO
     io.on("connection", (socket) => {

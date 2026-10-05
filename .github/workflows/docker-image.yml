@@ -1,29 +1,75 @@
 name: Docker Build and Push
 
+# ทุก push เข้า main: build image แล้ว push 2 tag
+#   - latest        → ให้ Jenkins/เครื่องเดิมทำงานแบบเดิมได้ระหว่างย้ายระบบ
+#   - sha-<7 ตัว>   → tag ถาวรไม่ซ้ำ ใช้ deploy บน Swarm (versions.env) และ rollback
 on:
   push:
-    branches:
-      - main  # Adjust this to match your main branch name
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: nohservdoc/go-chat-api
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Login to Docker Hub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      - id: vars
+        run: echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-    - name: Build and push Docker image
-      run: |
-        docker build -t nohservdoc/go-chat-api .
-        docker push nohservdoc/go-chat-api
-      env:
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-#up
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "### ${IMAGE}:${{ steps.vars.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "ใช้ tag นี้ใน Jenkins deploy หรือ stacks/erp/versions.env" >> "$GITHUB_STEP_SUMMARY"
+
+  notify:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          RESULT: ${{ needs.build.result }}
+          TAG: ${{ needs.build.outputs.tag }}
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          [ -n "$SLACK_BOT_TOKEN" ] || { echo "ไม่ได้ตั้ง secret SLACK_BOT_TOKEN — ข้าม"; exit 0; }
+          if [ "$RESULT" = success ]; then icon="✅"; else icon="❌"; fi
+          text="$icon ${GITHUB_REPOSITORY} ${RESULT}: ${IMAGE}:${TAG}
+          ${MSG%%$'\n'*}"
+          jq -n --arg c "#dev-cicd" --arg t "$text" '{channel:$c, text:$t}' |
+            curl -sS -X POST https://slack.com/api/chat.postMessage \
+              -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+              -H "Content-type: application/json; charset=utf-8" -d @-

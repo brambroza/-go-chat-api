@@ -3,12 +3,17 @@
 // default namespace เดิมที่ CRM web ใช้ (joinRoom/ReceiveNotification/localchat)
 // → ห้ามแตะ contract เดิม · ทุกอย่างของ NIS อยู่ในไฟล์นี้เท่านั้น
 //
-// contract v1 (ตรงกับ RN NIS-OnsiteService src/api/socket.ts):
+// contract v2 (ตรงกับ RN NIS-OnsiteService src/api/socket.ts) — v1 + PDF attachment (ยัง backward compatible):
 //   handshake auth: { token (JWT coreapi), cmpid, fullName }
-//   client→server: nis:chat:join/leave {ticketId} · nis:chat:send {ticketId,text,tempId} (ack)
-//   server→client: nis:chat:message {id,ticketId,sender,senderName,text,at}
+//   client→server: nis:chat:join/leave {ticketId}
+//                  nis:chat:send {ticketId,text,tempId,attachmentUrl?,attachmentName?,attachmentType?} (ack)
+//                    → ต้องมีอย่างน้อยหนึ่งอย่าง: text (ไม่ว่าง) หรือ attachmentUrl
+//   server→client: nis:chat:message {id,ticketId,sender,senderName,text,attachmentUrl,attachmentName,attachmentType,at}
+//                    → attachment* เป็น null เมื่อไม่มีไฟล์แนบ
 //                  nis:notify {type,ticketId,title,body,at} (ยิงจาก internal notify endpoint)
 //   rooms: nischat_{cmpid}_{ticketId} · nisuser_{cmpid}_{userlogin} (auto-join ตอน connect)
+//   อัปโหลดไฟล์แนบ (PDF เท่านั้น) ก่อนส่ง: POST /api/nis/chat/:ticketId/upload (nisauth) → {ok,url,fileName}
+//     แล้วค่อยส่ง attachmentUrl/attachmentName ผ่าน nis:chat:send (ดู nis.routes.js/nisrealtime.controller.js)
 //
 // identity: sender มาจาก JWT (decoded.sub) เท่านั้น — ห้ามรับจาก client payload
 // ⚠️ cmpid/fullName มาจาก handshake (token coreapi ยังไม่มี claim นี้) — ใช้ scope ห้อง/แสดงผล
@@ -75,7 +80,25 @@ function registerNisNamespace(io) {
       try {
         const ticketId = payload?.ticketId;
         const text = typeof payload?.text === "string" ? payload.text.trim() : "";
-        if (!validTicketId(ticketId) || !text || text.length > MAX_TEXT_LEN) {
+        const attachmentUrl =
+          typeof payload?.attachmentUrl === "string" && payload.attachmentUrl.trim()
+            ? payload.attachmentUrl.trim().slice(0, 500)
+            : null;
+        const attachmentName =
+          typeof payload?.attachmentName === "string" && payload.attachmentName.trim()
+            ? payload.attachmentName.trim().slice(0, 255)
+            : null;
+        const attachmentType =
+          typeof payload?.attachmentType === "string" && payload.attachmentType.trim()
+            ? payload.attachmentType.trim().slice(0, 50)
+            : null;
+
+        // ข้อความต้องมีอย่างน้อยหนึ่งอย่าง: text (ไม่ว่าง) หรือ attachmentUrl — ไม่ใช่ทั้งคู่ว่าง
+        if (
+          !validTicketId(ticketId) ||
+          text.length > MAX_TEXT_LEN ||
+          (!text && !attachmentUrl)
+        ) {
           return done({ ok: false, error: "invalid payload" });
         }
 
@@ -86,6 +109,9 @@ function registerNisNamespace(io) {
           sender: username,
           senderName: fullName,
           text,
+          attachmentUrl,
+          attachmentName,
+          attachmentType,
         });
 
         const msg = {
@@ -94,6 +120,9 @@ function registerNisNamespace(io) {
           sender: username,
           senderName: fullName,
           text,
+          attachmentUrl,
+          attachmentName,
+          attachmentType,
           at: saved.at,
         };
         // broadcast ให้คนอื่นในห้อง (ผู้ส่งได้ผลผ่าน ack — ไม่ echo)

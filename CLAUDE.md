@@ -15,7 +15,7 @@
 | Framework | Express 4 + Socket.IO 4 + `@socket.io/redis-adapter` |
 | Database | SQL Server (`mssql`) — เรียกผ่าน **stored procedure ของ coreapi** เป็นหลัก |
 | Queue | RabbitMQ (`amqplib`) — ใช้กับ webhook ของ FB / WhatsApp / Shopee / Lazada / TikTok |
-| Cache / Pub-Sub | Redis — ใช้เป็น Socket.IO adapter (scale หลาย instance) |
+| Cache / Pub-Sub | Redis — Socket.IO adapter + cron lock + dedupe LINE messageId (`src/config/redis.js`, `src/utils/redisLock.js`, key prefix `gochat:`) |
 | Entry point | `src/app.js` (ทั้ง HTTP + Socket.IO + cron อยู่ในไฟล์เดียว) |
 | Base path | REST = `/api/...` · Socket.IO path = `/socketionode` · Swagger = `/api-docs` |
 | Repo | https://github.com/brambroza/-go-chat-api — branch หลัก `main` |
@@ -55,7 +55,7 @@ LINE OA / FB / Shopee / Lazada / TikTok / WhatsApp   (webhook เข้า)
 | Dashboard config | `src/controllers/dashboard.config.controller.js` |
 | Service ticket bridge / short URL | `src/controllers/service.controller.js` |
 | Video thumbnail (ffmpeg + sharp) | `src/services/thumb.service.js` |
-| Infra config | `src/config/{database,rabbitmq,swagger}.js`, `src/utils/socket.js` |
+| Infra config | `src/config/{database,rabbitmq,swagger,redis}.js`, `src/utils/{socket,redisLock}.js` |
 
 ### Route map (`src/routes/index.js` mount ใต้ `/api`)
 
@@ -66,7 +66,7 @@ LINE OA / FB / Shopee / Lazada / TikTok / WhatsApp   (webhook เข้า)
 | `/api/dashboard` | `config.routes.js` | `authMiddleware` |
 | `/api/line` | `line.routes.js` | **ไม่มี** — webhook + LIFF endpoint |
 | `/api/service` | `service.router.js` | **ไม่มี** |
-| `/api/nis` | `nis.routes.js` | `nisauth` (JWT coreapi) ยกเว้น `/realtime/notify` = header `x-internal-secret` |
+| `/api/nis` | `nis.routes.js` | `nisauth` (JWT coreapi) ยกเว้น `/realtime/notify` = header `x-internal-secret` (รวม `POST /chat/:ticketId/upload` — อัปโหลดไฟล์แนบ PDF, `nisauth` เหมือนกัน) |
 | `/api/{fb,whatsapp,shopee,lazada,tiktok}` | ตามชื่อไฟล์ | verify token ของแต่ละแพลตฟอร์ม |
 
 ที่ไม่มี auth คือ**ของเดิมที่ตั้งใจไว้แบบนั้น** (platform เรียกเข้ามาเอง / LIFF ยิงจากเบราว์เซอร์ผู้ใช้)
@@ -89,12 +89,18 @@ Socket.IO path = `/socketionode` (ตรงกับ client ฝั่ง React) 
 | client↔server | `JoinTicketGroup` / `LeaveTicketGroup` / `SendMessage` | ticket task reply hub (`localchat.controller.js`) |
 | server→client | `ReceiveTicketTaskReply{CmpId}{TicketId}{RouteId}{RemindId}` | ชื่อ event ประกอบจาก field ของ message — ต่อ string ตรงกับ CRM |
 
-### 3.2 Namespace `/nis` — RN app (`NIS-OnsiteService`) contract v1
+### 3.2 Namespace `/nis` — RN app (`NIS-OnsiteService`) contract v2 (v1 + PDF attachment, backward compatible)
 
 - handshake auth: `{ token (JWT coreapi), cmpid, fullName }` — ไม่ผ่าน = ปฏิเสธตอน connect
-- client→server: `nis:chat:join` / `nis:chat:leave` `{ ticketId }` · `nis:chat:send` `{ ticketId, text, tempId }` (มี ack)
-- server→client: `nis:chat:message` `{ id, ticketId, sender, senderName, text, at }` · `nis:notify` `{ type, ticketId, title, body, at }`
+- client→server: `nis:chat:join` / `nis:chat:leave` `{ ticketId }` ·
+  `nis:chat:send` `{ ticketId, text, tempId, attachmentUrl?, attachmentName?, attachmentType? }` (มี ack) —
+  ต้องมีอย่างน้อยหนึ่งอย่าง: `text` (ไม่ว่าง) หรือ `attachmentUrl`
+- server→client: `nis:chat:message` `{ id, ticketId, sender, senderName, text, attachmentUrl, attachmentName, attachmentType, at }`
+  (attachment* เป็น `null` เมื่อไม่มีไฟล์แนบ) · `nis:notify` `{ type, ticketId, title, body, at }`
 - ห้อง: `nischat_{cmpid}_{ticketId}` · `nisuser_{cmpid}_{userlogin}` (auto-join ตอน connect)
+- อัปโหลดไฟล์แนบ (PDF เท่านั้น) ก่อนส่ง: `POST /api/nis/chat/:ticketId/upload` (`nisauth`, multipart
+  field `file` + `cmpid`) → `{ ok, url, fileName }` แล้วค่อยส่ง `attachmentUrl`/`attachmentName` ผ่าน
+  `nis:chat:send` — เก็บไฟล์ที่ `uploads/{cmpid}/nischat/{ticketId}/{uuid}.pdf`
 - `sender` มาจาก JWT (`decoded.sub`) เท่านั้น — **ห้ามรับผู้ส่งจาก payload ของ client**
 - ผู้ส่งได้ผลผ่าน `ack` ไม่ echo กลับ (ใช้ `socket.to(room)` ไม่ใช่ `nis.to(room)`)
 - ทุกอย่างของ NIS อยู่ใน `src/sockets/nis.namespace.js` — ห้ามเอา logic NIS ไปปนใน default namespace
@@ -138,9 +144,11 @@ Socket.IO path = `/socketionode` (ตรงกับ client ฝั่ง React) 
 - `.env` อยู่ใน `.gitignore` แล้ว — ห้าม commit, ห้าม echo/cat เนื้อหาออกใน output
 - env ที่ระบบใช้: `PORT`, `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`,
   `JWT_SECRET`, `JWT_Issuer`, `JWT_Audience`, `JWT_NIS_SECRET`, `NIS_INTERNAL_SECRET`,
-  `RABBITMQ_URL`, `REDIS_HOST`, `REDIS_PORT`,
+  `RABBITMQ_URL`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` (optional — ไม่ตั้ง/ว่าง = ไม่ส่ง AUTH),
   `FB_VERIFY_TOKEN`, `FB_PAGE_ACCESS_TOKEN`, `WHATSAPP_TOKEN`, `WHATSAPP_VERIFY_TOKEN`,
-  `WHATSAPP_PHONE_NUMBER_ID`, `SHOPEE_SECRET`, `CLIENT_ID`, `CLIENT_SECRET`, `REDIRECT_URI`, `REFRESH_TOKEN`
+  `WHATSAPP_PHONE_NUMBER_ID`, `SHOPEE_SECRET`, `CLIENT_ID`, `CLIENT_SECRET`, `REDIRECT_URI`, `REFRESH_TOKEN`,
+  `NIS_CHAT_PUBLIC_BASE_URL` (ใหม่ — optional, override โฮสต์สาธารณะของไฟล์แนบแชท NIS PDF,
+  ไม่ตั้ง = fallback `https://api.nisolution.co.th` เหมือนของเดิม; **ยังไม่ได้ตั้งบน server จริง**)
 - ถ้าเพิ่ม env ใหม่: ต้องบอกผู้ใช้ให้ไปตั้งบน server ด้วย และเขียน fallback/ปิดฟีเจอร์ให้ปลอดภัยเมื่อไม่ได้ตั้ง
   (ดูตัวอย่าง `NIS_INTERNAL_SECRET` → ถ้าไม่ตั้ง endpoint ตอบ 503 ไม่ใช่เปิดโล่ง)
 
@@ -148,7 +156,7 @@ Socket.IO path = `/socketionode` (ตรงกับ client ฝั่ง React) 
 
 - ตอบ `200` ให้ platform **เร็วที่สุด** แล้วค่อยประมวลผลต่อ (`process.nextTick`) — กัน LINE retry ยิงซ้ำ
 - ต้อง idempotent: กันซ้ำด้วย `messageId` ทั้งใน request เดียวกัน (`Set`) และข้าม request
-  (`recentLineMsgIds` TTL 5 นาที ใน `chat.controller.js`)
+  (`seenRecently` ใน `chat.controller.js`: Redis key `gochat:line:msg:{id}` TTL 5 นาที, Redis ใช้ไม่ได้ → fallback `recentLineMsgIds` Map)
 - error ใน background ต้อง `try/catch` + log — ห้ามให้ throw หลุดจนโปรเซสตาย
 
 ### 4.5 ไฟล์อัปโหลด
@@ -167,8 +175,8 @@ Socket.IO path = `/socketionode` (ตรงกับ client ฝั่ง React) 
 | `cmpId` hardcode `"230015"` | อยู่ใน `chat.controller.js` (11 จุด) และ `line.constroller.js` (5 จุด) | ระบบยัง single-tenant อยู่จริง — ห้ามแก้เป็น dynamic ทั้งชุดโดยไม่มี CR |
 | `line.constroller.js` (สะกดผิดจาก controller) | ~4,100 บรรทัด รวม Flex message, LIFF, helpdesk, assign, cron | อย่าเปลี่ยนชื่อไฟล์ (มี require หลายที่) · แก้เฉพาะฟังก์ชันที่เกี่ยว · อ่านฟังก์ชันข้างเคียงก่อน |
 | Flex message ต่อ JSON ยาวมาก | ประวัติ commit ส่วนใหญ่คือแก้ Flex ทีละรอบ | copy โครงจาก Flex ที่ทำงานอยู่แล้วในไฟล์เดียวกัน อย่าเขียนใหม่จากศูนย์ |
-| state ใน memory ไม่ shared | `recentLineMsgIds` (dedupe), `memStore` (nischat fallback), flag `isRunningJobGetLineFriend` | เป็น per-instance เท่านั้น ถ้ารันหลาย replica จะไม่ป้องกันข้าม instance — ถ้าต้องกันข้าม instance ต้องใช้ Redis |
-| cron อยู่ใน `app.js` | 3 job: `waitsendmsgagent` (ทุกนาที), `JobGetLineFriendNotProfile` (ทุกนาที), `JobGetLineFriend` (00:00 Asia/Bangkok + ตอน start) | ทุก replica รันเองทั้งหมด = งานซ้ำ ถ้า scale ต้องคุยก่อน |
+| state ใน memory ไม่ shared | `memStore` (nischat fallback) ยัง per-instance · `recentLineMsgIds` เหลือเป็น fallback ตอน Redis ใช้ไม่ได้ | ถ้าต้องกันข้าม instance ใช้ Redis ผ่าน `getRedis()` + prefix `gochat:` |
+| cron อยู่ใน `app.js` | 3 job: `waitsendmsgagent` (ทุกนาที), `JobGetLineFriendNotProfile` (ทุกนาที), `JobGetLineFriend` (00:00 Asia/Bangkok + ตอน start หลัง Redis connect) | ห่อด้วย `runCronExclusive` (Redis lock) แล้ว = instance เดียวต่อ tick + ไม่ซ้อนรอบข้าม instance · Redis ใช้ไม่ได้ → skip รอบนั้น (fail-closed) · cron ใหม่ต้องห่อแบบเดียวกัน |
 | `thumb.service.js` | ประกาศ `createThumbForLocalMp4` **ซ้ำ 2 ครั้ง** (บรรทัด 298 และ 384) ตัวหลังทับตัวแรก | แก้ที่ตัวบรรทัด 384 (ตัวที่ถูกใช้จริง) และรายงานความซ้ำนี้ให้ผู้ใช้ทราบ |
 | `sql.connected` ใน `database.js` | เช็คแบบนี้ไม่ค่อยตรง อาจ connect ซ้ำ | ไม่ใช่บั๊กเร่งด่วน อย่าแก้พ่วงกับ task อื่น |
 | ไม่มี test | `npm test` ตั้งใจให้ fail | verify ด้วย `node --check` + ยิง endpoint จริง (ดู `/chat-verify`) |
@@ -190,7 +198,9 @@ docker compose up --build    # api + nginx (conf.d/)
 ```
 
 ต้องมี MSSQL, Redis, RabbitMQ ที่เข้าถึงได้ตาม `.env` ถึงจะ start ผ่าน
-(Redis ล้ม = start ไม่ผ่าน เพราะ `app.js` `process.exit(1)`; RabbitMQ ล้ม = log error แต่ไปต่อได้)
+(Redis ต่อไม่ได้ตอน boot / password ผิด = retry ~5.5 วิ แล้ว `process.exit(1)`; Redis หลุดระหว่างรัน = reconnect เองไม่ตาย
+— ระหว่างหลุด cron skip และ dedupe ใช้ Map ใน memory; RabbitMQ ล้ม/หลุด = log error แต่ไปต่อได้ และต่อใหม่เองเบื้องหลัง backoff 1→30 วิ;
+ระหว่างหลุด `publishToQueue` throw `RabbitMQ not connected` → webhook marketplace ตอบ 500 ให้ platform retry)
 
 ---
 

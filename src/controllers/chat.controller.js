@@ -12,6 +12,8 @@ const { createThumbForLocalMp4 } = require("../services/thumb.service");
 
 /* const { io } = require("../app"); */
 const { getIO } = require("../utils/socket");
+const { getRedis } = require("../config/redis");
+const { KEY_PREFIX } = require("../utils/redisLock");
 
 function uuidv4() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -34,7 +36,35 @@ function getExtFromName(name) {
 const RECENT_TTL_MS = 5 * 60 * 1000; // 5 นาที
 const recentLineMsgIds = new Map(); // messageId -> timestamp
 
-function seenRecently(messageId) {
+/**
+ * เช็คว่า messageId ของ LINE เคยเห็นภายใน 5 นาทีหรือยัง (กันซ้ำข้าม instance ผ่าน Redis)
+ * Redis ไม่พร้อม/error → fallback ไป Map ใน memory (per-instance เหมือนเดิม)
+ * @param {string} messageId LINE message id
+ * @returns {Promise<boolean>} true ถ้าซ้ำ
+ */
+async function seenRecently(messageId) {
+  const client = getRedis();
+  if (client) {
+    try {
+      const ok = await client.set(
+        `${KEY_PREFIX}line:msg:${messageId}`,
+        "1",
+        { NX: true, PX: RECENT_TTL_MS },
+      );
+      return ok !== "OK";
+    } catch (err) {
+      console.error("seenRecently redis error, fallback memory:", err?.message || err);
+    }
+  }
+  return seenRecentlyLocal(messageId);
+}
+
+/**
+ * dedupe แบบ in-memory (fallback เมื่อ Redis ใช้ไม่ได้)
+ * @param {string} messageId LINE message id
+ * @returns {boolean} true ถ้าซ้ำ
+ */
+function seenRecentlyLocal(messageId) {
   const now = Date.now();
 
   // cleanup เก่า
@@ -198,7 +228,7 @@ exports.handleLineWebhook = async (req, res) => {
         if (seenInThisRequest.has(messageId)) continue;
         seenInThisRequest.add(messageId);
 
-        if (seenRecently(messageId)) {
+        if (await seenRecently(messageId)) {
           console.log("skip duplicate (recent cache):", messageId);
           continue;
         }

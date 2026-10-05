@@ -54,10 +54,17 @@ function memPush(cmpid, ticketId, msg) {
 
 /**
  * บันทึกข้อความ → คืน {id, at} (id จาก DB identity หรือ MEM-* ตอน fallback)
- * @param {{cmpid:string,ticketId:string,sender:string,senderName:string,text:string}} input
+ * แนบไฟล์ได้ (attachmentUrl/attachmentName/attachmentType) — เป็น optional ทั้งหมด
+ * ⚠️ คอลัมน์ AttachmentUrl/AttachmentName/AttachmentType บน [dbo].[NisChatMessages] เป็นของ
+ *    migration ฝั่ง coreapi-new (แยก agent ทำคู่ขนาน) — ที่นี่แค่เขียน SQL รอไว้ ไม่รัน migration เอง
+ * @param {{cmpid:string,ticketId:string,sender:string,senderName:string,text:string,
+ *          attachmentUrl?:string|null,attachmentName?:string|null,attachmentType?:string|null}} input
  */
 async function saveMessage(input) {
   const at = nowIsoBangkok();
+  const attachmentUrl = input.attachmentUrl || null;
+  const attachmentName = input.attachmentName || null;
+  const attachmentType = input.attachmentType || null;
   try {
     const pool = await connectDB();
     const rs = await pool
@@ -67,10 +74,14 @@ async function saveMessage(input) {
       .input("sender", sql.NVarChar, input.sender)
       .input("senderName", sql.NVarChar, input.senderName)
       .input("text", sql.NVarChar, input.text)
+      .input("attachmentUrl", sql.NVarChar(500), attachmentUrl)
+      .input("attachmentName", sql.NVarChar(255), attachmentName)
+      .input("attachmentType", sql.NVarChar(50), attachmentType)
       .input("at", sql.NVarChar, at).query(`
-        INSERT INTO [dbo].[NisChatMessages] (CmpId, TicketId, Sender, SenderName, [Text], CreatedAt)
+        INSERT INTO [dbo].[NisChatMessages]
+          (CmpId, TicketId, Sender, SenderName, [Text], AttachmentUrl, AttachmentName, AttachmentType, CreatedAt)
         OUTPUT INSERTED.Id
-        VALUES (@cmpid, @ticketId, @sender, @senderName, @text, @at)
+        VALUES (@cmpid, @ticketId, @sender, @senderName, @text, @attachmentUrl, @attachmentName, @attachmentType, @at)
       `);
     const row = rs.recordset?.[0];
     if (!row) throw new Error("insert returned no id");
@@ -85,6 +96,9 @@ async function saveMessage(input) {
       sender: input.sender,
       senderName: input.senderName,
       text: input.text,
+      attachmentUrl,
+      attachmentName,
+      attachmentType,
       at,
     });
     return { id, at };
@@ -104,7 +118,8 @@ async function getMessages(cmpid, ticketId, limit = 100) {
       .input("cmpid", sql.NVarChar, cmpid)
       .input("ticketId", sql.NVarChar, ticketId)
       .input("top", sql.Int, top).query(`
-        SELECT TOP (@top) Id, TicketId, Sender, SenderName, [Text], CreatedAt
+        SELECT TOP (@top) Id, TicketId, Sender, SenderName, [Text],
+               AttachmentUrl, AttachmentName, AttachmentType, CreatedAt
         FROM [dbo].[NisChatMessages]
         WHERE CmpId = @cmpid AND TicketId = @ticketId
         ORDER BY Id DESC
@@ -116,6 +131,9 @@ async function getMessages(cmpid, ticketId, limit = 100) {
       sender: r.Sender,
       senderName: r.SenderName || r.Sender,
       text: r.Text,
+      attachmentUrl: r.AttachmentUrl || null,
+      attachmentName: r.AttachmentName || null,
+      attachmentType: r.AttachmentType || null,
       // DATETIMEOFFSET กลับมาเป็น Date → แปลงกลับเป็น ISO เวลาไทย
       at: r.CreatedAt instanceof Date ? nowIsoBangkok(r.CreatedAt) : String(r.CreatedAt || ""),
     }));

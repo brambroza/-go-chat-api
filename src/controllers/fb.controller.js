@@ -30,19 +30,24 @@ exports.handleFbWebhook = async (req, res) => {
     // ถ้ามี object=page แสดงว่าเป็น event จากเพจ
     if (body.object === "page") {
       body.entry.forEach(async (entry) => {
-        // messaging array
-        const webhookEvent = entry.messaging[0];
-        console.log("Webhook event: ", webhookEvent);
+        // callback ไม่ถูก await — ต้อง catch เอง ไม่งั้น RabbitMQ หลุด = unhandled rejection ทำ process ตาย
+        try {
+          // messaging array
+          const webhookEvent = entry.messaging[0];
+          console.log("Webhook event: ", webhookEvent);
 
-        // ส่ง message เข้า RabbitMQ
-        await publishToQueue("fbQueue", webhookEvent);
+          // ส่ง message เข้า RabbitMQ
+          await publishToQueue("fbQueue", webhookEvent);
 
-        // ตัวอย่าง: ถ้าเป็นข้อความ (message) จะตอบกลับ
-        if (webhookEvent.message) {
-          const senderId = webhookEvent.sender.id;
-          const text = "Hello from Facebook controller!";
-          // เรียก service ส่งข้อความกลับไป
-          fbService.sendTextMessage(senderId, text);
+          // ตัวอย่าง: ถ้าเป็นข้อความ (message) จะตอบกลับ
+          if (webhookEvent.message) {
+            const senderId = webhookEvent.sender.id;
+            const text = "Hello from Facebook controller!";
+            // เรียก service ส่งข้อความกลับไป
+            fbService.sendTextMessage(senderId, text);
+          }
+        } catch (err) {
+          console.error("FB webhook entry error:", err?.message || err);
         }
       });
       return res.sendStatus(200);
