@@ -12,7 +12,21 @@ const { getIO } = require("../utils/socket");
 const { getMessages, nowIsoBangkok } = require("../services/nischat.service");
 const { userRoom } = require("../sockets/nis.namespace");
 
-const NOTIFY_TYPES = new Set(["assign", "reject_close", "overdue", "accept"]);
+const NOTIFY_TYPES = new Set([
+  "assign",
+  "reject_close",
+  "overdue",
+  "accept",
+  // คำขอเปิดเคส Onsite จาก helpdesk (coreapi NisController pending-requests) — SM / ผู้ขอ
+  "pending_request",
+  "request_approved",
+  "request_rejected",
+  // สถานะ/ข้อมูลหน้างานของตั๋วเปลี่ยน (checkin/checkout/progress/request_close/closed/close_approved/close_rejected)
+  // client ที่เปิดตั๋วนั้นอยู่ refetch เงียบ ๆ — action/status แนบมาใน payload
+  "ticket_update",
+]);
+
+const MAX_ACTION_LEN = 50;
 
 // ── ไฟล์แนบแชท NIS (PDF เท่านั้น) ──
 // path ตรงกับ docker volume เดียวกับที่ line.constroller.js ใช้ (/usr/src/app/uploads)
@@ -88,7 +102,8 @@ async function uploadChatAttachment(req, res) {
 
 /**
  * POST /api/nis/realtime/notify  (internal เท่านั้น — coreapi/cron เรียก)
- * body: { cmpid, users: string|string[], type, ticketId, title, body }
+ * body: { cmpid, users: string|string[], type, ticketId, title, body, action?, status? }
+ * action/status (optional) ใช้กับ type "ticket_update" — ส่งต่อใน nis:notify (เพิ่ม field ไม่กระทบ client เดิม)
  */
 function postNotify(req, res) {
   const secret = process.env.NIS_INTERNAL_SECRET;
@@ -99,14 +114,14 @@ function postNotify(req, res) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const { cmpid, users, type, ticketId, title, body } = req.body || {};
+  const { cmpid, users, type, ticketId, title, body, action, status } = req.body || {};
   const userList = (Array.isArray(users) ? users : [users]).filter(
     (u) => typeof u === "string" && u
   );
   if (!cmpid || userList.length === 0 || !NOTIFY_TYPES.has(type)) {
     return res
       .status(400)
-      .json({ message: "cmpid, users, type(assign|reject_close|overdue|accept) required" });
+      .json({ message: "cmpid, users, type(assign|reject_close|overdue|accept|ticket_update|...) required" });
   }
 
   const evt = {
@@ -114,6 +129,8 @@ function postNotify(req, res) {
     ticketId: String(ticketId || ""),
     title: String(title || ""),
     body: String(body || ""),
+    action: String(action || "").slice(0, MAX_ACTION_LEN),
+    status: String(status || "").slice(0, MAX_ACTION_LEN),
     at: nowIsoBangkok(),
   };
   const nis = getIO().of("/nis");

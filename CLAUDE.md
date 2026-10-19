@@ -96,7 +96,7 @@ Socket.IO path = `/socketionode` (ตรงกับ client ฝั่ง React) 
   `nis:chat:send` `{ ticketId, text, tempId, attachmentUrl?, attachmentName?, attachmentType? }` (มี ack) —
   ต้องมีอย่างน้อยหนึ่งอย่าง: `text` (ไม่ว่าง) หรือ `attachmentUrl`
 - server→client: `nis:chat:message` `{ id, ticketId, sender, senderName, text, attachmentUrl, attachmentName, attachmentType, at }`
-  (attachment* เป็น `null` เมื่อไม่มีไฟล์แนบ) · `nis:notify` `{ type, ticketId, title, body, at }`
+  (attachment* เป็น `null` เมื่อไม่มีไฟล์แนบ) · `nis:notify` `{ type, ticketId, title, body, action, status, at }` (`action`/`status` ใช้กับ type `ticket_update`)
 - ห้อง: `nischat_{cmpid}_{ticketId}` · `nisuser_{cmpid}_{userlogin}` (auto-join ตอน connect)
 - อัปโหลดไฟล์แนบ (PDF เท่านั้น) ก่อนส่ง: `POST /api/nis/chat/:ticketId/upload` (`nisauth`, multipart
   field `file` + `cmpid`) → `{ ok, url, fileName }` แล้วค่อยส่ง `attachmentUrl`/`attachmentName` ผ่าน

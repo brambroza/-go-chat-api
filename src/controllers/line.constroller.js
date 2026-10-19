@@ -3633,6 +3633,551 @@ async function sendLineToTeamSeviceFinish(TaskNoNew, issue) {
   }
 }
 
+/**
+ * POST /api/line/problem/sendonsite — แจ้งลูกค้าทาง LINE ว่าเคสนี้ให้บริการตามปกติ (remote) ไม่ได้
+ * ต้องส่งทีมช่างเข้าหน้างาน (Onsite) — ปิด SLA แบบปกติไว้ก่อน รอ Service Manager ยืนยันทีม/นัดหมาย
+ * เรียกจาก CRM ตอน staff ยืนยัน "เปิดเคส Onsite" (open-onsite-case-dialog) · flex style เดียวกับปิดเคส (bubble kilo)
+ * body: { userId, oaId, taskNo, ticketCode, issue, staffName, customerName, reporterName, requestDate, dueDate, detail }
+ */
+exports.sendCaseOnsiteMessage = async (req, res) => {
+  try {
+    const {
+      userId,
+      oaId,
+      taskNo,
+      ticketCode,
+      issue,
+      staffName,
+      customerName,
+      reporterName,
+      requestDate,
+      dueDate,
+      detail,
+    } = req.body;
+
+    if (!userId || !oaId || !taskNo) {
+      return res.status(400).json({ error: "Missing required fields (userId, oaId, taskNo)" });
+    }
+
+    const ORANGE = "#F0801A";
+
+    const flexmessage = {
+      type: "flex",
+      altText: `🚧 เคส ${taskNo} ต้องส่งทีมช่างเข้าหน้างาน (Onsite)`,
+      contents: {
+        type: "bubble",
+        size: "kilo",
+        body: {
+          type: "box",
+          layout: "vertical",
+          paddingAll: "lg",
+          backgroundColor: "#FFFFFF",
+          cornerRadius: "16px",
+          spacing: "md",
+          contents: [
+            // ===== Header =====
+            {
+              type: "box",
+              layout: "baseline",
+              spacing: "sm",
+              contents: [
+                { type: "text", text: "🚧", size: "sm", flex: 0 },
+                {
+                  type: "text",
+                  text: "เคสนี้ไม่สามารถให้บริการตามปกติได้",
+                  weight: "bold",
+                  size: "sm",
+                  color: ORANGE,
+                  wrap: true,
+                },
+              ],
+            },
+
+            // ===== Ticket =====
+            {
+              type: "box",
+              layout: "baseline",
+              spacing: "sm",
+              contents: [
+                { type: "text", text: "🧾", size: "sm", flex: 0 },
+                { type: "text", text: "Ticket:", weight: "bold", size: "sm", flex: 0 },
+                {
+                  type: "text",
+                  text: `${taskNo ?? ""}${ticketCode ? ` · ${ticketCode}` : ""}`,
+                  size: "sm",
+                  color: "#999999",
+                  wrap: true,
+                },
+              ],
+            },
+
+            // ===== บริษัท + ผู้แจ้ง =====
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "sm",
+              spacing: "xs",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "👤", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: `${customerName ?? ""}`,
+                      size: "xs",
+                      color: ORANGE,
+                      weight: "bold",
+                      wrap: true,
+                    },
+                  ],
+                },
+                ...(reporterName
+                  ? [
+                      {
+                        type: "box",
+                        layout: "horizontal",
+                        paddingStart: "30px",
+                        contents: [
+                          { type: "text", text: "ผู้แจ้ง:", weight: "bold", size: "xs", flex: 0 },
+                          { type: "text", text: `${reporterName}`, size: "xs", color: "#999999", wrap: true },
+                        ],
+                      },
+                    ]
+                  : []),
+              ],
+            },
+
+            // ===== รายละเอียด =====
+            {
+              type: "box",
+              layout: "baseline",
+              spacing: "xs",
+              margin: "xs",
+              paddingStart: "30px",
+              contents: [
+                { type: "text", text: "รายละเอียด:", weight: "bold", size: "xs", flex: 0 },
+                { type: "text", text: `${issue ?? ""}`, size: "xs", color: "#333333", wrap: true },
+              ],
+            },
+
+            // ===== การดำเนินการ =====
+            {
+              type: "box",
+              layout: "baseline",
+              spacing: "xs",
+              margin: "xs",
+              contents: [
+                { type: "text", text: "🛠️", size: "sm", flex: 0 },
+                { type: "text", text: "ดำเนินการ:", weight: "bold", size: "xs", flex: 0 },
+                {
+                  type: "text",
+                  text: "ส่งทีมช่างเข้าหน้างาน (Onsite) — รอ Service Manager ยืนยันทีมและนัดหมาย",
+                  size: "xs",
+                  color: "#333333",
+                  wrap: true,
+                },
+              ],
+            },
+            ...(detail
+              ? [
+                  {
+                    type: "box",
+                    layout: "baseline",
+                    spacing: "xs",
+                    paddingStart: "30px",
+                    contents: [
+                      { type: "text", text: `${detail}`, size: "xs", color: "#999999", wrap: true },
+                    ],
+                  },
+                ]
+              : []),
+
+            // ===== ผู้ดูแลเคส =====
+            {
+              type: "box",
+              layout: "baseline",
+              spacing: "xs",
+              margin: "xs",
+              contents: [
+                { type: "text", text: "👨🏻‍💻", size: "sm", flex: 0 },
+                { type: "text", text: "ผู้ดูแลเคส:", weight: "bold", size: "xs", flex: 0 },
+                { type: "text", text: `${staffName ?? ""}`, size: "xs", color: "#999999", wrap: true },
+              ],
+            },
+
+            // ===== ระยะเวลา =====
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "sm",
+              spacing: "xs",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "⏳", size: "sm", flex: 0 },
+                    { type: "text", text: "ระยะเวลา:", weight: "bold", size: "xs", flex: 0 },
+                    { type: "text", text: " ", size: "sm", flex: 1 },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  paddingStart: "10px",
+                  margin: "xs",
+                  spacing: "xs",
+                  contents: [
+                    { type: "text", text: `เวลาแจ้ง: ${requestDate ?? ""}`, size: "xs", color: "#999999", wrap: true },
+                    { type: "text", text: `กำหนดเข้าหน้างาน: ${dueDate ?? "รอนัดหมาย"}`, size: "xs", color: "#999999", wrap: true },
+                    {
+                      type: "text",
+                      text: "SLA การแก้ไขระยะไกลปิดที่ขั้นตอนนี้ · ระบบจะแจ้งนัดหมายอีกครั้งเมื่อยืนยันทีมช่าง",
+                      size: "xxs",
+                      color: "#B45309",
+                      wrap: true,
+                    },
+                  ],
+                },
+              ],
+            },
+
+            // ===== ปุ่มส้ม =====
+            {
+              type: "box",
+              layout: "vertical",
+              backgroundColor: ORANGE,
+              cornerRadius: "10px",
+              paddingAll: "md",
+              action: {
+                type: "uri",
+                label: "ติดตามสถานะเคส",
+                uri: `https://erp.nisolution.co.th/productservice/servicerequest/${taskNo ?? ""}`,
+              },
+              contents: [
+                {
+                  type: "text",
+                  text: "ส่งทีมช่างเข้าหน้างาน · ติดตามสถานะเคส",
+                  align: "center",
+                  weight: "bold",
+                  size: "md",
+                  color: "#FFFFFF",
+                  wrap: true,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    const pool = await connectDB();
+    const results = await pool.request().input("oaid", sql.VarChar, oaId)
+      .query(`
+        SELECT top 1 AccessToken as channelToken
+        FROM [dbo].[CompanySocialChannel]
+        WHERE ChannelId = @oaid
+      `);
+
+    if (results.recordset.length === 0) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    const { channelToken } = results.recordset[0];
+
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      { to: userId, messages: [flexmessage] },
+      {
+        headers: {
+          Authorization: `Bearer ${channelToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    console.log(`✅ Onsite case message sent to user (${taskNo})`);
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Error sending onsite case message:", err.response?.data || err.message);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+/**
+ * POST /api/line/problem/sendonsiteapproved — แจ้งลูกค้าทาง LINE ว่า Service Manager อนุมัติงาน Onsite แล้ว
+ * พร้อมวันเข้าหน้างานและชื่อช่างที่รับผิดชอบ — เป็นข้อความคู่กับ sendonsite (ตอนขอเปิดเคส) ซึ่งบอกลูกค้าไว้ว่า
+ * "ระบบจะแจ้งนัดหมายอีกครั้งเมื่อยืนยันทีมช่าง" · เรียกจาก CRM ตอน SM กดอนุมัติในแท็บอนุมัติ (Service Board)
+ * body: { userId, oaId, taskNo, ticketCode, title, customerName, assignee, startDate, endDate, location, staffName }
+ */
+exports.sendCaseOnsiteApprovedMessage = async (req, res) => {
+  try {
+    const {
+      userId,
+      oaId,
+      taskNo,
+      ticketCode,
+      title,
+      customerName,
+      assignee,
+      startDate,
+      endDate,
+      location,
+      staffName,
+    } = req.body;
+
+    if (!userId || !oaId || !taskNo) {
+      return res.status(400).json({ error: "Missing required fields (userId, oaId, taskNo)" });
+    }
+
+    const GREEN = "#06C755";
+
+    // ช่างหลายคนส่งมาแบบ comma-separated → แสดงคนละบรรทัด
+    const engineers = String(assignee ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const onsiteDate =
+      startDate && endDate && startDate !== endDate ? `${startDate} – ${endDate}` : startDate || endDate || "รอนัดหมาย";
+
+    const flexmessage = {
+      type: "flex",
+      altText: `✅ ยืนยันนัดหมายช่างเข้าหน้างาน เคส ${taskNo} วันที่ ${onsiteDate}`,
+      contents: {
+        type: "bubble",
+        size: "kilo",
+        body: {
+          type: "box",
+          layout: "vertical",
+          paddingAll: "lg",
+          backgroundColor: "#FFFFFF",
+          cornerRadius: "16px",
+          spacing: "md",
+          contents: [
+            // ===== Header =====
+            {
+              type: "box",
+              layout: "baseline",
+              spacing: "sm",
+              contents: [
+                { type: "text", text: "✅", size: "sm", flex: 0 },
+                {
+                  type: "text",
+                  text: "ยืนยันนัดหมายช่างเข้าหน้างานแล้ว",
+                  weight: "bold",
+                  size: "sm",
+                  color: GREEN,
+                  wrap: true,
+                },
+              ],
+            },
+
+            // ===== Ticket =====
+            {
+              type: "box",
+              layout: "baseline",
+              spacing: "sm",
+              contents: [
+                { type: "text", text: "🧾", size: "sm", flex: 0 },
+                { type: "text", text: "Ticket:", weight: "bold", size: "sm", flex: 0 },
+                {
+                  type: "text",
+                  text: `${taskNo ?? ""}${ticketCode ? ` · ${ticketCode}` : ""}`,
+                  size: "sm",
+                  color: "#999999",
+                  wrap: true,
+                },
+              ],
+            },
+
+            // ===== บริษัท + หัวข้องาน =====
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "sm",
+              spacing: "xs",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "sm",
+                  contents: [
+                    { type: "text", text: "👤", size: "sm", flex: 0 },
+                    {
+                      type: "text",
+                      text: `${customerName ?? ""}`,
+                      size: "xs",
+                      color: GREEN,
+                      weight: "bold",
+                      wrap: true,
+                    },
+                  ],
+                },
+                ...(title
+                  ? [
+                      {
+                        type: "box",
+                        layout: "horizontal",
+                        paddingStart: "30px",
+                        contents: [
+                          { type: "text", text: "งาน:", weight: "bold", size: "xs", flex: 0 },
+                          { type: "text", text: `${title}`, size: "xs", color: "#999999", wrap: true },
+                        ],
+                      },
+                    ]
+                  : []),
+              ],
+            },
+
+            // ===== วันเข้าหน้างาน =====
+            {
+              type: "box",
+              layout: "baseline",
+              spacing: "xs",
+              margin: "sm",
+              contents: [
+                { type: "text", text: "📅", size: "sm", flex: 0 },
+                { type: "text", text: "วันเข้าหน้างาน:", weight: "bold", size: "xs", flex: 0 },
+                { type: "text", text: `${onsiteDate}`, size: "xs", color: "#333333", weight: "bold", wrap: true },
+              ],
+            },
+            ...(location
+              ? [
+                  {
+                    type: "box",
+                    layout: "baseline",
+                    spacing: "xs",
+                    paddingStart: "30px",
+                    contents: [
+                      { type: "text", text: "สถานที่:", weight: "bold", size: "xs", flex: 0 },
+                      { type: "text", text: `${location}`, size: "xs", color: "#999999", wrap: true },
+                    ],
+                  },
+                ]
+              : []),
+
+            // ===== ช่างผู้รับผิดชอบ =====
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "sm",
+              spacing: "xs",
+              contents: [
+                {
+                  type: "box",
+                  layout: "baseline",
+                  spacing: "xs",
+                  contents: [
+                    { type: "text", text: "🛠️", size: "sm", flex: 0 },
+                    { type: "text", text: "ช่างผู้รับผิดชอบ:", weight: "bold", size: "xs", flex: 0 },
+                    ...(engineers.length <= 1
+                      ? [{ type: "text", text: engineers[0] ?? "รอมอบหมาย", size: "xs", color: "#333333", wrap: true }]
+                      : [{ type: "text", text: `${engineers.length} คน`, size: "xs", color: "#333333", wrap: true }]),
+                  ],
+                },
+                ...(engineers.length > 1
+                  ? engineers.map((name) => ({
+                      type: "box",
+                      layout: "baseline",
+                      paddingStart: "30px",
+                      contents: [{ type: "text", text: `• ${name}`, size: "xs", color: "#333333", wrap: true }],
+                    }))
+                  : []),
+              ],
+            },
+
+            // ===== ผู้อนุมัติ =====
+            ...(staffName
+              ? [
+                  {
+                    type: "box",
+                    layout: "baseline",
+                    spacing: "xs",
+                    margin: "xs",
+                    contents: [
+                      { type: "text", text: "👨🏻‍💻", size: "sm", flex: 0 },
+                      { type: "text", text: "ผู้ดูแลเคส:", weight: "bold", size: "xs", flex: 0 },
+                      { type: "text", text: `${staffName}`, size: "xs", color: "#999999", wrap: true },
+                    ],
+                  },
+                ]
+              : []),
+
+            {
+              type: "text",
+              text: "หากไม่สะดวกตามวันนัดหมาย กรุณาแจ้งกลับทาง LINE นี้เพื่อเลื่อนนัด",
+              size: "xxs",
+              color: "#999999",
+              wrap: true,
+              margin: "sm",
+            },
+
+            // ===== ปุ่มเขียว =====
+            {
+              type: "box",
+              layout: "vertical",
+              backgroundColor: GREEN,
+              cornerRadius: "10px",
+              paddingAll: "md",
+              action: {
+                type: "uri",
+                label: "ติดตามสถานะเคส",
+                uri: `https://erp.nisolution.co.th/productservice/servicerequest/${taskNo ?? ""}`,
+              },
+              contents: [
+                {
+                  type: "text",
+                  text: "ติดตามสถานะเคส",
+                  align: "center",
+                  weight: "bold",
+                  size: "md",
+                  color: "#FFFFFF",
+                  wrap: true,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    const pool = await connectDB();
+    const results = await pool.request().input("oaid", sql.VarChar, oaId)
+      .query(`
+        SELECT top 1 AccessToken as channelToken
+        FROM [dbo].[CompanySocialChannel]
+        WHERE ChannelId = @oaid
+      `);
+
+    if (results.recordset.length === 0) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    const { channelToken } = results.recordset[0];
+
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      { to: userId, messages: [flexmessage] },
+      {
+        headers: {
+          Authorization: `Bearer ${channelToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    console.log(`✅ Onsite approved message sent to user (${taskNo})`);
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Error sending onsite approved message:", err.response?.data || err.message);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 exports.sendFromproblem = async (req, res) => {
   const { userId, channelToken, cmpId, urlName } = req.body;
 

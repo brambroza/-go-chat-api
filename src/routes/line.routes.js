@@ -10,6 +10,8 @@ const {
   rateProblem,
   sendFlexMsgWaiting,
   sendCaseClosedMessage,
+  sendCaseOnsiteMessage,
+  sendCaseOnsiteApprovedMessage,
   sendFromproblem,
   uploadfiles,
   checkContact, 
@@ -54,6 +56,10 @@ router.post("/contact/check", checkContact);
 router.post("/problem/rate", rateProblem);
 router.post("/problem/sendmsgwaiting", sendFlexMsgWaiting);
 router.post("/problem/sendfinish", sendCaseClosedMessage);
+// แจ้งลูกค้า: เคสนี้ต้องส่งช่างเข้าหน้างาน (Onsite) — เรียกจาก CRM ตอน staff ยืนยันเปิดเคส Onsite
+router.post("/problem/sendonsite", sendCaseOnsiteMessage);
+// แจ้งลูกค้า: SM อนุมัติงาน Onsite แล้ว + วันเข้าหน้างาน + ช่างผู้รับผิดชอบ — เรียกจาก CRM แท็บอนุมัติ Service Board
+router.post("/problem/sendonsiteapproved", sendCaseOnsiteApprovedMessage);
 router.post("/problem/sendmsgtouser", sendmsgtouser);
 
 // webhook สำหรับ Line Messaging API
