@@ -3935,7 +3935,7 @@ exports.sendCaseOnsiteApprovedMessage = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields (userId, oaId, taskNo)" });
     }
 
-    const GREEN = "#06C755";
+    const GREEN = "#F0801A";
 
     // รายละเอียดจาก SM — ตัดความยาวกัน bubble ยาวเกิน/ชน limit ของ LINE
     const MAX_DETAIL = 500;
@@ -3951,8 +3951,8 @@ exports.sendCaseOnsiteApprovedMessage = async (req, res) => {
       startDate && endDate && startDate !== endDate ? `${startDate} – ${endDate}` : startDate || endDate || "รอนัดหมาย";
 
     const flexmessage = {
-      type: "flex",
-      altText: `✅ ยืนยันนัดหมายช่างเข้าหน้างาน เคส ${taskNo} วันที่ ${onsiteDate}`,
+      type: "flex", 
+       altText: `🚧 เคส ${taskNo} ต้องส่งทีมช่างเข้าหน้างาน (Onsite) วันที่ ${onsiteDate}`,
       contents: {
         type: "bubble",
         size: "kilo",
@@ -3970,9 +3970,9 @@ exports.sendCaseOnsiteApprovedMessage = async (req, res) => {
               layout: "baseline",
               spacing: "sm",
               contents: [
-                { type: "text", text: "✅", size: "sm", flex: 0 },
+                { type: "text", text: "🚧", size: "sm", flex: 0 },
                 {
-                  type: "text",
+                  type: "text", 
                   text: "ยืนยันนัดหมายช่างเข้าหน้างานแล้ว",
                   weight: "bold",
                   size: "sm",
