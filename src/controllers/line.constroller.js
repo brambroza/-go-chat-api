@@ -3910,9 +3910,9 @@ exports.sendCaseOnsiteMessage = async (req, res) => {
 
 /**
  * POST /api/line/problem/sendonsiteapproved — แจ้งลูกค้าทาง LINE ว่า Service Manager อนุมัติงาน Onsite แล้ว
- * พร้อมวันเข้าหน้างานและชื่อช่างที่รับผิดชอบ — เป็นข้อความคู่กับ sendonsite (ตอนขอเปิดเคส) ซึ่งบอกลูกค้าไว้ว่า
- * "ระบบจะแจ้งนัดหมายอีกครั้งเมื่อยืนยันทีมช่าง" · เรียกจาก CRM ตอน SM กดอนุมัติในแท็บอนุมัติ (Service Board)
- * body: { userId, oaId, taskNo, ticketCode, title, customerName, assignee, startDate, endDate, location, staffName }
+ * พร้อมวันเข้าหน้างาน ชื่อช่างที่รับผิดชอบ และรายละเอียดที่ SM แก้ — เป็นข้อความเดียวที่ลูกค้าได้ในรอบเปิดเคส Onsite
+ * (CRM เลิกเรียก sendonsite ตอนขอเปิดเคสแล้ว) · เรียกจาก CRM ตอน SM กดอนุมัติในแท็บอนุมัติ (Service Board)
+ * body: { userId, oaId, taskNo, ticketCode, title, customerName, assignee, startDate, endDate, location, detail, staffName }
  */
 exports.sendCaseOnsiteApprovedMessage = async (req, res) => {
   try {
@@ -3927,6 +3927,7 @@ exports.sendCaseOnsiteApprovedMessage = async (req, res) => {
       startDate,
       endDate,
       location,
+      detail,
       staffName,
     } = req.body;
 
@@ -3935,6 +3936,11 @@ exports.sendCaseOnsiteApprovedMessage = async (req, res) => {
     }
 
     const GREEN = "#06C755";
+
+    // รายละเอียดจาก SM — ตัดความยาวกัน bubble ยาวเกิน/ชน limit ของ LINE
+    const MAX_DETAIL = 500;
+    const detailText = String(detail ?? "").trim();
+    const shownDetail = detailText.length > MAX_DETAIL ? `${detailText.slice(0, MAX_DETAIL)}…` : detailText;
 
     // ช่างหลายคนส่งมาแบบ comma-separated → แสดงคนละบรรทัด
     const engineers = String(assignee ?? "")
@@ -4032,6 +4038,35 @@ exports.sendCaseOnsiteApprovedMessage = async (req, res) => {
                   : []),
               ],
             },
+
+            // ===== รายละเอียดจาก SM =====
+            ...(shownDetail
+              ? [
+                  {
+                    type: "box",
+                    layout: "vertical",
+                    margin: "sm",
+                    spacing: "xs",
+                    contents: [
+                      {
+                        type: "box",
+                        layout: "baseline",
+                        spacing: "sm",
+                        contents: [
+                          { type: "text", text: "📝", size: "sm", flex: 0 },
+                          { type: "text", text: "รายละเอียด:", weight: "bold", size: "xs", flex: 0 },
+                        ],
+                      },
+                      {
+                        type: "box",
+                        layout: "vertical",
+                        paddingStart: "30px",
+                        contents: [{ type: "text", text: shownDetail, size: "xs", color: "#555555", wrap: true }],
+                      },
+                    ],
+                  },
+                ]
+              : []),
 
             // ===== วันเข้าหน้างาน =====
             {
